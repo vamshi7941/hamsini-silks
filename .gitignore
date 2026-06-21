@@ -1,0 +1,44 @@
+(# Node
+node_modules/
+server/node_modules/
+
+# Build outputs
+dist/
+server/dist/
+build/
+.vite/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*.local
+.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+
+# Misc caches
+.cache/
+.parcel-cache/
+
+# Images or uploads (if you keep generated assets)
+/public/uploads/
+
