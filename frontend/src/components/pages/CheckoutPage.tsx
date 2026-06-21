@@ -1,0 +1,249 @@
+import { useState } from "react";
+import { useStore } from "../../context/StoreContext";
+
+const PAYMENT_METHODS = [
+  { id: "UPI",  icon: "📱", label: "UPI", sub: "PhonePe · GPay · Paytm · BHIM" },
+  { id: "Card", icon: "💳", label: "Card", sub: "Visa · Mastercard · RuPay" },
+  { id: "COD",  icon: "💵", label: "Cash on Delivery", sub: "Pay at doorstep" },
+];
+
+export default function CheckoutPage() {
+  const { cart, cartTotal, placeOrder, navigateTo, user } = useStore();
+
+  const [name, setName]     = useState(user.loggedIn && user.role === "customer" ? user.name : "Devasena K");
+  const [email, setEmail]   = useState(user.loggedIn ? user.email : "devasena@patron.in");
+  const [phone, setPhone]   = useState("+91 94440 12345");
+  const [address, setAddress] = useState("108, Gopuram View Estate, Nandi Hills Rd, Mysuru – 570001");
+  const [payment, setPayment] = useState("UPI");
+  const [orderId, setOrderId] = useState<string | null>(null);
+
+  if (cart.length === 0 && !orderId) {
+    return (
+      <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
+        <div className="text-center py-16 px-4">
+          <div className="text-5xl mb-4">🛍️</div>
+          <p className="text-maroon-800 font-serif italic text-lg mb-4">Your bag is empty.</p>
+          <button onClick={() => navigateTo("shop")} className="px-6 py-3 bg-maroon-900 text-gold-100 rounded-full font-bold text-sm cursor-pointer">
+            Explore Catalogue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const id = placeOrder({ customerName: name, customerEmail: email, phone, address, paymentMethod: payment });
+    setOrderId(id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* ── SUCCESS SCREEN ── */
+  if (orderId) {
+    return (
+      <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center p-4">
+        <div className="w-full max-w-lg">
+          <div className="bg-white rounded-3xl border-2 border-gold-300 p-8 text-center shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-mandala opacity-10 pointer-events-none" />
+            <div className="relative">
+              {/* Animated success icon */}
+              <div className="w-24 h-24 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center mx-auto mb-4 text-5xl shadow-lg animate-float">
+                🪷
+              </div>
+              <div className="text-xs font-bold tracking-[0.4em] text-gold-700 mb-2 uppercase">ॐ मङ्गलम् ॐ</div>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-maroon-900 mb-2">Order Confirmed!</h2>
+              <p className="text-sm text-maroon-700/80 mb-6 leading-relaxed">
+                Your heirloom saree has been commissioned. Our master weavers will begin preparation and dispatch tracking will be sent to your email.
+              </p>
+
+              {/* Order info card */}
+              <div className="bg-maroon-50 rounded-2xl p-4 text-left mb-6 space-y-2.5 border border-gold-200">
+                {[
+                  { label: "Order ID", val: orderId },
+                  { label: "Patron", val: name },
+                  { label: "Email", val: email },
+                  { label: "Payment", val: payment },
+                  { label: "Status", val: "⏳ Pending Dispatch", highlight: true },
+                ].map((r) => (
+                  <div key={r.label} className="flex justify-between items-center text-xs">
+                    <span className="text-maroon-700">{r.label}</span>
+                    <span className={`font-bold ${r.highlight ? "text-gold-700" : "text-maroon-900"}`}>{r.val}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => navigateTo("admin")}
+                  className="flex-1 py-3 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 transition-colors cursor-pointer"
+                >
+                  Track in Admin Panel
+                </button>
+                <button
+                  onClick={() => navigateTo("shop")}
+                  className="flex-1 py-3 rounded-xl bg-gold-50 text-maroon-900 text-sm font-bold border border-gold-200 hover:bg-gold-100 transition-colors cursor-pointer"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── CHECKOUT FORM ── */
+  return (
+    <div className="min-h-screen bg-[#fdf8f1]">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b border-gold-100 px-4 sm:px-8 py-4">
+        <div className="max-w-6xl mx-auto flex items-center gap-2 text-xs text-maroon-700">
+          <button onClick={() => navigateTo("home")} className="hover:text-maroon-900 cursor-pointer">Home</button>
+          <span>›</span>
+          <button onClick={() => navigateTo("cart")} className="hover:text-maroon-900 cursor-pointer">Bag</button>
+          <span>›</span>
+          <span className="text-maroon-900 font-semibold">Checkout</span>
+        </div>
+      </div>
+
+      {/* Progress steps */}
+      <div className="bg-white border-b border-gold-100 px-4 py-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-center gap-2 text-xs">
+          {["Bag", "Checkout", "Confirmed"].map((step, i) => (
+            <div key={step} className="flex items-center gap-2">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i === 1 ? "bg-maroon-900 text-gold-200" : i === 0 ? "bg-gold-200 text-maroon-900" : "bg-maroon-100 text-maroon-500"}`}>
+                {i + 1}
+              </div>
+              <span className={i === 1 ? "font-bold text-maroon-900" : "text-maroon-500"}>{step}</span>
+              {i < 2 && <span className="text-maroon-300">›</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-12 gap-8 items-start">
+          {/* ── Form ── */}
+          <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
+            {/* Delivery section */}
+            <div className="bg-white rounded-2xl border border-gold-100 shadow-xs p-5 sm:p-6">
+              <h2 className="font-display text-base font-bold text-maroon-900 mb-5 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-maroon-900 text-gold-200 text-xs flex items-center justify-center font-bold">1</span>
+                Delivery Details
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-maroon-900 mb-1.5">Full Name *</label>
+                  <input required type="text" value={name} onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors font-medium" />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-maroon-900 mb-1.5">Email *</label>
+                    <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-maroon-900 mb-1.5">Phone *</label>
+                    <input required type="text" value={phone} onChange={(e) => setPhone(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-maroon-900 mb-1.5">Delivery Address *</label>
+                  <textarea required rows={3} value={address} onChange={(e) => setAddress(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors resize-none leading-relaxed" />
+                </div>
+              </div>
+            </div>
+
+            {/* Payment section */}
+            <div className="bg-white rounded-2xl border border-gold-100 shadow-xs p-5 sm:p-6">
+              <h2 className="font-display text-base font-bold text-maroon-900 mb-5 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-maroon-900 text-gold-200 text-xs flex items-center justify-center font-bold">2</span>
+                Payment Method
+              </h2>
+              <div className="space-y-3">
+                {PAYMENT_METHODS.map((pm) => (
+                  <label
+                    key={pm.id}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      payment === pm.id ? "border-maroon-900 bg-maroon-50" : "border-gold-200 hover:border-gold-400"
+                    }`}
+                  >
+                    <input type="radio" name="payment" value={pm.id} checked={payment === pm.id}
+                      onChange={() => setPayment(pm.id)} className="accent-maroon-900" />
+                    <span className="text-2xl">{pm.icon}</span>
+                    <div>
+                      <span className="text-sm font-bold text-maroon-900 block">{pm.label}</span>
+                      <span className="text-xs text-maroon-700/70">{pm.sub}</span>
+                    </div>
+                    {payment === pm.id && (
+                      <span className="ml-auto text-maroon-900">✓</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm sm:text-base tracking-wider shadow-lg transition-all cursor-pointer"
+            >
+              🪷 Confirm Order · ₹{cartTotal.toLocaleString("en-IN")}
+            </button>
+            <p className="text-center text-xs text-maroon-700/50">
+              By confirming, you agree to our Terms & Silk Mark authenticity policy.
+            </p>
+          </form>
+
+          {/* ── Summary panel ── */}
+          <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
+            <div className="bg-white rounded-2xl border border-gold-100 shadow-xs p-5">
+              <h3 className="font-display text-sm font-bold text-maroon-900 uppercase tracking-wider border-b border-gold-100 pb-3 mb-4">
+                Your Order ({cart.length} {cart.length === 1 ? "item" : "items"})
+              </h3>
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                {cart.map(({ product: p, quantity }) => (
+                  <div key={p.id} className="flex items-center gap-3">
+                    <img src={p.image} alt={p.name} className="w-12 h-16 object-cover rounded-lg border border-gold-100 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-maroon-900 block truncate">{p.name}</span>
+                      <span className="text-[10px] text-maroon-700/70">Qty: {quantity}</span>
+                    </div>
+                    <span className="text-sm font-bold text-maroon-900 shrink-0">₹{(p.price * quantity).toLocaleString("en-IN")}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-gold-100 mt-4 pt-4 space-y-1.5 text-sm">
+                <div className="flex justify-between text-maroon-700">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-maroon-900">₹{cartTotal.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-maroon-700">
+                  <span>Shipping</span>
+                  <span className="font-semibold text-emerald-700">FREE</span>
+                </div>
+                <div className="flex justify-between font-bold text-base border-t border-gold-100 pt-2 mt-2">
+                  <span className="text-maroon-900">Total</span>
+                  <span className="font-display text-lg text-maroon-900">₹{cartTotal.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Security badges */}
+            <div className="bg-maroon-50 rounded-2xl p-4 flex items-center gap-3 border border-gold-200">
+              <span className="text-2xl shrink-0">🔒</span>
+              <div className="text-xs text-maroon-800">
+                <strong className="block">256-bit SSL Encrypted</strong>
+                Your payment details are fully protected and never stored.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
