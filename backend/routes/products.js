@@ -17,4 +17,6 @@ router.route('/addProduct').post(adminController.addProduct);
 
 router.route('/updateProduct/:id').put(adminController.updateProduct);
 
+router.route('/deleteProduct/:id').delete(adminController.deleteProduct);
+
 export default router;

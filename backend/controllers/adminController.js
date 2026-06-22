@@ -158,3 +158,24 @@ export async function updateProduct(req, res) {
     res.status(400).json({ error: error.message });
   }
 }
+
+export async function deleteProduct(req, res) {
+  const { id } = req.params;
+
+  try {
+    const product = await ProductSchema.findByIdAndDelete(id);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ error: 'Product not found', success: false });
+    }
+
+    return res.status(200).json({
+      message: 'Product deleted successfully',
+      success: true,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}

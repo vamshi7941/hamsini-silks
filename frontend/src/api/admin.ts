@@ -72,5 +72,27 @@ export const Admin = () => {
     }
   };
 
-  return { addProduct, updateProduct };
+  const deleteProduct = async (id: string, onClose: () => void) => {
+    try {
+      const response = await fetch(
+        `${apiUrl}/api/products/deleteProduct/${id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+      const json = await response.json();
+
+      if (json.success) {
+        fetchProducts();
+        showToast('Product deleted!');
+        onClose();
+      } else {
+        showToast(json.error || 'Unknown error');
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Unknown error');
+    }
+  };
+
+  return { addProduct, updateProduct, deleteProduct };
 };

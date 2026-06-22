@@ -45,7 +45,6 @@ type PageType =
 interface StoreContextType {
   products: Product[];
   fetchProducts: () => void;
-  deleteProduct: (id: string) => void;
 
   // Cart
   cart: CartItem[];
@@ -260,11 +259,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [fetchProducts]);
 
 
-  const deleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p._id !== id));
-    setWishlist((prev) => prev.filter((w) => w !== id));
-    showToast('Product removed from catalogue.');
-  };
+  // const deleteProduct = (id: string) => {
+  //   setProducts((prev) => prev.filter((p) => p._id !== id));
+  //   setWishlist((prev) => prev.filter((w) => w !== id));
+  //   showToast('Product removed from catalogue.');
+  // };
 
   // ── Cart ──
   const addToCart = (product: Product, quantity = 1) => {
@@ -405,7 +404,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         products,
         fetchProducts,
-        deleteProduct,
         cart,
         addToCart,
         removeFromCart,
