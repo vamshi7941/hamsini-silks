@@ -105,3 +105,56 @@ export async function addProduct(req, res) {
     res.status(400).json({ error: error.message });
   }
 }
+
+export async function updateProduct(req, res) {
+  const { id } = req.params;
+  const {
+    name,
+    category,
+    price,
+    originalPrice,
+    image,
+    badge,
+    rating,
+    inStock,
+    size,
+  } = req.body;
+
+  try {
+    const product = await ProductSchema.findById(id);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ error: 'Product not found', success: false });
+    }
+
+    let imageBuffer = image;
+    if (typeof image === 'string') {
+      try {
+        imageBuffer = Buffer.from(image, 'base64');
+      } catch (e) {
+        imageBuffer = Buffer.from(image);
+      }
+    }
+
+    product.name = name || product.name;
+    product.category = category || product.category;
+    product.price = price || product.price;
+    product.originalPrice = originalPrice || product.originalPrice;
+    product.image = imageBuffer || product.image;
+    product.badge = badge || product.badge;
+    product.rating = rating || product.rating;
+    product.inStock = inStock !== undefined ? inStock : product.inStock;
+    product.size = size || product.size;
+
+    await product.save();
+    return res.status(200).json({
+      message: 'Product updated successfully',
+      success: true,
+      product,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}

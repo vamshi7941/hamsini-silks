@@ -13,7 +13,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-
 router.route('/addProduct').post(adminController.addProduct);
+
+router.route('/updateProduct/:id').put(adminController.updateProduct);
 
 export default router;

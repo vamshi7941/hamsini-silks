@@ -638,7 +638,6 @@ function EditProductModal({
                 inStock,
                 size,
               });
-              onClose();
             }}
             className="flex-1 py-3 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 flex items-center justify-center gap-2 cursor-pointer shadow-md"
           >
@@ -1293,14 +1292,13 @@ export default function AdminDashboard() {
     orders,
     updateOrderStatus,
     products,
-    updateProduct,
     deleteProduct,
     showToast,
     logout,
     navigateTo,
     user,
   } = useStore();
-  const { addProduct } = Admin()
+  const { addProduct, updateProduct } = Admin()
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -1987,8 +1985,7 @@ export default function AdminDashboard() {
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
           onSave={(id, up) => {
-            updateProduct(id, up);
-            showToast('Product updated!');
+            updateProduct(id, up, () => setEditingProduct(null));
           }}
         />
       )}

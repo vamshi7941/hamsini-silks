@@ -44,5 +44,33 @@ export const Admin = () => {
     }
   };
 
-  return { addProduct };
+  const updateProduct = async (
+    id: string,
+    updates: Partial<Product>,
+    onClose: () => void,
+  ) => {
+    try {
+      const response = await fetch(
+        `${apiUrl}/api/products/updateProduct/${id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        },
+      );
+      const json = await response.json();
+
+      if (json.success) {
+        fetchProducts();
+        showToast('Product updated!');
+        onClose();
+      } else {
+        showToast(json.error || 'Unknown error');
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Unknown error');
+    }
+  };
+
+  return { addProduct, updateProduct };
 };

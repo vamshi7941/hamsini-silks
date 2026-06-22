@@ -45,7 +45,6 @@ type PageType =
 interface StoreContextType {
   products: Product[];
   fetchProducts: () => void;
-  updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
 
   // Cart
@@ -260,12 +259,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchProducts();
   }, [fetchProducts]);
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    setProducts((prev) =>
-      prev.map((p) => (p._id === id ? { ...p, ...updates } : p)),
-    );
-    showToast('Catalogue updated successfully!');
-  };
 
   const deleteProduct = (id: string) => {
     setProducts((prev) => prev.filter((p) => p._id !== id));
@@ -412,7 +405,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         products,
         fetchProducts,
-        updateProduct,
         deleteProduct,
         cart,
         addToCart,
