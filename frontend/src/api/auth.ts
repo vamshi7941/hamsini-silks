@@ -40,7 +40,8 @@ export const Auth = () => {
       const json = await response.json();
 
       if (json.success) {
-        login(email, 'admin', json.user.fullName);
+        const name = json.user.fullName ?? json.user.email?.split('@')[0] ?? 'Admin';
+        login(email, 'admin', name);
       } else {
         // show toast notification for failed login
 

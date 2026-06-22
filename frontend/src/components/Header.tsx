@@ -85,17 +85,17 @@ export default function Header() {
             </div>
 
             {/* Quick links to core user pages */}
-            <button
+            {/* <button
               onClick={() => navigateTo("shop")}
               className={`hidden md:inline-flex items-center text-xs font-semibold tracking-wider px-3 py-1.5 rounded-full transition-all cursor-pointer ${
                 currentPage === "shop" ? "bg-gold-500/20 text-maroon-900 font-bold" : "text-maroon-800 hover:text-maroon-600"
               }`}
             >
               CATALOGUE
-            </button>
+            </button> */}
 
             {/* Admin view toggle link */}
-            <button
+            {/* <button
               onClick={() => navigateTo("admin")}
               className={`text-xs font-bold tracking-widest px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md border transition-all cursor-pointer ${
                 currentPage === "admin" 
@@ -105,7 +105,7 @@ export default function Header() {
               title="Manage Orders & Catalog Pricing"
             >
               ⚙️ ATELIER ADMIN
-            </button>
+            </button> */}
 
             {/* Wishlist — real state with count */}
             <button
