@@ -4,12 +4,21 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 
 import authRouter from './routes/auth.js';
+import productsRouter from './routes/products.js';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('Invalid JSON received:', err.message);
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  next();
+});
 
 app.use((req, res, next) => {
   console.log(
@@ -18,8 +27,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// app.use('/api/products', productsRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/products', productsRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

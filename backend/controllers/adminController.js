@@ -1,4 +1,5 @@
 import AdminSchema from '../models/AdminSchema.js';
+import ProductSchema from '../models/ProductSchema.js';
 import jwt from 'jsonwebtoken';
 
 const createToken = (_id) => {
@@ -18,13 +19,11 @@ export async function loginUser(req, res) {
     const fullName = user.fullName;
     const _id = user.id;
 
-    res
-      .status(200)
-      .json({
-        user: { _id, fullName, email, token, role: process.env.ADMIN },
-        message: 'Login successful',
-        success: true,
-      });
+    res.status(200).json({
+      user: { _id, fullName, email, token, role: process.env.ADMIN },
+      message: 'Login successful',
+      success: true,
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -40,7 +39,68 @@ export async function signupUser(req, res) {
     // create a token
     const token = createToken(user._id);
 
-    res.status(200).json({ user: { _id, fullName, email, token }, message: 'Signup successful', success: true });
+    res.status(200).json({
+      user: { _id, fullName, email, token },
+      message: 'Signup successful',
+      success: true,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+export async function addProduct(req, res) {
+  const {
+    _id,
+    name,
+    category,
+    price,
+    originalPrice,
+    image,
+    badge,
+    rating,
+    inStock,
+    size,
+  } = req.body;
+
+  try {
+    const existing = await ProductSchema.findOne({ $or: [{ _id }, { name }] });
+    if (existing) {
+      const conflictField = existing._id === _id ? '_id' : 'name';
+      return res
+        .status(400)
+        .json({ error: `${conflictField} already exists`, success: false });
+    }
+
+    let imageBuffer = image;
+    if (typeof image === 'string') {
+      try {
+        imageBuffer = Buffer.from(image, 'base64');
+      } catch (e) {
+        imageBuffer = Buffer.from(image);
+      }
+    }
+
+    const product = new ProductSchema({
+      _id,
+      name,
+      category,
+      price,
+      originalPrice,
+      image: imageBuffer,
+      badge,
+      rating,
+      inStock,
+      size,
+    });
+
+    await product.save();
+
+    return res.status(200).json({
+      message: 'Product added successfully',
+      success: true,
+      product,
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

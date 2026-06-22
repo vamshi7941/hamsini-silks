@@ -147,9 +147,9 @@ export default function LoginPage() {
                         className="w-full py-3.5 rounded-xl border-2 border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-3"
                       >
                         <img
-                          src="https://static.vecteezy.com/system/resources/previews/011/598/471/original/google-logo-icon-illustration-free-vector.jpg"
+                          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-1Ycipkw9Clm9nVFijD9N4jsF38AUOQAppg&s"
                           alt="Google"
-                          className="h-10 w-10"
+                          className="h-4 w-4"
                         />
                         Sign in with Google
                       </button>

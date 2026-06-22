@@ -41,7 +41,8 @@ export const Auth = () => {
 
       if (json.success) {
         const name = json.user.fullName ?? json.user.email?.split('@')[0] ?? 'Admin';
-        login(email, 'admin', name);
+        const token = json.user.token;
+        login(email, 'admin', name, token);
       } else {
         // show toast notification for failed login
 

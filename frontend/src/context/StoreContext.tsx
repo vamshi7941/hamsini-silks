@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Product, products as initialProducts } from '../data';
+import { Product } from '../data';
 
 export type CartItem = {
   product: Product;
@@ -39,7 +39,7 @@ type PageType =
 interface StoreContextType {
   products: Product[];
   updateProduct: (id: string, updates: Partial<Product>) => void;
-  addProduct: (product: Omit<Product, 'id'>) => void;
+  // addProduct: (product: Omit<Product, 'id'>) => void;
   deleteProduct: (id: string) => void;
 
   // Cart
@@ -65,7 +65,12 @@ interface StoreContextType {
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
 
   user: User;
-  login: (email: string, role: 'customer' | 'admin', name?: string) => void;
+  login: (
+    email: string,
+    role: 'customer' | 'admin',
+    name?: string,
+    token?: string,
+  ) => void;
   logout: () => void;
 
   currentPage: PageType;
@@ -185,7 +190,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>(mockInitialOrders);
   const [wishlist, setWishlist] = useState<string[]>(['1', '4']);
@@ -211,6 +216,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       email: '',
       role: 'customer',
       loggedIn: false,
+      token: '',
     };
   });
 
@@ -237,11 +243,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     showToast('Catalogue updated successfully!');
   };
 
-  const addProduct = (newProd: Omit<Product, 'id'>) => {
-    const id = (products.length + 1).toString();
-    setProducts((prev) => [{ ...newProd, id }, ...prev]);
-    showToast('New saree added to catalogue!');
-  };
+  // const addProduct = (newProd: Omit<Product, 'id'>) => {
+  //   const id = (products.length + 1).toString();
+  //   setProducts((prev) => [{ ...newProd, id }, ...prev]);
+  //   showToast('New saree added to catalogue!');
+  // };
 
   const deleteProduct = (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -331,11 +337,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // ── User ──
-  const login = (email: string, role: 'customer' | 'admin', name?: string) => {
+  const login = (
+    email: string,
+    role: 'customer' | 'admin',
+    name?: string,
+    token?: string,
+  ) => {
     const displayName =
       name ||
       (role === 'admin' ? 'Hamsini Atelier Admin' : email.split('@')[0]);
-    const newUser = { name: displayName, email, role, loggedIn: true } as User;
+    const newUser = {
+      name: displayName,
+      email,
+      role,
+      loggedIn: true,
+      token,
+    } as User;
     setUser(newUser);
     try {
       localStorage.setItem('hamsini_user', JSON.stringify(newUser));
@@ -377,7 +394,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         products,
         updateProduct,
-        addProduct,
+        // addProduct,
         deleteProduct,
         cart,
         addToCart,
