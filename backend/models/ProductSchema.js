@@ -20,7 +20,7 @@ const ProductSchema = new Schema({
   },
   originalPrice: {
     type: Number,
-    required: true,
+    required: false,
   },
   image: {
     type: Buffer,

@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { Product } from '../data';
 
 export type CartItem = {
@@ -38,8 +44,8 @@ type PageType =
 
 interface StoreContextType {
   products: Product[];
+  fetchProducts: () => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
-  // addProduct: (product: Omit<Product, 'id'>) => void;
   deleteProduct: (id: string) => void;
 
   // Cart
@@ -98,7 +104,7 @@ const mockInitialOrders: Order[] = [
     items: [
       {
         product: {
-          id: '1',
+          _id: '1',
           name: 'Shrestha Kanjivaram',
           category: 'Bridal Kanjivaram',
           price: 48500,
@@ -122,7 +128,7 @@ const mockInitialOrders: Order[] = [
     items: [
       {
         product: {
-          id: '2',
+          _id: '2',
           name: 'Smarthika Banarasi',
           category: 'Banarasi Silk',
           price: 32900,
@@ -133,7 +139,7 @@ const mockInitialOrders: Order[] = [
       },
       {
         product: {
-          id: '3',
+          _id: '3',
           name: 'Vaichitrya Pattu',
           category: 'Soft Silk Pattu',
           price: 18750,
@@ -157,7 +163,7 @@ const mockInitialOrders: Order[] = [
     items: [
       {
         product: {
-          id: '4',
+          _id: '4',
           name: 'Nilambari Designer',
           category: 'Designer Silk',
           price: 27400,
@@ -168,7 +174,7 @@ const mockInitialOrders: Order[] = [
       },
       {
         product: {
-          id: '5',
+          _id: '5',
           name: 'Mayura Kanjivaram',
           category: 'Bridal Kanjivaram',
           price: 54200,
@@ -190,6 +196,9 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const apiUrl =
+    (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
+
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>(mockInitialOrders);
@@ -236,21 +245,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // ── Products ──
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/products`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const data: Product[] = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  }, [apiUrl]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
   const updateProduct = (id: string, updates: Partial<Product>) => {
     setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+      prev.map((p) => (p._id === id ? { ...p, ...updates } : p)),
     );
     showToast('Catalogue updated successfully!');
   };
 
-  // const addProduct = (newProd: Omit<Product, 'id'>) => {
-  //   const id = (products.length + 1).toString();
-  //   setProducts((prev) => [{ ...newProd, id }, ...prev]);
-  //   showToast('New saree added to catalogue!');
-  // };
-
   const deleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setProducts((prev) => prev.filter((p) => p._id !== id));
     setWishlist((prev) => prev.filter((w) => w !== id));
     showToast('Product removed from catalogue.');
   };
@@ -258,10 +276,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   // ── Cart ──
   const addToCart = (product: Product, quantity = 1) => {
     setCart((prev) => {
-      const exists = prev.find((item) => item.product.id === product.id);
+      const exists = prev.find((item) => item.product._id === product._id);
       if (exists) {
         return prev.map((item) =>
-          item.product.id === product.id
+          item.product._id === product._id
             ? { ...item, quantity: item.quantity + quantity }
             : item,
         );
@@ -272,7 +290,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+    setCart((prev) => prev.filter((item) => item.product._id !== productId));
     showToast('Item removed from bag');
   };
 
@@ -283,7 +301,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     setCart((prev) =>
       prev.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item,
+        item.product._id === productId ? { ...item, quantity } : item,
       ),
     );
   };
@@ -393,8 +411,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     <StoreContext.Provider
       value={{
         products,
+        fetchProducts,
         updateProduct,
-        // addProduct,
         deleteProduct,
         cart,
         addToCart,

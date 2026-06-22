@@ -628,7 +628,7 @@ function EditProductModal({
           </button>
           <button
             onClick={() => {
-              onSave(product.id, {
+              onSave(product._id, {
                 name,
                 price: Number(price),
                 originalPrice: origPrice ? Number(origPrice) : undefined,
@@ -656,11 +656,11 @@ function AddProductModal({
   onAdd,
 }: {
   onClose: () => void;
-  onAdd: (p: Omit<Product, 'id'>) => void;
+  onAdd: (p: Product) => void;
 }) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Bridal Kanjivaram');
-  const [price, setPrice] = useState(48000);
+  const [price, setPrice] = useState<number | ''>('');
   const [origPrice, setOrigPrice] = useState('');
   const [badge, setBadge] = useState('');
   const [image, setImage] = useState('/images/saree-kanjivaram.jpg');
@@ -671,17 +671,17 @@ function AddProductModal({
     e.preventDefault();
     if (!name.trim()) return;
     onAdd({
+      _id: `prod-${Date.now()}`,
       name,
       category,
       price: Number(price),
       originalPrice: origPrice ? Number(origPrice) : undefined,
       badge: badge || undefined,
       image,
-      rating: 4.9,
+      rating: 4.9, // hardcoded
       inStock,
       size,
     });
-    onClose();
   };
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
@@ -1294,7 +1294,6 @@ export default function AdminDashboard() {
     updateOrderStatus,
     products,
     updateProduct,
-    // addProduct,
     deleteProduct,
     showToast,
     logout,
@@ -1548,7 +1547,7 @@ export default function AdminDashboard() {
                   <div className="space-y-3">
                     {products.slice(0, 4).map((p) => (
                       <div
-                        key={p.id}
+                        key={p._id}
                         className="flex items-center gap-3 p-2 rounded-xl hover:bg-maroon-50/30 transition-colors"
                       >
                         <img
@@ -1700,7 +1699,7 @@ export default function AdminDashboard() {
 
                   return (
                     <div
-                      key={p.id}
+                      key={p._id}
                       className={`bg-white rounded-2xl border border-gold-100 shadow-xs overflow-hidden hover:shadow-md hover:border-gold-300 transition-all group flex flex-col justify-between ${
                         outOfStock ? 'opacity-75' : ''
                       }`}
@@ -1744,7 +1743,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => {
                                 if (confirm(`Delete "${p.name}"?`))
-                                  deleteProduct(p.id);
+                                  deleteProduct(p._id);
                               }}
                               className="flex items-center gap-1.5 px-3 py-2 bg-red-500 text-white rounded-xl text-xs font-bold hover:bg-red-600 cursor-pointer"
                             >
@@ -1996,9 +1995,8 @@ export default function AdminDashboard() {
       {showAddModal && (
         <AddProductModal
           onClose={() => setShowAddModal(false)}
-          onAdd={(p) => {
-            addProduct(p);
-            showToast('New saree published!');
+          onAdd={(p: Product) => {
+            addProduct(p, () => setShowAddModal(false));
           }}
         />
       )}
