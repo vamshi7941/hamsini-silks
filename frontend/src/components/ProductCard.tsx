@@ -8,7 +8,7 @@ export default function ProductCard({ product }: { product: Product }) {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
-  const liked = isInWishlist(product.id);
+  const liked = isInWishlist(product._id);
   const outOfStock = product.inStock === false;
 
   return (
@@ -53,7 +53,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            toggleWishlist(product.id);
+            toggleWishlist(product._id);
           }}
           className={`absolute top-3 right-3 h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center shadow-lg transition-all z-10 cursor-pointer ${
             liked

@@ -337,6 +337,44 @@ function ImageUploadZone({
     reader.readAsDataURL(file);
   };
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.readAsDataURL(file);
+
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+
+      reader.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const base64 = await fileToBase64(file);
+    setPreview(base64);
+    onChange(base64);
+  };
+
+  const handleGallerySelect = async (imagePath: string) => {
+    try {
+      const response = await fetch(imagePath);
+      const blob = await response.blob();
+      const base64 = await fileToBase64(blob as File);
+      setPreview(base64);
+      onChange(base64);
+    } catch (error) {
+      console.error('Error loading gallery image:', error);
+    }
+  };
+
   const gallery = [
     { label: 'Bridal Red Kanjivaram', path: '/images/saree-kanjivaram.jpg' },
     { label: 'Emerald Banarasi', path: '/images/saree-banarasi.jpg' },
@@ -369,7 +407,7 @@ function ImageUploadZone({
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+          onChange={handleImageChange}
         />
         {preview ? (
           <div className="relative">
@@ -405,10 +443,7 @@ function ImageUploadZone({
             <button
               key={img.path}
               type="button"
-              onClick={() => {
-                setPreview(img.path);
-                onChange(img.path);
-              }}
+              onClick={() => handleGallerySelect(img.path)}
               className={`relative rounded-xl overflow-hidden aspect-square group border-2 transition-all ${preview === img.path ? 'border-maroon-800' : 'border-transparent hover:border-gold-400'}`}
             >
               <img
@@ -662,7 +697,7 @@ function AddProductModal({
   const [price, setPrice] = useState<number | ''>('');
   const [origPrice, setOrigPrice] = useState('');
   const [badge, setBadge] = useState('');
-  const [image, setImage] = useState('/images/saree-kanjivaram.jpg');
+  const [image, setImage] = useState('');
   const [inStock, setInStock] = useState(true);
   const [size, setSize] = useState('6.2m (incl. blouse)');
 
@@ -670,7 +705,7 @@ function AddProductModal({
     e.preventDefault();
     if (!name.trim()) return;
     onAdd({
-      _id: `prod-${Date.now()}`,
+      _id: `HSPID-${Date.now()}`,
       name,
       category,
       price: Number(price),

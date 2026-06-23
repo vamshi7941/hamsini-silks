@@ -23,7 +23,7 @@ const ProductSchema = new Schema({
     required: false,
   },
   image: {
-    type: Buffer,
+    type: String,
     required: true,
   },
   badge: {

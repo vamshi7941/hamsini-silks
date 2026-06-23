@@ -72,22 +72,13 @@ export async function addProduct(req, res) {
         .json({ error: `${conflictField} already exists`, success: false });
     }
 
-    let imageBuffer = image;
-    if (typeof image === 'string') {
-      try {
-        imageBuffer = Buffer.from(image, 'base64');
-      } catch (e) {
-        imageBuffer = Buffer.from(image);
-      }
-    }
-
     const product = new ProductSchema({
       _id,
       name,
       category,
       price,
       originalPrice,
-      image: imageBuffer,
+      image,
       badge,
       rating,
       inStock,
@@ -129,20 +120,11 @@ export async function updateProduct(req, res) {
         .json({ error: 'Product not found', success: false });
     }
 
-    let imageBuffer = image;
-    if (typeof image === 'string') {
-      try {
-        imageBuffer = Buffer.from(image, 'base64');
-      } catch (e) {
-        imageBuffer = Buffer.from(image);
-      }
-    }
-
     product.name = name || product.name;
     product.category = category || product.category;
     product.price = price || product.price;
     product.originalPrice = originalPrice || product.originalPrice;
-    product.image = imageBuffer || product.image;
+    product.image = image || product.image;
     product.badge = badge || product.badge;
     product.rating = rating || product.rating;
     product.inStock = inStock !== undefined ? inStock : product.inStock;
