@@ -1,5 +1,6 @@
 import AdminSchema from '../models/AdminSchema.js';
 import ProductSchema from '../models/ProductSchema.js';
+import OrderSchema from '../models/OrdersSchema.js';
 import jwt from 'jsonwebtoken';
 
 const createToken = (_id) => {
@@ -159,5 +160,31 @@ export async function deleteProduct(req, res) {
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+}
+
+export async function updateOrderStatus(req, res) {
+  const { orderId, status } = req.body;
+
+  try {
+    const order = await OrderSchema.findById(orderId);
+    console.log('Order found:', order); // Debugging line
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found', success: false });
+    }
+
+    order.status = status;
+    await order.save();
+
+    return res.status(200).json({
+      message: 'Order status updated successfully',
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error updating order status',
+      success: false,
+      error: error.message,
+    });
   }
 }

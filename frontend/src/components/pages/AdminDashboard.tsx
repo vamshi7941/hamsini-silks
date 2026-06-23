@@ -439,9 +439,9 @@ function ImageUploadZone({
           Gallery quick-pick
         </p>
         <div className="grid grid-cols-4 gap-2">
-          {gallery.map((img) => (
+          {gallery.map((img, i) => (
             <button
-              key={img.path}
+              key={i}
               type="button"
               onClick={() => handleGallerySelect(img.path)}
               className={`relative rounded-xl overflow-hidden aspect-square group border-2 transition-all ${preview === img.path ? 'border-maroon-800' : 'border-transparent hover:border-gold-400'}`}
@@ -940,7 +940,7 @@ function PrintInvoice({ order }: { order: Order }) {
       .join('');
 
     printWindow.document.write(`
-      <html><head><title>Hamsini Invoice #${order.id}</title>
+      <html><head><title>Hamsini Invoice #${order._id}</title>
       <style>
         body { font-family: 'Inter',Arial,sans-serif; background:#fff; color:#3d0e0a; max-width:700px; margin:40px auto; padding:30px; }
         .header { text-align:center; border-bottom:2px solid #d97706; padding-bottom:20px; margin-bottom:20px; }
@@ -966,12 +966,12 @@ function PrintInvoice({ order }: { order: Order }) {
         </div>
         <div class="details">
           <div class="col">
-            <strong>Order #${order.id}</strong>
-            ${order.date} · <span class="status" style="background:${order.status === 'Delivered' ? '#d1fae5' : order.status === 'Dispatched' ? '#dbeafe' : order.status === 'Processing' ? '#fef3c7' : '#fce6e3'};color:${order.status === 'Delivered' ? '#065f46' : order.status === 'Dispatched' ? '#1e40af' : order.status === 'Processing' ? '#92400e' : '#7e1c12'}">${statusIcon[order.status]} ${order.status}</span>
+            <strong>Order #${order._id}</strong>
+            ${order.orderedDate} · <span class="status" style="background:${order.status === 'Delivered' ? '#d1fae5' : order.status === 'Dispatched' ? '#dbeafe' : order.status === 'Processing' ? '#fef3c7' : '#fce6e3'};color:${order.status === 'Delivered' ? '#065f46' : order.status === 'Dispatched' ? '#1e40af' : order.status === 'Processing' ? '#92400e' : '#7e1c12'}">${statusIcon[order.status]} ${order.status}</span>
           </div>
           <div class="col">
             <strong>Shipping To</strong>
-            ${order.customerName}<br>${order.customerEmail}<br>${order.phone}<br>${order.address}
+            ${order.name}<br>${order.email}<br>${order.phone}<br>${order.address}
           </div>
         </div>
         <table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table>
@@ -1022,16 +1022,16 @@ function OrderRow({
       >
         <div className="min-w-[110px]">
           <span className="font-display text-sm font-bold text-maroon-900 block">
-            #{order.id}
+            #{order._id}
           </span>
-          <span className="text-[11px] text-maroon-700/60">{order.date}</span>
+          <span className="text-[11px] text-maroon-700/60">{order.orderedDate}</span>
         </div>
         <div className="flex-1 min-w-0">
           <span className="font-semibold text-sm text-maroon-900 block truncate">
-            {order.customerName}
+            {order.name}
           </span>
           <span className="text-[11px] text-maroon-700/70 truncate block">
-            {order.customerEmail}
+            {order.email}
           </span>
         </div>
         <div className="hidden sm:flex items-center gap-1.5">
@@ -1090,14 +1090,14 @@ function OrderRow({
                     Name:
                   </span>
                   <span className="font-semibold text-maroon-900">
-                    {order.customerName}
+                    {order.name}
                   </span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-maroon-700/70 w-16 shrink-0">
                     Email:
                   </span>
-                  <span className="text-maroon-900">{order.customerEmail}</span>
+                  <span className="text-maroon-900">{order.email}</span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-maroon-700/70 w-16 shrink-0">
@@ -1151,10 +1151,10 @@ function OrderRow({
                 Update Status
               </h4>
               <div className="space-y-2">
-                {statuses.map((s) => (
+                {statuses.map((s, i) => (
                   <button
-                    key={s}
-                    onClick={() => onStatusChange(order.id, s)}
+                    key={i}
+                    onClick={() => onStatusChange(order._id, s)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer border-2 ${
                       order.status === s
                         ? 'border-maroon-900 bg-maroon-900 text-white shadow-md'
@@ -1344,9 +1344,9 @@ function ImageEditor({
                   { label: 'Silk Sheen', b: 105, c: 125 },
                   { label: 'Gold Tint', b: 95, c: 120 },
                   { label: 'Vintage', b: 85, c: 90 },
-                ].map((p) => (
+                ].map((p, i) => (
                   <button
-                    key={p.label}
+                    key={i}
                     onClick={() => {
                       setBrightness(p.b);
                       setContrast(p.c);
@@ -1423,8 +1423,8 @@ export default function AdminDashboard() {
 
   const filteredOrders = orders.filter((o) => {
     const ms =
-      o.customerName.toLowerCase().includes(orderSearch.toLowerCase()) ||
-      o.id.includes(orderSearch);
+      o.name.toLowerCase().includes(orderSearch.toLowerCase()) ||
+      o._id.includes(orderSearch);
     const mf = orderFilter === 'All' || o.status === orderFilter;
     return ms && mf;
   });
@@ -1466,9 +1466,9 @@ export default function AdminDashboard() {
           </div>
         </div>
         <nav className="flex-1 px-2 md:px-3 py-4 space-y-1 overflow-y-auto admin-scroll">
-          {sidebarItems.map((item) => (
+          {sidebarItems.map((item, i) => (
             <button
-              key={item.id}
+              key={i}
               onClick={() => setActiveTab(item.id as AdminTab)}
               className={`w-full flex items-center gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer relative group ${
                 activeTab === item.id
@@ -1603,20 +1603,20 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                   <div className="space-y-3">
-                    {orders.slice(0, 3).map((o) => (
+                    {orders.slice(0, 3).map((o: Order, i: number) => (
                       <div
-                        key={o.id}
+                        key={i}
                         className="flex items-center gap-3 p-3 rounded-xl hover:bg-maroon-50/40 transition-colors"
                       >
                         <div className="h-9 w-9 rounded-full bg-maroon-100 text-maroon-800 font-bold text-sm flex items-center justify-center shrink-0">
-                          {o.customerName[0]}
+                          {o.name[0]}
                         </div>
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-semibold text-maroon-900 block truncate">
-                            {o.customerName}
+                            {o.name}
                           </span>
                           <span className="text-[11px] text-maroon-700/60">
-                            #{o.id}
+                            #{o._id}
                           </span>
                         </div>
                         <div className="text-right shrink-0">
@@ -1646,9 +1646,9 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                   <div className="space-y-3">
-                    {products.slice(0, 4).map((p) => (
+                    {products.slice(0, 4).map((p, i) => (
                       <div
-                        key={p._id}
+                        key={i}
                         className="flex items-center gap-3 p-2 rounded-xl hover:bg-maroon-50/30 transition-colors"
                       >
                         <img
@@ -1728,9 +1728,9 @@ export default function AdminDashboard() {
                     'Processing',
                     'Dispatched',
                     'Delivered',
-                  ].map((f) => (
+                  ].map((f, i) => (
                     <button
-                      key={f}
+                      key={i}
                       onClick={() => setOrderFilter(f)}
                       className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${orderFilter === f ? 'bg-maroon-900 text-gold-200' : 'bg-maroon-50 text-maroon-900 hover:bg-maroon-100'}`}
                     >
@@ -1753,9 +1753,9 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                 ) : (
-                  filteredOrders.map((order) => (
+                  filteredOrders.map((order, i) => (
                     <OrderRow
-                      key={order.id}
+                      key={i}
                       order={order}
                       onStatusChange={updateOrderStatus}
                     />
@@ -1790,7 +1790,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredProducts.map((p) => {
+                {filteredProducts.map((p, i) => {
                   const d = p.originalPrice
                     ? Math.round(
                         ((p.originalPrice - p.price) / p.originalPrice) * 100,
@@ -1800,7 +1800,7 @@ export default function AdminDashboard() {
 
                   return (
                     <div
-                      key={p._id}
+                      key={i}
                       className={`bg-white rounded-2xl border border-gold-100 shadow-xs overflow-hidden hover:shadow-md hover:border-gold-300 transition-all group flex flex-col justify-between ${
                         outOfStock ? 'opacity-75' : ''
                       }`}
@@ -1983,9 +1983,9 @@ export default function AdminDashboard() {
                         (p) => p.image === '/images/artisan.jpg',
                       ).length,
                     },
-                  ].map((img) => (
+                  ].map((img, i) => (
                     <div
-                      key={img.path}
+                      key={i}
                       className="bg-white rounded-2xl border border-gold-100 shadow-xs overflow-hidden hover:shadow-md hover:border-gold-300 transition-all group"
                     >
                       <div className="relative aspect-square overflow-hidden bg-maroon-50">

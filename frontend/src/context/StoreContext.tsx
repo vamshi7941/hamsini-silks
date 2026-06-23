@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { Product } from '../data';
 import { updateCart, getCustomerData, updateWishlist } from '../api/customer';
+import { updateOrderStatusApi } from '@/api/orders';
 
 export type CartItem = {
   product: Product;
@@ -14,7 +15,7 @@ export type CartItem = {
 };
 
 export type Order = {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   phone: string;
@@ -22,7 +23,8 @@ export type Order = {
   items: CartItem[];
   total: number;
   paymentMethod: string;
-  status: 'Placed' | 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
+  status: 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
+  orderedDate: string;
 };
 
 export type User = {
@@ -151,6 +153,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     showToast(`Switched to Option ${opt} Design Theme!`);
   };
 
+  const [rawOrders, setRawOrders] = useState<any[]>([]);
+
   // ── Products ──
   const fetchProducts = useCallback(async () => {
     try {
@@ -163,9 +167,45 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [apiUrl]);
 
+  const fetchOrdersData = useCallback(async () => {
+    if (user.loggedIn && user.role === 'admin') {
+      try {
+        const response = await fetch(`${apiUrl}/api/orders/allOrders`, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const json = await response.json();
+
+        if (json.success) {
+          setRawOrders(json.orders || []);
+        } else {
+          showToast('No orders found');
+        }
+      } catch (err) {
+        showToast(
+          err instanceof Error ? err.message : 'Failed to fetch orders',
+        );
+      }
+    }
+  }, [user, apiUrl]);
+
+  useEffect(() => {
+    const ordersWithProducts = (rawOrders || []).map((order: any) => ({
+      ...order,
+      items: order.items.map((item: any) => {
+        const product = products.find((p) => p._id === item.productId);
+        return {
+          product: product || { _id: item.productId },
+          quantity: item.quantity,
+        };
+      }),
+    }));
+    setOrders(ordersWithProducts);
+  }, [rawOrders, products]);
+
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    fetchOrdersData();
+  }, [fetchProducts, fetchOrdersData]);
 
   const fetchCustomerCart = useCallback(async () => {
     if (user.loggedIn && user._id) {
@@ -187,10 +227,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
         setWishlist(wishlistItems);
       });
     }
-  }, [user, products]);
+  }, [user]);
 
   useEffect(() => {
-    fetchCustomerCart();
+    if (user.role === 'customer') fetchCustomerCart();
   }, [fetchCustomerCart]);
 
   // ── Cart ──
@@ -263,25 +303,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       ? wishlist.filter((id) => id !== productId)
       : [...wishlist, productId];
 
-    setWishlist(updatedWishlist);
-    updateWishlist(updatedWishlist, user).then(() => {
-      showToast(
-        wishlist.includes(productId)
-          ? 'Removed from heirloom wishlist'
-          : 'Saved to your heirloom wishlist!',
-      );
+    updateWishlist(updatedWishlist, user).then((res) => {
+      if (res.success) {
+        setWishlist(updatedWishlist);
+        showToast(
+          wishlist.includes(productId)
+            ? 'Removed from your wishlist!'
+            : 'Added to your wishlist!',
+        );
+      }
     });
   };
 
   const isInWishlist = (productId: string) => wishlist.includes(productId);
   const wishlistCount = wishlist.length;
 
+  const updateOrderStatus = async (
+    orderId: string,
+    status: Order['status'],
+  ) => {
+    await updateOrderStatusApi(orderId, status).then((res) => {
+      if (!res || !res.success) {
+        showToast('Failed to update order status on server');
+      }
 
-  const updateOrderStatus = (orderId: string, status: Order['status']) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status } : o)),
-    );
-    showToast(`Order #${orderId} → ${status}`);
+      setOrders((prev) =>
+        prev.map((o) => (o._id === orderId ? { ...o, status } : o)),
+      );
+      showToast(`Order #${orderId} → ${status}`);
+    });
   };
 
   // ── User ──

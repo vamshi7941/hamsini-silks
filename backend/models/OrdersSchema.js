@@ -52,8 +52,8 @@ const OrdersSchema = new Schema({
   ],
   status: {
     type: String,
-    enum: ['Placed', 'Pending', 'Processing', 'Dispatched', 'Delivered'],
-    default: 'Placed',
+    enum: ['Pending', 'Processing', 'Dispatched', 'Delivered'],
+    default: 'Pending',
   },
   total: {
     type: Number,

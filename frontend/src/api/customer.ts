@@ -82,6 +82,8 @@ export const updateWishlist = async (wishlist: string[], user: any) => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    return response.json();
   } catch (error) {
     console.error('Error updating wishlist:', error);
   }
