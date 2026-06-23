@@ -120,3 +120,32 @@ export async function placeOrder(req, res) {
     });
   }
 }
+
+export async function getOrdersByCustomerId(req, res) {
+  const { _id } = req.query;
+
+  try {
+    const orders = await OrderSchema.find({ customerId: _id }).sort({
+      orderedDate: -1,
+    });
+
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({
+        message: 'No orders found for this customer',
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Orders retrieved successfully',
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error retrieving orders',
+      success: false,
+      error: error.message,
+    });
+  }
+}

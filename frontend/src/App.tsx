@@ -21,6 +21,7 @@ import CheckoutPage from './components/pages/CheckoutPage';
 import LoginPage from './components/pages/LoginPage';
 import AdminDashboard from './components/pages/AdminDashboard';
 import WishlistPage from './components/pages/WishlistPage';
+import MyOrdersPage from './components/pages/MyOrdersPage';
 import { AdminApi } from './api/admin';
 import { CustomerApi } from './api/customer';
 
@@ -35,6 +36,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if(!imagesLoaded) return;
     if (user.role === 'admin') {
       fetchAllOrders();
     }
@@ -70,6 +72,7 @@ export default function App() {
         {currentPage === 'checkout' && <CheckoutPage />}
         {currentPage === 'login' && <LoginPage />}
         {currentPage === 'admin' && <AdminDashboard />}
+        {currentPage === 'my-orders' && <MyOrdersPage />}
       </main>
 
       <Footer />

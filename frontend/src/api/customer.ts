@@ -33,7 +33,6 @@ export const CustomerApi = () => {
   };
 
   const updateCart = async (cart: CartItem[], user: any) => {
-    // should pass only customerId: user._id and products: {productId: string, quantity: number}[]
     const payload = {
       customerId: user._id,
       products: cart.map((item) => ({
@@ -232,6 +231,44 @@ export const CustomerApi = () => {
     });
   };
 
+  const fetchMyOrders = async () => {
+    try {
+      const response = await fetch(
+        `${apiUrl}/api/customer/getOrders?_id=${user._id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        const ordersWithProducts = (data.orders || []).map((order: any) => ({
+          ...order,
+          items: order.items.map((item: any) => {
+            const product = products.find((p) => p._id === item.productId);
+            return {
+              product: product || { _id: item.productId },
+              quantity: item.quantity,
+            };
+          }),
+        }));
+
+        return ordersWithProducts;
+      }
+    } catch (error) {
+      console.error('Error fetching my orders:', error);
+    }
+  };
+
   return {
     fetchCart,
     addToCart,
@@ -241,5 +278,6 @@ export const CustomerApi = () => {
     clearCart,
     toggleWishlist,
     placeOrder,
+    fetchMyOrders,
   };
 };

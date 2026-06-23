@@ -56,7 +56,9 @@ export default function LoginPage() {
                       : '👑 Privileged Patron'}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 pt-2">
+                <div
+                  className={`grid gap-3 pt-2 ${user.role === 'admin' ? 'grid-cols-2' : 'grid-cols-3'}`}
+                >
                   <button
                     onClick={() =>
                       user.role === 'admin'
@@ -67,6 +69,14 @@ export default function LoginPage() {
                   >
                     {user.role === 'admin' ? 'Go to Admin' : 'Shop Now'}
                   </button>
+                  {user.role === 'customer' && (
+                    <button
+                      onClick={() => navigateTo('my-orders')}
+                      className="py-3 rounded-xl bg-gold-500 text-white text-sm font-bold hover:bg-gold-600 transition-colors cursor-pointer"
+                    >
+                      My Orders
+                    </button>
+                  )}
                   <button
                     onClick={logout}
                     className="py-3 rounded-xl border-2 border-gold-200 text-maroon-900 text-sm font-bold hover:bg-gold-50 transition-colors cursor-pointer"

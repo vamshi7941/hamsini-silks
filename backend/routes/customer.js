@@ -11,6 +11,6 @@ router.route('/updateWishlist').post(customerController.updateWishlist);
 
 router.route('/placeOrder').post(customerController.placeOrder);
 
-// router.route('/getOrders').get(customerController.getOrders);
+router.route('/getOrders').get(customerController.getOrdersByCustomerId);
 
 export default router;

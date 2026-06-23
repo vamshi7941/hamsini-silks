@@ -36,7 +36,8 @@ type PageType =
   | 'checkout'
   | 'login'
   | 'admin'
-  | 'wishlist';
+  | 'wishlist'
+  | 'my-orders';
 
 interface StoreContextType {
   products: Product[];
