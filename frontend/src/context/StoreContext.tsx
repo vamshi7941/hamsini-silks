@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import { Product } from '../data';
+import { updateCart, getCustomerData } from '../api/customer';
 
 export type CartItem = {
   product: Product;
@@ -30,6 +31,8 @@ export type User = {
   email: string;
   role: 'customer' | 'admin';
   loggedIn: boolean;
+  token?: string; // for admin
+  _id?: string; // for customer
 };
 
 type PageType =
@@ -73,7 +76,7 @@ interface StoreContextType {
     email: string,
     role: 'customer' | 'admin',
     name?: string,
-    token?: string,
+    _id?: string
   ) => void;
   logout: () => void;
 
@@ -213,6 +216,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
           email: parsed.email || '',
           role: parsed.role === 'admin' ? 'admin' : 'customer',
           loggedIn: !!parsed.loggedIn,
+          token: parsed.token || '',
+          _id: parsed._id || '',
         };
       }
     } catch (e) {
@@ -224,6 +229,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       role: 'customer',
       loggedIn: false,
       token: '',
+      _id: '',
     };
   });
 
@@ -258,32 +264,50 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchProducts();
   }, [fetchProducts]);
 
+  const fetchCustomerCart = useCallback(async () => {
+    if (user.loggedIn && user._id) {
+      await getCustomerData(user._id, (cartItems) => {
+        const updatedCart = cartItems.map((item: any) => {
+          const product = products.find((p) => p._id === item.productId);
+          if (product) {
+            return {
+              product,
+              quantity: item.quantity,
+            };
+          }
+          return null;
+        }).filter((item) => item !== null) as CartItem[];
 
-  // const deleteProduct = (id: string) => {
-  //   setProducts((prev) => prev.filter((p) => p._id !== id));
-  //   setWishlist((prev) => prev.filter((w) => w !== id));
-  //   showToast('Product removed from catalogue.');
-  // };
+        setCart(updatedCart);
+      });
+    }
+  }, [user, products]);
+
+  useEffect(() => {
+    fetchCustomerCart();
+  }, [fetchCustomerCart]);
 
   // ── Cart ──
   const addToCart = (product: Product, quantity = 1) => {
-    setCart((prev) => {
-      const exists = prev.find((item) => item.product._id === product._id);
-      if (exists) {
-        return prev.map((item) =>
-          item.product._id === product._id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item,
-        );
-      }
-      return [...prev, { product, quantity }];
-    });
-    showToast(`Added ${product.name} to your bag`);
+    const newCart =
+      cart.length > 0
+        ? cart.find((item) => item.product._id === product._id)
+          ? cart.map((item) =>
+              item.product._id === product._id
+                ? { ...item, quantity: item.quantity + quantity }
+                : item,
+            )
+          : [...cart, { product, quantity }]
+        : [{ product, quantity }];
+
+    setCart(newCart);
+    updateCart(newCart, user);
   };
 
   const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.product._id !== productId));
-    showToast('Item removed from bag');
+    const newCart = cart.filter((item) => item.product._id !== productId);
+    setCart(newCart);
+    updateCart(newCart, user);
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -291,14 +315,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       removeFromCart(productId);
       return;
     }
-    setCart((prev) =>
-      prev.map((item) =>
-        item.product._id === productId ? { ...item, quantity } : item,
-      ),
+    const newCart = cart.map((item) =>
+      item.product._id === productId ? { ...item, quantity } : item,
     );
+    setCart(newCart);
+    updateCart(newCart, user);
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    const newCart: CartItem[] = [];
+    setCart(newCart);
+    updateCart(newCart, user);
+  };
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0,
@@ -351,7 +379,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     email: string,
     role: 'customer' | 'admin',
     name?: string,
-    token?: string,
+    _id?: string
   ) => {
     const displayName =
       name ||
@@ -361,7 +389,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       email,
       role,
       loggedIn: true,
-      token,
+      _id,
     } as User;
     setUser(newUser);
     try {

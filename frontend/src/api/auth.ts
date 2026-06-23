@@ -23,7 +23,7 @@ export const Auth = () => {
       const json = await response.json();
 
       if (json.success) {
-        login(email, 'customer', name);
+        login(email, 'customer', name, json.customer._id ?? '');
       }
     } catch (err) {
       console.error('Google sign-in failed', err);
@@ -40,12 +40,12 @@ export const Auth = () => {
       const json = await response.json();
 
       if (json.success) {
-        const name = json.user.fullName ?? json.user.email?.split('@')[0] ?? 'Admin';
-        const token = json.user.token;
+        const name =
+          json.user.fullName ?? json.user.email?.split('@')[0] ?? 'Admin';
+        const token = json.user.token ?? '';
         login(email, 'admin', name, token);
       } else {
         // show toast notification for failed login
-
       }
     } catch (err) {
       console.error('Admin login failed', err);

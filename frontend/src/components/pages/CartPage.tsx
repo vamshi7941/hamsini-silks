@@ -55,7 +55,7 @@ export default function CartPage() {
               {cart.map(({ product: p, quantity }) => {
                 const d = p.originalPrice ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
                 return (
-                  <div key={p.id} className="bg-white rounded-2xl border border-gold-100 shadow-xs p-4 flex gap-4 hover:border-gold-300 transition-colors">
+                  <div key={p._id} className="bg-white rounded-2xl border border-gold-100 shadow-xs p-4 flex gap-4 hover:border-gold-300 transition-colors">
                     {/* Image */}
                     <button onClick={() => navigateTo("product-detail", p)} className="shrink-0 cursor-pointer">
                       <img src={p.image} alt={p.name} className="w-20 h-24 sm:w-24 sm:h-32 object-cover rounded-xl border border-gold-100 hover:opacity-90 transition-opacity" />
@@ -82,12 +82,12 @@ export default function CartPage() {
                         {/* Quantity stepper */}
                         <div className="inline-flex items-center border-2 border-gold-200 rounded-xl overflow-hidden">
                           <button
-                            onClick={() => updateQuantity(p.id, quantity - 1)}
+                            onClick={() => updateQuantity(p._id, quantity - 1)}
                             className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-maroon-900 font-bold hover:bg-maroon-50 transition-colors cursor-pointer text-base"
                           >-</button>
                           <span className="w-8 sm:w-10 text-center font-bold text-maroon-900 text-sm">{quantity}</span>
                           <button
-                            onClick={() => updateQuantity(p.id, quantity + 1)}
+                            onClick={() => updateQuantity(p._id, quantity + 1)}
                             className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-maroon-900 font-bold hover:bg-maroon-50 transition-colors cursor-pointer text-base"
                           >+</button>
                         </div>
@@ -97,7 +97,7 @@ export default function CartPage() {
                             ₹{(p.price * quantity).toLocaleString("en-IN")}
                           </span>
                           <button
-                            onClick={() => removeFromCart(p.id)}
+                            onClick={() => removeFromCart(p._id)}
                             className="text-maroon-400 hover:text-red-500 transition-colors cursor-pointer"
                             title="Remove"
                           >

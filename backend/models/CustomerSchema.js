@@ -15,6 +15,17 @@ const CustomerSchema = new Schema({
     required: true,
     unique: true,
   },
+  cartItems: [
+    {
+      productId: {
+        type: String,
+      },
+      quantity: {
+        type: Number,
+        default: 1,
+      },
+    },
+  ],
   loggedInAtIST: {
     type: String,
   },
