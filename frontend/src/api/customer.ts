@@ -1,4 +1,4 @@
-import { CartItem } from '@/context/StoreContext';
+import { CartItem, Order } from '@/context/StoreContext';
 
 export const getCustomerData = async (
   customerId: string,
@@ -53,6 +53,8 @@ export const updateCart = async (cart: CartItem[], user: any) => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    return response.json();
   } catch (error) {
     console.error('Error updating cart:', error);
   }
@@ -82,5 +84,55 @@ export const updateWishlist = async (wishlist: string[], user: any) => {
     }
   } catch (error) {
     console.error('Error updating wishlist:', error);
+  }
+};
+
+export const placeOrder = async (
+  orderData: Omit<Order, 'id' | 'status' | 'date' | 'items' | 'total'>,
+  buyNowItem: CartItem | null,
+  cart: CartItem[],
+  cartTotal: number,
+  user: any,
+) => {
+  const apiUrl =
+    (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
+
+  const orderItems = buyNowItem ? [buyNowItem] : cart;
+  const orderTotal = buyNowItem
+    ? buyNowItem.product.price * buyNowItem.quantity
+    : cartTotal;
+
+  const payload = {
+    customerId: user._id,
+    orderData: {
+      ...orderData,
+      items: orderItems.map((item) => ({
+        productId: item.product._id,
+        name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+      })),
+      total: orderTotal,
+    },
+  };
+
+  try {
+    const response = await fetch(`${apiUrl}/api/customer/placeOrder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${user?.token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const res = await response.json();
+    return res.data._id;
+  } catch (error) {
+    console.error('Error placing order:', error);
   }
 };

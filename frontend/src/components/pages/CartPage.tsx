@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useStore } from "../../context/StoreContext";
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity, cartTotal, navigateTo, showToast } = useStore();
+  const { cart, removeFromCart, updateQuantity, cartTotal, navigateTo, showToast, setBuyNowItem } = useStore();
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
 
@@ -174,7 +174,10 @@ export default function CartPage() {
 
                 {/* Checkout button */}
                 <button
-                  onClick={() => navigateTo("checkout")}
+                  onClick={() => {
+                    setBuyNowItem(null); // Clear any previous buy now item
+                    navigateTo("checkout")
+                  }}
                   className="w-full py-4 rounded-2xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wider shadow-lg transition-all cursor-pointer"
                 >
                   Proceed to Checkout →

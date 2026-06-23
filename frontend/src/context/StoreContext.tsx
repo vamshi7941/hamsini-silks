@@ -15,15 +15,14 @@ export type CartItem = {
 
 export type Order = {
   id: string;
-  customerName: string;
-  customerEmail: string;
+  name: string;
+  email: string;
   phone: string;
   address: string;
   items: CartItem[];
   total: number;
   paymentMethod: string;
-  status: 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
-  date: string;
+  status: 'Placed' | 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
 };
 
 export type User = {
@@ -58,6 +57,9 @@ interface StoreContextType {
   cartTotal: number;
   cartCount: number;
 
+  buyNowItem: CartItem | null;
+  setBuyNowItem: (item: CartItem | null) => void;
+
   // Wishlist — full state
   wishlist: string[];
   toggleWishlist: (productId: string) => void;
@@ -66,9 +68,6 @@ interface StoreContextType {
 
   // Orders
   orders: Order[];
-  placeOrder: (
-    orderData: Omit<Order, 'id' | 'status' | 'date' | 'items' | 'total'>,
-  ) => string;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
 
   user: User;
@@ -95,103 +94,6 @@ interface StoreContextType {
   showToast: (msg: string) => void;
 }
 
-const mockInitialOrders: Order[] = [
-  {
-    id: 'ORD-9281',
-    customerName: 'Aishwarya Iyer',
-    customerEmail: 'aishwarya@gmail.com',
-    phone: '+91 98401 23456',
-    address: 'Flat 4B, Shanti Apartments, Alwarpet, Chennai – 600018',
-    items: [
-      {
-        product: {
-          _id: '1',
-          name: 'Shrestha Kanjivaram',
-          category: 'Bridal Kanjivaram',
-          price: 48500,
-          image: '/images/saree-kanjivaram.jpg',
-          rating: 4.9,
-        },
-        quantity: 1,
-      },
-    ],
-    total: 48500,
-    paymentMethod: 'UPI (Google Pay)',
-    status: 'Dispatched',
-    date: '2026-03-08',
-  },
-  {
-    id: 'ORD-8432',
-    customerName: 'Rohan Varma',
-    customerEmail: 'rohan.v@outlook.com',
-    phone: '+91 91234 56789',
-    address: 'Villa 12, Palm Meadows, Whitefield, Bengaluru – 560066',
-    items: [
-      {
-        product: {
-          _id: '2',
-          name: 'Smarthika Banarasi',
-          category: 'Banarasi Silk',
-          price: 32900,
-          image: '/images/saree-banarasi.jpg',
-          rating: 4.8,
-        },
-        quantity: 1,
-      },
-      {
-        product: {
-          _id: '3',
-          name: 'Vaichitrya Pattu',
-          category: 'Soft Silk Pattu',
-          price: 18750,
-          image: '/images/saree-pattu.jpg',
-          rating: 4.7,
-        },
-        quantity: 2,
-      },
-    ],
-    total: 70400,
-    paymentMethod: 'Card (Visa)',
-    status: 'Pending',
-    date: '2026-03-10',
-  },
-  {
-    id: 'ORD-7765',
-    customerName: 'Deepa Srinivasan',
-    customerEmail: 'deepa.s@yahoo.com',
-    phone: '+91 98765 43210',
-    address: 'A-201, Lotus Heights, Nungambakkam, Chennai – 600034',
-    items: [
-      {
-        product: {
-          _id: '4',
-          name: 'Nilambari Designer',
-          category: 'Designer Silk',
-          price: 27400,
-          image: '/images/saree-designer.jpg',
-          rating: 4.9,
-        },
-        quantity: 1,
-      },
-      {
-        product: {
-          _id: '5',
-          name: 'Mayura Kanjivaram',
-          category: 'Bridal Kanjivaram',
-          price: 54200,
-          image: '/images/saree-kanjivaram.jpg',
-          rating: 4.8,
-        },
-        quantity: 1,
-      },
-    ],
-    total: 81600,
-    paymentMethod: 'UPI (PhonePe)',
-    status: 'Processing',
-    date: '2026-03-12',
-  },
-];
-
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -202,7 +104,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [orders, setOrders] = useState<Order[]>(mockInitialOrders);
+  const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]); // product IDs in wishlist
   const [themeOption, setThemeOptionState] = useState<'A' | 'B'>('A');
 
@@ -291,7 +194,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [fetchCustomerCart]);
 
   // ── Cart ──
-  const addToCart = (product: Product, quantity = 1) => {
+  const addToCart = async (product: Product, quantity = 1) => {
     const newCart =
       cart.length > 0
         ? cart.find((item) => item.product._id === product._id)
@@ -303,32 +206,50 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
           : [...cart, { product, quantity }]
         : [{ product, quantity }];
 
-    setCart(newCart);
-    updateCart(newCart, user);
+    await updateCart(newCart, user).then((res) => {
+      if (res.success) {
+        setCart(newCart);
+        showToast('Added item(s) to your bag!');
+      }
+    });
   };
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = async (productId: string) => {
     const newCart = cart.filter((item) => item.product._id !== productId);
-    setCart(newCart);
-    updateCart(newCart, user);
+
+    await updateCart(newCart, user).then((res) => {
+      if (res.success) {
+        setCart(newCart);
+        showToast('Removed item from your bag!');
+      }
+    });
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = async (productId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      await removeFromCart(productId);
       return;
     }
     const newCart = cart.map((item) =>
       item.product._id === productId ? { ...item, quantity } : item,
     );
-    setCart(newCart);
-    updateCart(newCart, user);
+
+    await updateCart(newCart, user).then((res) => {
+      if (res.success) {
+        setCart(newCart);
+        showToast('Updated item quantity!');
+      }
+    });
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
     const newCart: CartItem[] = [];
-    setCart(newCart);
-    updateCart(newCart, user);
+    await updateCart(newCart, user).then((res) => {
+      if (res.success) {
+        setCart(newCart);
+        showToast('Cleared your bag!');
+      }
+    });
   };
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
@@ -355,22 +276,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const isInWishlist = (productId: string) => wishlist.includes(productId);
   const wishlistCount = wishlist.length;
 
-  // ── Orders ──
-  const placeOrder = (
-    orderData: Omit<Order, 'id' | 'status' | 'date' | 'items' | 'total'>,
-  ) => {
-    const newOrder: Order = {
-      ...orderData,
-      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      items: [...cart],
-      total: cartTotal,
-      status: 'Pending',
-      date: new Date().toISOString().split('T')[0],
-    };
-    setOrders((prev) => [newOrder, ...prev]);
-    clearCart();
-    return newOrder.id;
-  };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
     setOrders((prev) =>
@@ -444,12 +349,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
         clearCart,
         cartTotal,
         cartCount,
+        buyNowItem,
+        setBuyNowItem,
         wishlist,
         toggleWishlist,
         isInWishlist,
         wishlistCount,
         orders,
-        placeOrder,
         updateOrderStatus,
         user,
         login,

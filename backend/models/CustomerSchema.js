@@ -31,6 +31,11 @@ const CustomerSchema = new Schema({
       type: String,
     },
   ],
+  orders: [
+    {
+      type: String,
+    },
+  ],
   loggedInAtIST: {
     type: String,
   },
