@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import { Product } from '../data';
-import { updateCart, getCustomerData } from '../api/customer';
+import { updateCart, getCustomerData, updateWishlist } from '../api/customer';
 
 export type CartItem = {
   product: Product;
@@ -76,7 +76,7 @@ interface StoreContextType {
     email: string,
     role: 'customer' | 'admin',
     name?: string,
-    _id?: string
+    _id?: string,
   ) => void;
   logout: () => void;
 
@@ -203,7 +203,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>(mockInitialOrders);
-  const [wishlist, setWishlist] = useState<string[]>(['1', '4']);
+  const [wishlist, setWishlist] = useState<string[]>([]); // product IDs in wishlist
   const [themeOption, setThemeOptionState] = useState<'A' | 'B'>('A');
 
   const [user, setUser] = useState<User>(() => {
@@ -266,19 +266,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const fetchCustomerCart = useCallback(async () => {
     if (user.loggedIn && user._id) {
-      await getCustomerData(user._id, (cartItems) => {
-        const updatedCart = cartItems.map((item: any) => {
-          const product = products.find((p) => p._id === item.productId);
-          if (product) {
-            return {
-              product,
-              quantity: item.quantity,
-            };
-          }
-          return null;
-        }).filter((item) => item !== null) as CartItem[];
+      await getCustomerData(user._id, (cartItems, wishlistItems) => {
+        const updatedCart = cartItems
+          .map((item: any) => {
+            const product = products.find((p) => p._id === item.productId);
+            if (product) {
+              return {
+                product,
+                quantity: item.quantity,
+              };
+            }
+            return null;
+          })
+          .filter((item) => item !== null) as CartItem[];
 
         setCart(updatedCart);
+        setWishlist(wishlistItems);
       });
     }
   }, [user, products]);
@@ -335,15 +338,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // ── Wishlist (real state) ──
   const toggleWishlist = (productId: string) => {
-    setWishlist((prev) => {
-      const isIn = prev.includes(productId);
-      if (isIn) {
-        showToast('Removed from heirloom wishlist');
-        return prev.filter((id) => id !== productId);
-      } else {
-        showToast('Saved to your heirloom wishlist!');
-        return [...prev, productId];
-      }
+    const updatedWishlist = wishlist.includes(productId)
+      ? wishlist.filter((id) => id !== productId)
+      : [...wishlist, productId];
+
+    setWishlist(updatedWishlist);
+    updateWishlist(updatedWishlist, user).then(() => {
+      showToast(
+        wishlist.includes(productId)
+          ? 'Removed from heirloom wishlist'
+          : 'Saved to your heirloom wishlist!',
+      );
     });
   };
 
@@ -379,7 +384,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     email: string,
     role: 'customer' | 'admin',
     name?: string,
-    _id?: string
+    _id?: string,
   ) => {
     const displayName =
       name ||

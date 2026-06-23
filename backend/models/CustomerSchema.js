@@ -26,6 +26,11 @@ const CustomerSchema = new Schema({
       },
     },
   ],
+  wishlist: [
+    {
+      type: String,
+    },
+  ],
   loggedInAtIST: {
     type: String,
   },

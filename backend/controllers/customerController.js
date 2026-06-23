@@ -48,3 +48,26 @@ export async function updateCart(req, res) {
     });
   }
 }
+
+export async function updateWishlist(req, res) {
+  const { customerId, wishlist } = req.body;
+
+  try {
+    let updatedCustomer = await CustomerSchema.findOneAndUpdate(
+      { _id: customerId },
+      { wishlist: wishlist },
+      { upsert: true, new: true },
+    );
+
+    return res.status(200).json({
+      message: 'Wishlist updated successfully',
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error updating wishlist',
+      success: false,
+      error: error.message,
+    });
+  }
+}

@@ -3,7 +3,7 @@ import ProductCard from "../ProductCard";
 
 export default function WishlistPage() {
   const { products, wishlist, navigateTo } = useStore();
-  const savedItems = products.filter((p) => wishlist.includes(p.id));
+  let savedItems = products.filter((p) => wishlist.includes(p._id));
 
   return (
     <div className="min-h-screen bg-[#fdf8f1]">
@@ -41,7 +41,7 @@ export default function WishlistPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {savedItems.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product._id} product={product} />
             ))}
           </div>
         )}

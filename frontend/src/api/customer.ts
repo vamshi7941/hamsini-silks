@@ -2,7 +2,7 @@ import { CartItem } from '@/context/StoreContext';
 
 export const getCustomerData = async (
   customerId: string,
-  onCartDataFetched?: (cartItems: any[]) => void,
+  onDataFetched?: (cartItems: any[], wishlist: string[]) => void,
 ) => {
   const apiUrl =
     (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
@@ -16,9 +16,9 @@ export const getCustomerData = async (
     }
     const data = await response.json();
 
-    if (data.success && data.data.cartItems) {
-      if (onCartDataFetched) {
-        onCartDataFetched(data.data.cartItems);
+    if (data.success) {
+      if (onDataFetched) {
+        onDataFetched(data.data.cartItems, data.data.wishlist);
       }
       return data.data;
     }
@@ -52,11 +52,35 @@ export const updateCart = async (cart: CartItem[], user: any) => {
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
-    } else {
-      const data = await response.json();
-      console.log('Cart updated successfully:', data);
     }
   } catch (error) {
     console.error('Error updating cart:', error);
+  }
+};
+
+export const updateWishlist = async (wishlist: string[], user: any) => {
+  const apiUrl =
+    (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
+
+  const payload = {
+    customerId: user._id,
+    wishlist: wishlist,
+  };
+
+  try {
+    const response = await fetch(`${apiUrl}/api/customer/updateWishlist`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${user?.token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error updating wishlist:', error);
   }
 };

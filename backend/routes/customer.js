@@ -7,4 +7,6 @@ router.route('/getUser').get(customerController.getCustomerById);
 
 router.route('/updateCart').post(customerController.updateCart);
 
+router.route('/updateWishlist').post(customerController.updateWishlist);
+
 export default router;
