@@ -96,6 +96,7 @@ export async function placeOrder(req, res) {
 
     const newOrder = {
       _id: orderId,
+      customerId,
       ...orderData,
       orderedDate: now,
     };

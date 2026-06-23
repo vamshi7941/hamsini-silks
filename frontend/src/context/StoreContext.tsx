@@ -1,13 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Product } from '../data';
-import { updateCart, getCustomerData, updateWishlist } from '../api/customer';
-import { updateOrderStatusApi } from '@/api/orders';
 
 export type CartItem = {
   product: Product;
@@ -24,7 +16,7 @@ export type Order = {
   total: number;
   paymentMethod: string;
   status: 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
-  orderedDate: string;
+  orderedDate?: string;
 };
 
 export type User = {
@@ -48,14 +40,12 @@ type PageType =
 
 interface StoreContextType {
   products: Product[];
-  fetchProducts: () => void;
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
 
   // Cart
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+
   cartTotal: number;
   cartCount: number;
 
@@ -64,24 +54,24 @@ interface StoreContextType {
 
   // Wishlist — full state
   wishlist: string[];
-  toggleWishlist: (productId: string) => void;
+  setWishlist: React.Dispatch<React.SetStateAction<string[]>>;
+
   isInWishlist: (productId: string) => boolean;
   wishlistCount: number;
 
   // Orders
   orders: Order[];
-  updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
+
+  imagesLoaded: Boolean;
+  setImagesLoaded: React.Dispatch<React.SetStateAction<Boolean>>;
 
   user: User;
-  login: (
-    email: string,
-    role: 'customer' | 'admin',
-    name?: string,
-    _id?: string,
-  ) => void;
-  logout: () => void;
+  setUser: React.Dispatch<React.SetStateAction<User>>;
 
   currentPage: PageType;
+  setCurrentPage: React.Dispatch<React.SetStateAction<PageType>>;
+
   navigateTo: (page: PageType, param?: any) => void;
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
@@ -101,14 +91,12 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const apiUrl =
-    (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
-
   const [products, setProducts] = useState<Product[]>([]);
+  const [imagesLoaded, setImagesLoaded] = useState<Boolean>(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]); // product IDs in wishlist
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const [themeOption, setThemeOptionState] = useState<'A' | 'B'>('A');
 
   const [user, setUser] = useState<User>(() => {
@@ -153,230 +141,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     showToast(`Switched to Option ${opt} Design Theme!`);
   };
 
-  const [rawOrders, setRawOrders] = useState<any[]>([]);
-
-  // ── Products ──
-  const fetchProducts = useCallback(async () => {
-    try {
-      const response = await fetch(`${apiUrl}/api/products`);
-      if (!response.ok) throw new Error('Failed to fetch products');
-      const data: Product[] = await response.json();
-      setProducts(data);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  }, [apiUrl]);
-
-  const fetchOrdersData = useCallback(async () => {
-    if (user.loggedIn && user.role === 'admin') {
-      try {
-        const response = await fetch(`${apiUrl}/api/orders/allOrders`, {
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const json = await response.json();
-
-        if (json.success) {
-          setRawOrders(json.orders || []);
-        } else {
-          showToast('No orders found');
-        }
-      } catch (err) {
-        showToast(
-          err instanceof Error ? err.message : 'Failed to fetch orders',
-        );
-      }
-    }
-  }, [user, apiUrl]);
-
-  useEffect(() => {
-    const ordersWithProducts = (rawOrders || []).map((order: any) => ({
-      ...order,
-      items: order.items.map((item: any) => {
-        const product = products.find((p) => p._id === item.productId);
-        return {
-          product: product || { _id: item.productId },
-          quantity: item.quantity,
-        };
-      }),
-    }));
-    setOrders(ordersWithProducts);
-  }, [rawOrders, products]);
-
-  useEffect(() => {
-    fetchProducts();
-    fetchOrdersData();
-  }, [fetchProducts, fetchOrdersData]);
-
-  const fetchCustomerCart = useCallback(async () => {
-    if (user.loggedIn && user._id) {
-      await getCustomerData(user._id, (cartItems, wishlistItems) => {
-        const updatedCart = cartItems
-          .map((item: any) => {
-            const product = products.find((p) => p._id === item.productId);
-            if (product) {
-              return {
-                product,
-                quantity: item.quantity,
-              };
-            }
-            return null;
-          })
-          .filter((item) => item !== null) as CartItem[];
-
-        setCart(updatedCart);
-        setWishlist(wishlistItems);
-      });
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user.role === 'customer') fetchCustomerCart();
-  }, [fetchCustomerCart]);
-
   // ── Cart ──
-  const addToCart = async (product: Product, quantity = 1) => {
-    const newCart =
-      cart.length > 0
-        ? cart.find((item) => item.product._id === product._id)
-          ? cart.map((item) =>
-              item.product._id === product._id
-                ? { ...item, quantity: item.quantity + quantity }
-                : item,
-            )
-          : [...cart, { product, quantity }]
-        : [{ product, quantity }];
-
-    await updateCart(newCart, user).then((res) => {
-      if (res.success) {
-        setCart(newCart);
-        showToast('Added item(s) to your bag!');
-      }
-    });
-  };
-
-  const removeFromCart = async (productId: string) => {
-    const newCart = cart.filter((item) => item.product._id !== productId);
-
-    await updateCart(newCart, user).then((res) => {
-      if (res.success) {
-        setCart(newCart);
-        showToast('Removed item from your bag!');
-      }
-    });
-  };
-
-  const updateQuantity = async (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      await removeFromCart(productId);
-      return;
-    }
-    const newCart = cart.map((item) =>
-      item.product._id === productId ? { ...item, quantity } : item,
-    );
-
-    await updateCart(newCart, user).then((res) => {
-      if (res.success) {
-        setCart(newCart);
-        showToast('Updated item quantity!');
-      }
-    });
-  };
-
-  const clearCart = async () => {
-    const newCart: CartItem[] = [];
-    await updateCart(newCart, user).then((res) => {
-      if (res.success) {
-        setCart(newCart);
-        showToast('Cleared your bag!');
-      }
-    });
-  };
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0,
   );
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // ── Wishlist (real state) ──
-  const toggleWishlist = (productId: string) => {
-    const updatedWishlist = wishlist.includes(productId)
-      ? wishlist.filter((id) => id !== productId)
-      : [...wishlist, productId];
-
-    updateWishlist(updatedWishlist, user).then((res) => {
-      if (res.success) {
-        setWishlist(updatedWishlist);
-        showToast(
-          wishlist.includes(productId)
-            ? 'Removed from your wishlist!'
-            : 'Added to your wishlist!',
-        );
-      }
-    });
-  };
-
   const isInWishlist = (productId: string) => wishlist.includes(productId);
   const wishlistCount = wishlist.length;
-
-  const updateOrderStatus = async (
-    orderId: string,
-    status: Order['status'],
-  ) => {
-    await updateOrderStatusApi(orderId, status).then((res) => {
-      if (!res || !res.success) {
-        showToast('Failed to update order status on server');
-      }
-
-      setOrders((prev) =>
-        prev.map((o) => (o._id === orderId ? { ...o, status } : o)),
-      );
-      showToast(`Order #${orderId} → ${status}`);
-    });
-  };
-
-  // ── User ──
-  const login = (
-    email: string,
-    role: 'customer' | 'admin',
-    name?: string,
-    _id?: string,
-  ) => {
-    const displayName =
-      name ||
-      (role === 'admin' ? 'Hamsini Atelier Admin' : email.split('@')[0]);
-    const newUser = {
-      name: displayName,
-      email,
-      role,
-      loggedIn: true,
-      _id,
-    } as User;
-    setUser(newUser);
-    try {
-      localStorage.setItem('hamsini_user', JSON.stringify(newUser));
-    } catch (e) {
-      // ignore storage errors
-    }
-    showToast(`Welcome back, ${displayName}!`);
-    setCurrentPage(role === 'admin' ? 'admin' : 'home');
-  };
-
-  const logout = () => {
-    const guest = {
-      name: 'Guest Patron',
-      email: '',
-      role: 'customer',
-      loggedIn: false,
-    } as User;
-    setUser(guest);
-    try {
-      localStorage.removeItem('hamsini_user');
-    } catch (e) {
-      // ignore
-    }
-    showToast('Logged out successfully');
-    setCurrentPage('home');
-  };
 
   // ── Navigation ──
   const navigateTo = (page: PageType, param?: any) => {
@@ -390,33 +163,46 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <StoreContext.Provider
       value={{
+        user,
+        setUser,
+
         products,
-        fetchProducts,
+        setProducts,
+
+        orders,
+        setOrders,
+
+        imagesLoaded,
+        setImagesLoaded,
+
         cart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
+        setCart,
+
         cartTotal,
         cartCount,
+
         buyNowItem,
         setBuyNowItem,
+
         wishlist,
-        toggleWishlist,
+        setWishlist,
+
         isInWishlist,
         wishlistCount,
-        orders,
-        updateOrderStatus,
-        user,
-        login,
-        logout,
+
         currentPage,
+        setCurrentPage,
+
         navigateTo,
+
         selectedCategory,
         setSelectedCategory,
+
         selectedProduct,
+        
         themeOption,
         setThemeOption,
+
         toast,
         showToast,
       }}

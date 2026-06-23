@@ -168,7 +168,6 @@ export async function updateOrderStatus(req, res) {
 
   try {
     const order = await OrderSchema.findById(orderId);
-    console.log('Order found:', order); // Debugging line
     if (!order) {
       return res.status(404).json({ error: 'Order not found', success: false });
     }

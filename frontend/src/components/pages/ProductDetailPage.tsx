@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { CustomerApi } from '@/api/customer';
 
 export default function ProductDetailPage() {
   const {
     selectedProduct,
-    addToCart,
     navigateTo,
     showToast,
     products,
-    toggleWishlist,
     isInWishlist,
     setBuyNowItem,
   } = useStore();
+
+  const {addToCart, toggleWishlist} = CustomerApi()
   const [qty, setQty] = useState(1);
   const [activeSize, setActiveSize] = useState('6.2m (with blouse)');
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { placeOrder } from '@/api/customer';
+import { CustomerApi } from '@/api/customer';
 
 const PAYMENT_METHODS = [
   { id: 'UPI', icon: '📱', label: 'UPI', sub: 'PhonePe · GPay · Paytm · BHIM' },
@@ -10,6 +10,7 @@ const PAYMENT_METHODS = [
 
 export default function CheckoutPage() {
   const { cart, cartTotal, navigateTo, user, buyNowItem } = useStore();
+  const { placeOrder } = CustomerApi();
 
   if (!user.loggedIn && user.role !== 'customer') return;
 
@@ -74,12 +75,12 @@ export default function CheckoutPage() {
                 ॐ मङ्गलम् ॐ
               </div>
               <h2 className="font-display text-2xl sm:text-3xl font-bold text-maroon-900 mb-2">
-                Order Confirmed!
+                Order Placed!
               </h2>
               <p className="text-sm text-maroon-700/80 mb-6 leading-relaxed">
-                Your heirloom saree has been commissioned. Our master weavers
-                will begin preparation and dispatch tracking will be sent to
-                your email.
+                Your heirloom saree has been commissioned. Our merchants will be
+                confirming you order and dispatch tracking will be sent to your
+                email.
               </p>
 
               {/* Order info card */}

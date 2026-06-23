@@ -2,7 +2,8 @@ import { useState, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
 import type { Order } from '../../context/StoreContext';
 import type { Product } from '../../data';
-import { Admin } from '@/api/admin';
+import { AdminApi } from '@/api/admin';
+import { Auth } from '@/api/auth';
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
 const Icon = {
@@ -1024,7 +1025,9 @@ function OrderRow({
           <span className="font-display text-sm font-bold text-maroon-900 block">
             #{order._id}
           </span>
-          <span className="text-[11px] text-maroon-700/60">{order.orderedDate}</span>
+          <span className="text-[11px] text-maroon-700/60">
+            {order.orderedDate}
+          </span>
         </div>
         <div className="flex-1 min-w-0">
           <span className="font-semibold text-sm text-maroon-900 block truncate">
@@ -1388,16 +1391,10 @@ function ImageEditor({
 
 // ── MAIN ADMIN DASHBOARD ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
-  const {
-    orders,
-    updateOrderStatus,
-    products,
-    showToast,
-    logout,
-    navigateTo,
-    user,
-  } = useStore();
-  const { addProduct, updateProduct, deleteProduct } = Admin();
+  const { orders, products, showToast, navigateTo, user } =
+    useStore();
+  const { addProduct, updateProduct, deleteProduct, updateOrderStatus } = AdminApi();
+  const { logout } = Auth();
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);

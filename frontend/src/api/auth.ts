@@ -1,10 +1,37 @@
-import { useStore } from '@/context/StoreContext';
+import { User, useStore } from '@/context/StoreContext';
 import { signInWithGooglePopup } from '../firebase';
 
 export const Auth = () => {
-  const { login } = useStore();
+  const { setUser, showToast, setCurrentPage } = useStore();
   const apiUrl =
     (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
+
+  // ── User ──
+  const login = (
+    email: string,
+    role: 'customer' | 'admin',
+    name?: string,
+    _id?: string,
+  ) => {
+    const displayName =
+      name ||
+      (role === 'admin' ? 'Hamsini Atelier Admin' : email.split('@')[0]);
+    const newUser = {
+      name: displayName,
+      email,
+      role,
+      loggedIn: true,
+      _id,
+    } as User;
+    setUser(newUser);
+    try {
+      localStorage.setItem('hamsini_user', JSON.stringify(newUser));
+    } catch (e) {
+      // ignore storage errors
+    }
+    showToast(`Welcome back, ${displayName}!`);
+    setCurrentPage(role === 'admin' ? 'admin' : 'home');
+  };
 
   const loginWithGoogle = async () => {
     try {
@@ -52,5 +79,22 @@ export const Auth = () => {
     }
   };
 
-  return { loginWithGoogle, adminLogin };
+  const logout = () => {
+    const guest = {
+      name: 'Guest Patron',
+      email: '',
+      role: 'customer',
+      loggedIn: false,
+    } as User;
+    setUser(guest);
+    try {
+      localStorage.removeItem('hamsini_user');
+    } catch (e) {
+      // ignore
+    }
+    showToast('Logged out successfully');
+    setCurrentPage('home');
+  };
+
+  return { loginWithGoogle, adminLogin, logout };
 };

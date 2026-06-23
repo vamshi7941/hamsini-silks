@@ -1,11 +1,15 @@
-import type { Product } from "../data";
-import { BagIcon, StarIcon } from "./Icons";
-import { useStore } from "../context/StoreContext";
+import type { Product } from '../data';
+import { BagIcon, StarIcon } from './Icons';
+import { useStore } from '../context/StoreContext';
+import { CustomerApi } from '@/api/customer';
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { addToCart, navigateTo, toggleWishlist, isInWishlist } = useStore();
+  const { navigateTo, isInWishlist } = useStore();
+  const { addToCart, toggleWishlist } = CustomerApi();
   const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100,
+      )
     : 0;
 
   const liked = isInWishlist(product._id);
@@ -15,14 +19,14 @@ export default function ProductCard({ product }: { product: Product }) {
     <div className="group relative bg-white rounded-2xl overflow-hidden border border-gold-100 hover:border-gold-400 hover:shadow-xl hover:shadow-maroon-900/10 transition-all duration-300 flex flex-col h-full shadow-xs">
       {/* Image section */}
       <div
-        onClick={() => navigateTo("product-detail", product)}
+        onClick={() => navigateTo('product-detail', product)}
         className="relative aspect-[3/4] overflow-hidden bg-maroon-50 cursor-pointer"
       >
         <img
           src={product.image}
           alt={product.name}
           className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
-            outOfStock ? "opacity-65 grayscale-[30%]" : ""
+            outOfStock ? 'opacity-65 grayscale-[30%]' : ''
           }`}
         />
 
@@ -57,14 +61,14 @@ export default function ProductCard({ product }: { product: Product }) {
           }}
           className={`absolute top-3 right-3 h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center shadow-lg transition-all z-10 cursor-pointer ${
             liked
-              ? "bg-maroon-900 text-gold-300 scale-100"
-              : "bg-white/90 backdrop-blur-sm text-maroon-500 hover:bg-white hover:text-maroon-900"
+              ? 'bg-maroon-900 text-gold-300 scale-100'
+              : 'bg-white/90 backdrop-blur-sm text-maroon-500 hover:bg-white hover:text-maroon-900'
           }`}
-          title={liked ? "Remove from wishlist" : "Add to wishlist"}
+          title={liked ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <svg
             viewBox="0 0 24 24"
-            fill={liked ? "currentColor" : "none"}
+            fill={liked ? 'currentColor' : 'none'}
             stroke="currentColor"
             strokeWidth={liked ? 0 : 1.8}
             className="h-4 w-4 sm:h-5 sm:w-5 transition-all duration-200"
@@ -93,13 +97,13 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Info section */}
       <div className="p-3.5 sm:p-4 flex flex-col flex-1">
         <div
-          onClick={() => navigateTo("product-detail", product)}
+          onClick={() => navigateTo('product-detail', product)}
           className="text-[9px] sm:text-[10px] tracking-[0.2em] text-gold-700 mb-1 uppercase font-bold cursor-pointer hover:underline"
         >
           {product.category}
         </div>
         <h3
-          onClick={() => navigateTo("product-detail", product)}
+          onClick={() => navigateTo('product-detail', product)}
           className="font-display text-sm sm:text-base lg:text-lg text-maroon-900 mb-1.5 leading-tight font-bold cursor-pointer hover:text-maroon-700 transition-colors"
         >
           {product.name}
@@ -110,16 +114,21 @@ export default function ProductCard({ product }: { product: Product }) {
           {Array.from({ length: 5 }).map((_, i) => (
             <StarIcon
               key={i}
-              className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${i < Math.round(product.rating) ? "text-gold-500" : "text-gold-200"}`}
+              className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${i < Math.round(product.rating) ? 'text-gold-500' : 'text-gold-200'}`}
             />
           ))}
-          <span className="text-[10px] sm:text-xs text-maroon-700/70 ml-1 font-medium">{product.rating}</span>
+          <span className="text-[10px] sm:text-xs text-maroon-700/70 ml-1 font-medium">
+            {product.rating}
+          </span>
         </div>
 
         {/* Size Spec */}
         {product.size && (
           <div className="text-[11px] text-maroon-800/80 mb-3 font-medium bg-gold-50/50 px-2.5 py-1 rounded-lg border border-gold-200/40 inline-block self-start">
-            📏 <span className="font-semibold text-maroon-900">{product.size}</span>
+            📏{' '}
+            <span className="font-semibold text-maroon-900">
+              {product.size}
+            </span>
           </div>
         )}
 
@@ -127,16 +136,18 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="mt-auto flex items-baseline gap-2 pt-2.5 border-t border-gold-100 justify-between">
           <div>
             <span className="font-display text-base sm:text-lg lg:text-xl text-maroon-900 font-bold">
-              ₹{product.price.toLocaleString("en-IN")}
+              ₹{product.price.toLocaleString('en-IN')}
             </span>
             {product.originalPrice && (
               <span className="text-xs sm:text-sm text-maroon-400 line-through ml-2">
-                ₹{product.originalPrice.toLocaleString("en-IN")}
+                ₹{product.originalPrice.toLocaleString('en-IN')}
               </span>
             )}
           </div>
           {outOfStock ? (
-            <span className="text-[10px] text-maroon-500 font-bold uppercase tracking-wider">Sold Out</span>
+            <span className="text-[10px] text-maroon-500 font-bold uppercase tracking-wider">
+              Sold Out
+            </span>
           ) : (
             <button
               onClick={(e) => {

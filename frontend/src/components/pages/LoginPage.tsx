@@ -3,8 +3,8 @@ import { useStore } from '../../context/StoreContext';
 import { Auth } from '../../api/auth';
 
 export default function LoginPage() {
-  const { logout, user, navigateTo } = useStore();
-  const { loginWithGoogle, adminLogin } = Auth();
+  const { user, navigateTo } = useStore();
+  const { loginWithGoogle, adminLogin, logout } = Auth();
   const [tab, setTab] = useState<'patron' | 'admin'>('patron');
 
   const [patronName, setPatronName] = useState('');

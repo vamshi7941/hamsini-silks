@@ -1,11 +1,13 @@
-import { useStore } from '@/context/StoreContext';
+import { Order, useStore } from '@/context/StoreContext';
 import { Product } from '@/data';
+import { ProductsApi } from './products';
 
-export const Admin = () => {
+export const AdminApi = () => {
   const apiUrl =
     (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
 
-  const { products, fetchProducts, showToast } = useStore();
+  const { products, showToast, setOrders } = useStore();
+  const { fetchAllProducts } = ProductsApi();
 
   const getNextProductId = (products: Product[]) => {
     if (products.length === 0) return 'HSPID-0001';
@@ -33,7 +35,7 @@ export const Admin = () => {
 
       if (response.ok) {
         console.log(json);
-        fetchProducts(); // Refresh the product list
+        fetchAllProducts();
         showToast('New saree published!');
         onClose();
       } else {
@@ -61,7 +63,7 @@ export const Admin = () => {
       const json = await response.json();
 
       if (json.success) {
-        fetchProducts();
+        fetchAllProducts();
         showToast('Product updated!');
         onClose();
       } else {
@@ -83,7 +85,7 @@ export const Admin = () => {
       const json = await response.json();
 
       if (json.success) {
-        fetchProducts();
+        fetchAllProducts();
         showToast('Product deleted!');
         onClose();
       } else {
@@ -94,5 +96,65 @@ export const Admin = () => {
     }
   };
 
-  return { addProduct, updateProduct, deleteProduct };
+  const fetchAllOrders = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/orders/allOrders`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const json = await response.json();
+
+      if (json.success) {
+        const ordersWithProducts = (json.orders || []).map((order: any) => ({
+          ...order,
+          items: order.items.map((item: any) => {
+            const product = products.find((p) => p._id === item.productId);
+            return {
+              product: product || { _id: item.productId },
+              quantity: item.quantity,
+            };
+          }),
+        }));
+        setOrders(ordersWithProducts);
+      } else {
+        showToast('No orders found');
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to fetch orders');
+    }
+  };
+
+  const updateOrderStatus = async (
+    orderId: string,
+    status: Order['status'],
+  ) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/orders/updateOrderStatus`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setOrders((prev) =>
+        prev.map((o) => (o._id === orderId ? { ...o, status } : o)),
+      );
+      showToast(`Order #${orderId} → ${status}`);
+
+      return response.json();
+    } catch (err) {
+      console.log(err instanceof Error ? err.message : 'Unknown error');
+      return null;
+    }
+  };
+
+  return {
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    fetchAllOrders,
+    updateOrderStatus,
+  };
 };
