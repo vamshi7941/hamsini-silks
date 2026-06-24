@@ -3,7 +3,7 @@ import { User, useStore } from '@/context/StoreContext';
 import { signInWithGooglePopup } from '../firebase';
 
 export const Auth = () => {
-  const { setUser, showToast } = useStore();
+  const { setUser, showToast, setCart, setWishlist } = useStore();
   const navigate = useNavigate();
   const apiUrl =
     (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
@@ -30,7 +30,7 @@ export const Auth = () => {
     } catch (e) {
       // ignore storage errors
     }
-    showToast(`Welcome back, ${displayName}!`);
+    showToast(`Welcome back, ${displayName}!`, 'success');
     navigate(role === 'admin' ? '/admin' : '/');
   };
 
@@ -52,9 +52,15 @@ export const Auth = () => {
 
       if (json.success) {
         login(email, 'customer', name, json.customer._id ?? '');
+      } else {
+        showToast('Google sign-in failed. Please try again.', 'error');
       }
     } catch (err) {
       console.error('Google sign-in failed', err);
+      showToast(
+        'Google sign-in failed. Please check your connection.',
+        'error',
+      );
     }
   };
 
@@ -72,9 +78,13 @@ export const Auth = () => {
           json.user.fullName ?? json.user.email?.split('@')[0] ?? 'Admin';
         const token = json.user.token ?? '';
         login(email, 'admin', name, token);
+        showToast(`Welcome back, ${name}!`, 'success');
+      } else {
+        showToast(json.message || json.error || 'Invalid email or password', 'error');
       }
     } catch (err) {
       console.error('Admin login failed', err);
+      showToast('Login failed. Please check your credentials.', 'error');
     }
   };
 
@@ -87,11 +97,13 @@ export const Auth = () => {
     } as User;
     setUser(guest);
     try {
+      setCart([]);
+      setWishlist([]);
       localStorage.removeItem('hamsini_user');
     } catch (e) {
       // ignore
     }
-    showToast('Logged out successfully');
+    showToast('Logged out successfully', 'success');
     navigate('/');
   };
 

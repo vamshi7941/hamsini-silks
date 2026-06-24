@@ -16,24 +16,35 @@ export const CustomerApi = () => {
     buyNowItem,
     cartTotal,
   } = useStore();
-  const getCustomerData = async (
-    customerId: string,
-    onDataFetched?: (cartItems: any[], wishlist: string[]) => void,
-  ) => {
+  const getCustomerData = async () => {
     try {
       const response = await fetch(
-        `${apiUrl}/api/customer/getUser?_id=${customerId}`,
+        `${apiUrl}/api/customer/getUser?_id=${user._id}`,
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
+      const returnData = await response.json();
 
-      if (data.success) {
-        if (onDataFetched) {
-          onDataFetched(data.data.cartItems, data.data.wishlist);
-        }
-        return data.data;
+      if (returnData.success) {
+        const cartItems = returnData.data.cartItems || [];
+        const wishlistItems = returnData.data.wishlist || [];
+
+        const updatedCart = cartItems
+          .map((item: any) => {
+            const product = products.find((p) => p._id === item.productId);
+            if (product) {
+              return {
+                product,
+                quantity: item.quantity,
+              };
+            }
+            return null;
+          })
+          .filter((item: any) => item !== null) as CartItem[];
+
+        setCart(updatedCart);
+        setWishlist(wishlistItems);
       }
     } catch (error) {
       console.error('Error fetching customer data:', error);
@@ -41,6 +52,14 @@ export const CustomerApi = () => {
   };
 
   const updateCart = async (cart: CartItem[], user: any) => {
+    if (!user.loggedIn) {
+      showToast('Please log in to update your cart.', 'warning');
+      return;
+    }
+    if (user.role !== 'customer') {
+      showToast('Only customers can update the cart.', 'warning');
+      return;
+    }
     const payload = {
       customerId: user._id,
       products: cart.map((item) => ({
@@ -70,6 +89,15 @@ export const CustomerApi = () => {
   };
 
   const updateWishlist = async (wishlist: string[], user: any) => {
+    if (!user.loggedIn) {
+      showToast('Please log in to update your wishlist.', 'warning');
+      return;
+    }
+    if (user.role !== 'customer') {
+      showToast('Only customers can update the wishlist.', 'warning');
+      return;
+    }
+
     const payload = {
       customerId: user._id,
       wishlist: wishlist,
@@ -92,28 +120,6 @@ export const CustomerApi = () => {
       return response.json();
     } catch (error) {
       console.error('Error updating wishlist:', error);
-    }
-  };
-
-  const fetchCart = async () => {
-    if (user.loggedIn && user._id) {
-      await getCustomerData(user._id, (cartItems, wishlistItems) => {
-        const updatedCart = cartItems
-          .map((item: any) => {
-            const product = products.find((p) => p._id === item.productId);
-            if (product) {
-              return {
-                product,
-                quantity: item.quantity,
-              };
-            }
-            return null;
-          })
-          .filter((item) => item !== null) as CartItem[];
-
-        setCart(updatedCart);
-        setWishlist(wishlistItems);
-      });
     }
   };
 
@@ -175,7 +181,9 @@ export const CustomerApi = () => {
     await updateCart(newCart, user).then((res: any) => {
       if (res.success) {
         setCart(newCart);
-        showToast('Added item(s) to your bag!');
+        showToast('Added item(s) to your bag!', 'success');
+      } else {
+        showToast('Failed to add item to cart.', 'error');
       }
     });
   };
@@ -186,7 +194,9 @@ export const CustomerApi = () => {
     await updateCart(newCart, user).then((res) => {
       if (res.success) {
         setCart(newCart);
-        showToast('Removed item from your bag!');
+        showToast('Removed item from your bag!', 'success');
+      } else {
+        showToast('Failed to remove item from cart.', 'error');
       }
     });
   };
@@ -203,7 +213,9 @@ export const CustomerApi = () => {
     await updateCart(newCart, user).then((res) => {
       if (res.success) {
         setCart(newCart);
-        showToast('Updated item quantity!');
+        showToast('Updated item quantity!', 'success');
+      } else {
+        showToast('Failed to update item quantity.', 'error');
       }
     });
   };
@@ -213,7 +225,9 @@ export const CustomerApi = () => {
     await updateCart(newCart, user).then((res) => {
       if (res.success) {
         setCart(newCart);
-        showToast('Cleared your bag!');
+        showToast('Cleared your bag!', 'success');
+      } else {
+        showToast('Failed to clear cart.', 'error');
       }
     });
   };
@@ -230,7 +244,10 @@ export const CustomerApi = () => {
           wishlist.includes(productId)
             ? 'Removed from your wishlist!'
             : 'Added to your wishlist!',
+          'success',
         );
+      } else {
+        showToast('Failed to update wishlist.', 'error');
       }
     });
   };
@@ -274,7 +291,7 @@ export const CustomerApi = () => {
   };
 
   return {
-    fetchCart,
+    getCustomerData,
     addToCart,
     updateCart,
     updateQuantity,

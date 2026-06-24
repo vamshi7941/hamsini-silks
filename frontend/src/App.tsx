@@ -25,6 +25,7 @@ import WishlistPage from './components/pages/WishlistPage';
 import MyOrdersPage from './components/pages/MyOrdersPage';
 import { AdminApi } from './api/admin';
 import { CustomerApi } from './api/customer';
+import ProfilePage from './components/pages/Profile';
 
 function HomePage() {
   return (
@@ -46,7 +47,7 @@ export default function App() {
   const { user, imagesLoaded } = useStore();
   const { fetchAllProducts } = ProductsApi();
   const { fetchAllOrders } = AdminApi();
-  const { fetchCart } = CustomerApi();
+  const { getCustomerData } = CustomerApi();
 
   useEffect(() => {
     fetchAllProducts();
@@ -58,7 +59,7 @@ export default function App() {
       fetchAllOrders();
     }
     if (user.role === 'customer') {
-      fetchCart();
+      getCustomerData();
     }
   }, [user, imagesLoaded]);
 
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/product/:slug" element={<ProductDetailPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/login" element={<LoginPage />} />

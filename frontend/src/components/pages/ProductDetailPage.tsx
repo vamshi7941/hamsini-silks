@@ -322,7 +322,7 @@ export default function ProductDetailPage() {
                   <button
                     onClick={() =>
                       showToast(
-                        `We will notify you when ${p.name} is back on looms!`,
+                        `We will notify you when ${p.name} is back on looms!`, 'info'
                       )
                     }
                     className="w-full py-3.5 rounded-2xl border-2 border-maroon-900 text-maroon-900 hover:bg-maroon-50 font-bold text-sm tracking-wider transition-colors cursor-pointer shadow-xs"

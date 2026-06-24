@@ -62,7 +62,7 @@ export default function Footer() {
               {[InstagramIcon, FacebookIcon, WhatsAppIcon].map((Icon, i) => (
                 <button
                   key={i}
-                  onClick={() => showToast("Opening official social channel feed...")}
+                  onClick={() => showToast("Opening official social channel feed...", "info")}
                   className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-gold-700/40 flex items-center justify-center text-gold-300 hover:bg-gold-500 hover:text-maroon-900 hover:border-gold-500 transition-colors cursor-pointer"
                 >
                   <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -97,8 +97,8 @@ export default function Footer() {
         <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-between">
           <div className="text-[10px] sm:text-sm text-gold-200/60 text-center sm:text-left">
             © 2026 Hamsini Silks Pvt. Ltd. · Option A Premium Atelier ·
-            <button onClick={() => showToast("Loading traditional privacy contract...")} className="hover:text-gold-300 ml-1 underline cursor-pointer">Privacy</button> ·
-            <button onClick={() => showToast("Loading service guidelines...")} className="hover:text-gold-300 ml-1 underline cursor-pointer">Terms</button>
+            <button onClick={() => showToast("Loading traditional privacy contract...", 'info')} className="hover:text-gold-300 ml-1 underline cursor-pointer">Privacy</button> ·
+            <button onClick={() => showToast("Loading service guidelines...", 'info')} className="hover:text-gold-300 ml-1 underline cursor-pointer">Terms</button>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-gold-200/60 flex-wrap justify-center">
             <span className="px-2 py-0.5 sm:py-1 rounded border border-gold-700/40 font-bold">VISA</span>

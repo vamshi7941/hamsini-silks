@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Icon } from '../Icons';
 import { statusIcon, statusMap, printInvoice } from '../../utils/orderUtils';
 import { CustomerApi } from '@/api/customer';
+import GuestUser from '../guestUser';
+import AccessDenied from '../accessDenied';
 
 function PrintInvoice({ order }: { order: Order }) {
   return (
@@ -35,7 +37,7 @@ function OrderRow({ order: order }: { order: Order }) {
             {order.orderedDate}
           </span>
         </div>
-        <div className="flex-1 min-w-0"/>
+        <div className="flex-1 min-w-0" />
         <div className="hidden sm:flex items-center gap-1.5">
           {order.items.slice(0, 2).map((item, i) => (
             <img
@@ -194,7 +196,7 @@ export default function MyOrdersPage() {
       setMyOrders(orders);
     };
 
-    getMyOrders();
+    if (user.loggedIn && user.role === 'customer') getMyOrders();
   }, [imagesLoaded]);
 
   const filteredOrders = orders.filter((o) => {
@@ -204,6 +206,9 @@ export default function MyOrdersPage() {
     const mf = orderFilter === 'All' || o.status === orderFilter;
     return ms && mf;
   });
+
+  if (!user.loggedIn) return <GuestUser page="my-orders" />;
+  if (user.role !== 'customer') return <AccessDenied page="my-orders" />;
 
   return (
     <div className="min-h-screen bg-[#fdf8f1] py-8 sm:py-12 lg:py-16 lg:pt-4">

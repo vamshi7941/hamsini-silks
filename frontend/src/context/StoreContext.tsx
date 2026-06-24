@@ -28,6 +28,13 @@ export type User = {
   _id?: string;
 };
 
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+export type Toast = {
+  message: string;
+  type: ToastType;
+};
+
 interface StoreContextType {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
@@ -62,8 +69,8 @@ interface StoreContextType {
   themeOption: 'A' | 'B';
   setThemeOption: (option: 'A' | 'B') => void;
 
-  toast: string | null;
-  showToast: (msg: string) => void;
+  toast: Toast | null;
+  showToast: (msg: string, type?: ToastType) => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -107,16 +114,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
+  const showToast = (msg: string, type: ToastType = 'success') => {
+    setToast({ message: msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
   const setThemeOption = (opt: 'A' | 'B') => {
     setThemeOptionState(opt);
-    showToast(`Switched to Option ${opt} Design Theme!`);
+    showToast(`Switched to Option ${opt} Design Theme!`, 'success');
   };
 
   const cartTotal = cart.reduce(
@@ -171,9 +178,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-maroon-900 text-gold-100 px-6 py-3.5 rounded-2xl shadow-2xl border border-gold-400/40 flex items-center gap-3 animate-float transition-all max-w-sm">
-          <span className="text-gold-400 text-lg">🪷</span>
-          <span className="text-sm font-medium tracking-wide">{toast}</span>
+        <div
+          className={`fixed bottom-6 right-6 z-50 px-6 py-3.5 rounded-2xl shadow-2xl border flex items-center gap-3 animate-float transition-all max-w-sm ${
+            toast.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-900'
+              : toast.type === 'error'
+                ? 'bg-red-50 border-red-200 text-red-900'
+                : toast.type === 'info'
+                  ? 'bg-blue-50 border-blue-200 text-blue-900'
+                  : 'bg-amber-50 border-amber-200 text-amber-900'
+          }`}
+        >
+          <span className="text-sm font-medium tracking-wide">
+            {toast.message}
+          </span>
         </div>
       )}
     </StoreContext.Provider>

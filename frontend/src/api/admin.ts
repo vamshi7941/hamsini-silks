@@ -36,13 +36,16 @@ export const AdminApi = () => {
       if (response.ok) {
         console.log(json);
         fetchAllProducts();
-        showToast('New saree published!');
+        showToast('New saree published!', 'success');
         onClose();
       } else {
-        showToast(json.error || 'Unknown error');
+        showToast(json.error || 'Failed to add product', 'error');
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Unknown error');
+      showToast(
+        err instanceof Error ? err.message : 'Failed to add product',
+        'error',
+      );
     }
   };
 
@@ -64,13 +67,16 @@ export const AdminApi = () => {
 
       if (json.success) {
         fetchAllProducts();
-        showToast('Product updated!');
+        showToast('Product updated!', 'success');
         onClose();
       } else {
-        showToast(json.error || 'Unknown error');
+        showToast(json.error || 'Failed to update product', 'error');
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Unknown error');
+      showToast(
+        err instanceof Error ? err.message : 'Failed to update product',
+        'error',
+      );
     }
   };
 
@@ -86,13 +92,16 @@ export const AdminApi = () => {
 
       if (json.success) {
         fetchAllProducts();
-        showToast('Product deleted!');
+        showToast('Product deleted!', 'success');
         onClose();
       } else {
-        showToast(json.error || 'Unknown error');
+        showToast(json.error || 'Failed to delete product', 'error');
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Unknown error');
+      showToast(
+        err instanceof Error ? err.message : 'Failed to delete product',
+        'error',
+      );
     }
   };
 
@@ -116,10 +125,13 @@ export const AdminApi = () => {
         }));
         setOrders(ordersWithProducts);
       } else {
-        showToast('No orders found');
+        showToast('No orders found', 'warning');
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to fetch orders');
+      showToast(
+        err instanceof Error ? err.message : 'Failed to fetch orders',
+        'error',
+      );
     }
   };
 
@@ -141,11 +153,12 @@ export const AdminApi = () => {
       setOrders((prev) =>
         prev.map((o) => (o._id === orderId ? { ...o, status } : o)),
       );
-      showToast(`Order #${orderId} → ${status}`);
+      showToast(`Order #${orderId} → ${status}`, 'success');
 
       return response.json();
     } catch (err) {
       console.log(err instanceof Error ? err.message : 'Unknown error');
+      showToast('Failed to update order status', 'error');
       return null;
     }
   };

@@ -8,7 +8,7 @@ export default function Newsletter() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      showToast(`Welcome! ₹1,000 credit dispatched to ${email}`);
+      showToast(`Welcome! ₹1,000 credit dispatched to ${email}`, "success");
       setEmail("");
     }
   };

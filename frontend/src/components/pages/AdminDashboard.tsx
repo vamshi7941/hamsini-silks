@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import type { Order } from '../../context/StoreContext';
@@ -7,6 +7,8 @@ import { AdminApi } from '@/api/admin';
 import { Auth } from '@/api/auth';
 import { Icon } from '../Icons';
 import { statusIcon, statusMap, printInvoice } from '../../utils/orderUtils';
+import GuestUser from '../guestUser';
+import AccessDenied from '../accessDenied';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -1059,9 +1061,14 @@ function ImageEditor({
 // ── MAIN ADMIN DASHBOARD ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { orders, products, showToast, user } = useStore();
-  const { addProduct, updateProduct, deleteProduct, updateOrderStatus } =
-    AdminApi();
+  const { orders, products, showToast, user, imagesLoaded } = useStore();
+  const {
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    updateOrderStatus,
+    fetchAllOrders,
+  } = AdminApi();
   const { logout } = Auth();
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -1117,26 +1124,15 @@ export default function AdminDashboard() {
     { id: 'media', label: 'Media', icon: Icon.image },
   ];
 
-  if (user.role !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5ede3]">
-        <div className="bg-white p-8 rounded-3xl shadow-lg text-center">
-          <h1 className="text-2xl font-bold text-maroon-900 mb-4">
-            Access Denied
-          </h1>
-          <p className="text-sm text-maroon-700 mb-6">
-            You do not have permission to access the admin dashboard.
-          </p>
-          <button
-            onClick={logout}
-            className="px-4 py-2 bg-maroon-900 text-white rounded-lg hover:bg-maroon-800 transition-colors"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!imagesLoaded) return;
+    if (user.role === 'admin') {
+      fetchAllOrders();
+    }
+  }, [user, imagesLoaded]);
+
+  if(!user.loggedIn) return <GuestUser page='admin'/>
+  if(user.role !== 'admin') return <AccessDenied page='admin'/>
 
   return (
     <div className="min-h-screen bg-[#f5ede3] flex">
@@ -1223,7 +1219,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => showToast('No new notifications')}
+              onClick={() => showToast('No new notifications', 'info')}
               className="p-2 rounded-full hover:bg-maroon-50 text-maroon-700 relative cursor-pointer"
             >
               <Icon.bell />
@@ -1696,7 +1692,7 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => {
                               setActiveTab('catalogue');
-                              showToast('Go to Catalogue to assign this image');
+                              showToast('Go to Catalogue to assign this image', 'warning');
                             }}
                             className="px-3 py-2 bg-maroon-900 text-gold-100 rounded-xl text-xs font-bold hover:bg-maroon-800 flex items-center gap-1.5 cursor-pointer shadow-lg transition-transform hover:scale-105"
                           >

@@ -92,7 +92,7 @@ export default function Bridal() {
                 <ChevronRightIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
               </button>
               <button
-                onClick={() => showToast("Our traditional weave guides will contact you shortly!")}
+                onClick={() => showToast("Our traditional weave guides will contact you shortly!", "info")}
                 className="inline-flex items-center px-5 sm:px-7 py-3 sm:py-3.5 rounded-full border border-gold-400/50 text-gold-100 font-semibold text-xs sm:text-sm tracking-wider hover:bg-gold-500/10 transition-all cursor-pointer"
               >
                 BOOK CONSULTATION

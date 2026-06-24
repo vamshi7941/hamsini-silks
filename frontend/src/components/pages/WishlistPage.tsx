@@ -1,10 +1,15 @@
-import { Link } from "react-router-dom";
-import { useStore } from "../../context/StoreContext";
-import ProductCard from "../ProductCard";
+import { Link } from 'react-router-dom';
+import { useStore } from '../../context/StoreContext';
+import ProductCard from '../ProductCard';
+import GuestUser from '../guestUser';
+import AccessDenied from '../accessDenied';
 
 export default function WishlistPage() {
-  const { products, wishlist } = useStore();
+  const { products, wishlist, user } = useStore();
   let savedItems = products.filter((p) => wishlist.includes(p._id));
+
+  if(!user.loggedIn) return <GuestUser page="wishlist" />;
+  if(user.role !== 'customer')  return <AccessDenied page="wishlist" />;
 
   return (
     <div className="min-h-screen bg-[#fdf8f1]">
@@ -14,11 +19,13 @@ export default function WishlistPage() {
         <div className="relative max-w-7xl mx-auto flex items-center gap-4">
           <div className="text-4xl">❤️</div>
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-gold-200">Heirloom Wishlist</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-gold-200">
+              Heirloom Wishlist
+            </h1>
             <p className="text-sm text-gold-100/70">
               {wishlist.length === 0
-                ? "Your wishlist is empty — start saving your favourite weaves!"
-                : `${wishlist.length} ${wishlist.length === 1 ? "saree" : "sarees"} saved for you`}
+                ? 'Your wishlist is empty — start saving your favourite weaves!'
+                : `${wishlist.length} ${wishlist.length === 1 ? 'saree' : 'sarees'} saved for you`}
             </p>
           </div>
         </div>
@@ -28,9 +35,12 @@ export default function WishlistPage() {
         {savedItems.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🪷</div>
-            <h2 className="font-display text-xl font-bold text-maroon-900 mb-2">Your wishlist is empty</h2>
+            <h2 className="font-display text-xl font-bold text-maroon-900 mb-2">
+              Your wishlist is empty
+            </h2>
             <p className="text-sm text-maroon-700/70 mb-6 max-w-md mx-auto">
-              Click the heart icon on any saree to save your favourite traditional weaves here.
+              Click the heart icon on any saree to save your favourite
+              traditional weaves here.
             </p>
             <Link
               to="/shop"
@@ -50,7 +60,8 @@ export default function WishlistPage() {
         {/* Quick tip */}
         <div className="mt-10 bg-white rounded-2xl border border-gold-200 p-5 text-center">
           <p className="text-xs text-maroon-700/80">
-            💡 Items in your wishlist are saved locally. Share this list with family to pick your wedding trousseau!
+            💡 Items in your wishlist are saved locally. Share this list with
+            family to pick your wedding trousseau!
           </p>
         </div>
       </div>

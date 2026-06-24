@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
+import GuestUser from '../guestUser';
+import AccessDenied from '../accessDenied';
 
 const PAYMENT_METHODS = [
   { id: 'UPI', icon: '📱', label: 'UPI', sub: 'PhonePe · GPay · Paytm · BHIM' },
@@ -23,6 +25,27 @@ export default function CheckoutPage() {
   const [payment, setPayment] = useState('UPI');
   const [orderId, setOrderId] = useState<string | null>(null);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await placeOrder({
+      name,
+      email,
+      phone,
+      address,
+      paymentMethod: payment,
+    }).then((res) => {
+      console.log(res);
+      if (res.success) {
+        setOrderId(res.data._id);
+        clearCart();
+      }
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (!user.loggedIn) return <GuestUser page="checkout" />;
+  if (user.role !== 'customer') return <AccessDenied page="checkout" />;
+
   if (cart.length === 0 && !orderId && !buyNowItem) {
     return (
       <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
@@ -41,24 +64,6 @@ export default function CheckoutPage() {
       </div>
     );
   }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await placeOrder({
-      name,
-      email,
-      phone,
-      address,
-      paymentMethod: payment,
-    }).then((res) => {
-      console.log(res);
-      if (res.success) {
-        setOrderId(res.data._id);
-        clearCart();
-      }
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   /* ── SUCCESS SCREEN ── */
   if (orderId) {

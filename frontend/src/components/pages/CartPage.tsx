@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
 import { generateSlug } from '@/utils/slug';
+import GuestUser from '../guestUser';
+import AccessDenied from '../accessDenied';
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { cart, cartTotal, showToast, setBuyNowItem, user } =
+  const { cart, cartTotal, showToast, setBuyNowItem, user, imagesLoaded } =
     useStore();
   const { updateQuantity, removeFromCart } = CustomerApi();
   const [coupon, setCoupon] = useState('');
@@ -16,9 +18,9 @@ export default function CartPage() {
     e.preventDefault();
     if (coupon.trim().toUpperCase() === 'BRIDE30') {
       setDiscount(0.3);
-      showToast('🎉 BRIDE30 applied — 30% off!');
+      showToast('🎉 BRIDE30 applied — 30% off!', 'success');
     } else {
-      showToast('Invalid coupon. Try BRIDE30');
+      showToast('Invalid coupon. Try BRIDE30', 'warning');
     }
   };
 
@@ -26,27 +28,8 @@ export default function CartPage() {
   const finalTotal = cartTotal - savings;
   const shippingFree = cartTotal >= 5000;
 
-  if (user.role === 'admin') {
-    return (
-      <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
-        <div className="text-center py-24 max-w-md mx-auto">
-          <div className="text-7xl mb-5">🚫</div>
-          <h2 className="font-display text-2xl font-bold text-maroon-900 mb-2">
-            Admins cannot access the cart
-          </h2>
-          <p className="text-sm text-maroon-700/70 mb-6">
-            Please log in as a customer to view and manage your shopping bag.
-          </p>
-          <button
-            onClick={() => navigate('/shop')}
-            className="px-8 py-3 bg-maroon-900 text-gold-100 rounded-full font-bold text-sm hover:bg-maroon-800 transition-colors cursor-pointer shadow-md"
-          >
-            Explore Catalogue
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!user.loggedIn) return <GuestUser page="cart" />;
+  if (user.role !== 'customer') return <AccessDenied page="cart" />;
 
   return (
     <div className="min-h-screen bg-[#fdf8f1]">
@@ -104,7 +87,9 @@ export default function CartPage() {
                   >
                     {/* Image */}
                     <button
-                      onClick={() => navigate(`/product/${generateSlug(p._id, p.name)}`)}
+                      onClick={() =>
+                        navigate(`/product/${generateSlug(p._id, p.name)}`)
+                      }
                       className="shrink-0 cursor-pointer"
                     >
                       <img
@@ -121,7 +106,9 @@ export default function CartPage() {
                           {p.category}
                         </span>
                         <h3
-                          onClick={() => navigate(`/product/${generateSlug(p._id, p.name)}`)}
+                          onClick={() =>
+                            navigate(`/product/${generateSlug(p._id, p.name)}`)
+                          }
                           className="font-display text-base sm:text-lg font-bold text-maroon-900 cursor-pointer hover:text-maroon-700 transition-colors leading-snug"
                         >
                           {p.name}

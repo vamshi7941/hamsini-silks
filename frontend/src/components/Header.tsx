@@ -112,7 +112,7 @@ export default function Header() {
               </button>
             </div>
 
-            {user.role === 'customer' && (
+            {user.loggedIn && user.role === 'customer' && (
               <Link
                 to="/wishlist"
                 className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all hidden sm:inline-flex cursor-pointer"
@@ -128,7 +128,7 @@ export default function Header() {
             )}
 
             <Link
-              to="/login"
+              to={user.loggedIn ? '/profile' : '/login'}
               className={`p-1.5 sm:p-2 rounded-full relative transition-colors cursor-pointer ${
                 user.loggedIn
                   ? 'text-gold-600 bg-gold-50'
@@ -144,7 +144,7 @@ export default function Header() {
               )}
             </Link>
 
-            {user.role === 'customer' && (
+            {user.loggedIn && user.role === 'customer' && (
               <Link
                 to="/cart"
                 className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all cursor-pointer"
@@ -174,7 +174,11 @@ export default function Header() {
           {[
             { label: 'Home', to: '/', isCat: false },
             { label: 'All Weaves', cat: 'All', isCat: true },
-            { label: 'Bridal Kanjivaram', cat: 'Bridal Kanjivaram', isCat: true },
+            {
+              label: 'Bridal Kanjivaram',
+              cat: 'Bridal Kanjivaram',
+              isCat: true,
+            },
             { label: 'Banarasi Heritage', cat: 'Banarasi Silk', isCat: true },
             { label: 'Soft Silk Pattu', cat: 'Soft Silk Pattu', isCat: true },
             { label: 'Designer Atelier', cat: 'Designer Silk', isCat: true },
