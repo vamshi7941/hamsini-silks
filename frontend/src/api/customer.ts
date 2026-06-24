@@ -28,9 +28,12 @@ export const CustomerApi = () => {
           },
         },
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
       }
+
       const returnData = await response.json();
 
       if (returnData.success) {
@@ -54,6 +57,7 @@ export const CustomerApi = () => {
         setWishlist(wishlistItems);
       }
     } catch (error) {
+      showToast('Failed to fetch customer data.', 'error');
       console.error('Error fetching customer data:', error);
     }
   };
@@ -85,12 +89,14 @@ export const CustomerApi = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
       }
 
       return response.json();
     } catch (error) {
+      showToast('Failed to update cart.', 'error');
       console.error('Error updating cart:', error);
     }
   };
@@ -115,17 +121,19 @@ export const CustomerApi = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
+          Authorization: `Bearer ${user?.token}aa`,
         },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
       }
 
       return response.json();
     } catch (error) {
+      showToast('Failed to update wishlist.', 'error');
       console.error('Error updating wishlist:', error);
     }
   };
@@ -162,13 +170,14 @@ export const CustomerApi = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
       }
 
       const res = await response.json();
       return res;
     } catch (error) {
+      showToast('Failed to place order.', 'error');
       console.error('Error placing order:', error);
     }
   };
@@ -267,17 +276,17 @@ export const CustomerApi = () => {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${user?.token}`,
+            Authorization: `Bearer ${user?.token}aaa`,
           },
         },
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
       const data = await response.json();
 
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return [];
+      }
       if (data.success) {
         const ordersWithProducts = (data.orders || []).map((order: any) => ({
           ...order,
@@ -293,6 +302,7 @@ export const CustomerApi = () => {
         return ordersWithProducts;
       }
     } catch (error) {
+      showToast('Failed to fetch my orders.', 'error');
       console.error('Error fetching my orders:', error);
     }
   };

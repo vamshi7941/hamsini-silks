@@ -36,6 +36,11 @@ export const AdminApi = () => {
       });
       const json = await response.json();
 
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
+      }
+
       if (response.ok) {
         console.log(json);
         fetchAllProducts();
@@ -71,6 +76,11 @@ export const AdminApi = () => {
       );
       const json = await response.json();
 
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
+      }
+
       if (json.success) {
         fetchAllProducts();
         showToast('Product updated!', 'success');
@@ -100,6 +110,11 @@ export const AdminApi = () => {
       );
       const json = await response.json();
 
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
+      }
+
       if (json.success) {
         fetchAllProducts();
         showToast('Product deleted!', 'success');
@@ -124,6 +139,11 @@ export const AdminApi = () => {
         },
       });
       const json = await response.json();
+
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
+      }
 
       if (json.success) {
         const ordersWithProducts = (json.orders || []).map((order: any) => ({
@@ -157,13 +177,14 @@ export const AdminApi = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
+          Authorization: `Bearer ${user?.token}aa`,
         },
         body: JSON.stringify({ orderId, status }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
       }
 
       setOrders((prev) =>
@@ -173,8 +194,8 @@ export const AdminApi = () => {
 
       return response.json();
     } catch (err) {
-      console.log(err instanceof Error ? err.message : 'Unknown error');
       showToast('Failed to update order status', 'error');
+      console.log(err instanceof Error ? err.message : 'Unknown error');
       return null;
     }
   };
