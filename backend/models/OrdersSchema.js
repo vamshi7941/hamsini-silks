@@ -48,6 +48,10 @@ const OrdersSchema = new Schema({
         type: Number,
         required: true,
       },
+      size: {
+        type: String,
+        required: true,
+      },
       quantity: {
         type: Number,
         required: true,

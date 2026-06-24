@@ -333,7 +333,7 @@ export default function ProductDetailPage() {
               ) : (
                 <>
                   <button
-                    onClick={() => (!isAdmin ? addToCart(p, qty) : null)}
+                    onClick={() => (!isAdmin ? addToCart(p, qty, activeSize) : null)}
                     className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99] cursor-pointer"
                   >
                     🛍️ Add to Bag · {qty > 1 ? `${qty} pieces` : '1 piece'}
@@ -341,7 +341,7 @@ export default function ProductDetailPage() {
                   <button
                     onClick={() => {
                       if (isAdmin) return;
-                      setBuyNowItem({ product: p, quantity: qty });
+                      setBuyNowItem({ product: p, quantity: qty, size: activeSize });
                       navigate('/checkout');
                     }}
                     className="w-full py-3.5 rounded-2xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wider transition-colors cursor-pointer shadow-md"

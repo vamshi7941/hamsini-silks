@@ -805,7 +805,8 @@ function OrderRow({
                         {item.product.name}
                       </span>
                       <span className="text-[10px] text-maroon-700/70">
-                        {item.product.category} · Qty: {item.quantity}
+                        {item.product.category} · Qty: {item.quantity} · Size:{' '}
+                        {item.size}
                       </span>
                     </div>
                     <span className="text-xs font-bold text-maroon-900 shrink-0">
@@ -1141,7 +1142,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         <nav className="flex-1 px-2 md:px-3 py-4 space-y-1 overflow-y-auto admin-scroll">
-          {sidebarItems.map((item, i) => (
+          {sidebarItems.map((item: any, i: number) => (
             <button
               key={i}
               onClick={() => setActiveTab(item.id as AdminTab)}

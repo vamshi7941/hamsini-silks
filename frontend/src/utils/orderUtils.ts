@@ -23,7 +23,7 @@ export const printInvoice = (order: Order) => {
   const itemsHtml = order.items
     .map(
       (i) =>
-        `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.product.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${i.product.price.toLocaleString('en-IN')}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${(i.product.price * i.quantity).toLocaleString('en-IN')}</td></tr>`,
+        `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.product.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.size}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${i.product.price.toLocaleString('en-IN')}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${(i.product.price * i.quantity).toLocaleString('en-IN')}</td></tr>`,
     )
     .join('');
 
@@ -62,7 +62,7 @@ export const printInvoice = (order: Order) => {
           ${order.name}<br>${order.email}<br>${order.phone}<br>${order.address}
         </div>
       </div>
-      <table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table>
+      <table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:center">Size</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table>
       <div class="total">Total: ₹${order.total.toLocaleString('en-IN')}<br><span style="font-size:12px;font-weight:400">via ${order.paymentMethod}</span></div>
       <p style="font-size:12px">🛡️ Certified pure mulberry silk · Silk Mark registered</p>
       <div class="footer">॥ वस्त्रं तेजः ॥ &nbsp; A drape is a blessing.<br>© Hamsini Silks · Thank you for your patronage</div>

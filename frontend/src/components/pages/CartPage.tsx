@@ -73,7 +73,7 @@ export default function CartPage() {
           <div className="grid lg:grid-cols-12 gap-8">
             {/* ── Item list ── */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-4">
-              {cart.map(({ product: p, quantity }) => {
+              {cart.map(({ product: p, quantity, size }) => {
                 const d = p.originalPrice
                   ? Math.round(
                       ((p.originalPrice - p.price) / p.originalPrice) * 100,
@@ -126,6 +126,10 @@ export default function CartPage() {
                               {d}% off
                             </span>
                           )}
+                        </div>
+
+                        <div className="text-xs text-maroon-700 mt-1">
+                          Size: <span className="font-semibold">{size}</span>
                         </div>
                       </div>
 

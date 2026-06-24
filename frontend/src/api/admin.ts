@@ -153,6 +153,7 @@ export const AdminApi = () => {
             return {
               product: product || { _id: item.productId },
               quantity: item.quantity,
+              size: item.size,
             };
           }),
         }));

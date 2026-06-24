@@ -135,8 +135,10 @@ function OrderRow({ order: order }: { order: Order }) {
                       <span className="text-xs font-semibold text-maroon-900 block truncate">
                         {item.product.name}
                       </span>
+
                       <span className="text-[10px] text-maroon-700/70">
-                        {item.product.category} · Qty: {item.quantity}
+                        {item.product.category} · Qty: {item.quantity} · Size:{' '}
+                        {item.size}
                       </span>
                     </div>
                     <span className="text-xs font-bold text-maroon-900 shrink-0">
@@ -190,7 +192,7 @@ export default function MyOrdersPage() {
   const [orderFilter, setOrderFilter] = useState('All');
 
   useEffect(() => {
-    if (!imagesLoaded) return;
+    if (!imagesLoaded || !user.loggedIn) return;
 
     const getMyOrders = async () => {
       if (hasFetchedOrders.current) return;

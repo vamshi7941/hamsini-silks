@@ -47,6 +47,7 @@ export const CustomerApi = () => {
               return {
                 product,
                 quantity: item.quantity,
+                size: item.size,
               };
             }
             return null;
@@ -76,6 +77,7 @@ export const CustomerApi = () => {
       products: cart.map((item) => ({
         productId: item.product._id,
         quantity: item.quantity,
+        size: item.size,
       })),
     };
 
@@ -155,6 +157,7 @@ export const CustomerApi = () => {
           name: item.product.name,
           price: item.product.price,
           quantity: item.quantity,
+          size: item.size,
         })),
         total: orderTotal,
       },
@@ -182,17 +185,25 @@ export const CustomerApi = () => {
     }
   };
 
-  const addToCart = async (product: Product, quantity = 1) => {
+  const addToCart = async (
+    product: Product,
+    quantity = 1,
+    activeSize = '6.2m (with blouse)',
+  ) => {
     const newCart =
       cart.length > 0
         ? cart.find((item) => item.product._id === product._id)
           ? cart.map((item) =>
               item.product._id === product._id
-                ? { ...item, quantity: item.quantity + quantity }
+                ? {
+                    ...item,
+                    quantity: item.quantity + quantity,
+                    size: activeSize,
+                  }
                 : item,
             )
-          : [...cart, { product, quantity }]
-        : [{ product, quantity }];
+          : [...cart, { product, quantity, size: activeSize }]
+        : [{ product, quantity, size: activeSize }];
 
     await updateCart(newCart, user).then((res: any) => {
       if (res.success) {
@@ -276,7 +287,7 @@ export const CustomerApi = () => {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${user?.token}aaa`,
+            Authorization: `Bearer ${user?.token}`,
           },
         },
       );
@@ -295,11 +306,15 @@ export const CustomerApi = () => {
             return {
               product: product || { _id: item.productId },
               quantity: item.quantity,
+              size: item.size,
             };
           }),
         }));
 
         return ordersWithProducts;
+      } else {
+        showToast(data.message || 'Failed to fetch my orders.', 'error');
+        return [];
       }
     } catch (error) {
       showToast('Failed to fetch my orders.', 'error');
