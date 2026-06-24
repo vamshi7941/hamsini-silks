@@ -33,7 +33,7 @@ router.post('/google', async (req, res) => {
         fullName: name,
         email: email,
         loggedInAtIST: istString,
-        role: process.env.CUSTOMER,
+        role: 'customer',
       },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );

@@ -1,15 +1,15 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 // Firebase config (from your SDK snippet)
 const firebaseConfig = {
-  apiKey: "AIzaSyA4OdGn3kZlAO1Txsy_tm8IDKsXyNA4zG4",
-  authDomain: "hamsini-silks.firebaseapp.com",
-  projectId: "hamsini-silks",
-  storageBucket: "hamsini-silks.firebasestorage.app",
-  messagingSenderId: "712849818613",
-  appId: "1:712849818613:web:1588be4edd91411f9796bc",
-  measurementId: "G-W47F05CWMB",
+  apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY,
+  authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: (import.meta as any).env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: (import.meta as any).env.VITE_FIREBASE_APP_ID,
+  measurementId: (import.meta as any).env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);

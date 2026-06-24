@@ -21,7 +21,7 @@ export async function loginUser(req, res) {
     const _id = user.id;
 
     res.status(200).json({
-      user: { _id, fullName, email, token, role: process.env.ADMIN },
+      user: { _id, fullName, email, token, role: 'admin' },
       message: 'Login successful',
       success: true,
     });
