@@ -8,8 +8,7 @@ import AccessDenied from '../accessDenied';
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { cart, cartTotal, showToast, setBuyNowItem, user, imagesLoaded } =
-    useStore();
+  const { cart, cartTotal, showToast, setBuyNowItem, user } = useStore();
   const { updateQuantity, removeFromCart } = CustomerApi();
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);

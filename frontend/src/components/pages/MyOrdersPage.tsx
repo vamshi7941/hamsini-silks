@@ -1,6 +1,6 @@
 import { useStore } from '../../context/StoreContext';
 import { Order } from '../../context/StoreContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icons';
 import { statusIcon, statusMap, printInvoice } from '../../utils/orderUtils';
 import { CustomerApi } from '@/api/customer';
@@ -183,6 +183,7 @@ function OrderRow({ order: order }: { order: Order }) {
 export default function MyOrdersPage() {
   const { user, imagesLoaded } = useStore();
   const { fetchMyOrders } = CustomerApi();
+  const hasFetchedOrders = useRef(false);
 
   const [orders, setMyOrders] = useState<Order[]>([]);
   const [orderSearch, setOrderSearch] = useState('');
@@ -192,6 +193,8 @@ export default function MyOrdersPage() {
     if (!imagesLoaded) return;
 
     const getMyOrders = async () => {
+      if (hasFetchedOrders.current) return;
+      hasFetchedOrders.current = true;
       const orders = await fetchMyOrders();
       setMyOrders(orders);
     };

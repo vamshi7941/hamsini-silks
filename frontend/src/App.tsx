@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useStore } from './context/StoreContext';
 import { ProductsApi } from './api/products';
@@ -49,16 +49,24 @@ export default function App() {
   const { fetchAllOrders } = AdminApi();
   const { getCustomerData } = CustomerApi();
 
+  const hasFetchedProducts = useRef(false);
+  const hasFetchedOrders = useRef(false);
+
   useEffect(() => {
+    if (hasFetchedProducts.current) return;
+    hasFetchedProducts.current = true;
     fetchAllProducts();
   }, []);
 
   useEffect(() => {
     if (!imagesLoaded) return;
     if (user.role === 'admin') {
-      fetchAllOrders();
+      if (!hasFetchedOrders.current) {
+        hasFetchedOrders.current = true;
+        fetchAllOrders();
+      }
     }
-    if (user.role === 'customer') {
+    if (user.loggedIn && user.role === 'customer') {
       getCustomerData();
     }
   }, [user, imagesLoaded]);

@@ -1107,7 +1107,7 @@ export default function AdminDashboard() {
       p.category.toLowerCase().includes(productSearch.toLowerCase()),
   );
 
-  const sidebarItems = [
+  const sidebarItems: any = [
     {
       id: 'overview',
       label: 'Overview',
@@ -1123,13 +1123,6 @@ export default function AdminDashboard() {
     },
     { id: 'media', label: 'Media', icon: Icon.image },
   ];
-
-  useEffect(() => {
-    if (!imagesLoaded) return;
-    if (user.role === 'admin') {
-      fetchAllOrders();
-    }
-  }, [user, imagesLoaded]);
 
   if(!user.loggedIn) return <GuestUser page='admin'/>
   if(user.role !== 'admin') return <AccessDenied page='admin'/>
