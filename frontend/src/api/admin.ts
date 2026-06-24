@@ -6,7 +6,7 @@ export const AdminApi = () => {
   const apiUrl =
     (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
 
-  const { products, showToast, setOrders } = useStore();
+  const { products, showToast, setOrders, user } = useStore();
   const { fetchAllProducts } = ProductsApi();
 
   const getNextProductId = (products: Product[]) => {
@@ -28,7 +28,10 @@ export const AdminApi = () => {
     try {
       const response = await fetch(`${apiUrl}/api/products/addProduct`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
         body: JSON.stringify({ ...product, _id: generatedId }),
       });
       const json = await response.json();
@@ -59,7 +62,10 @@ export const AdminApi = () => {
         `${apiUrl}/api/products/updateProduct/${id}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
           body: JSON.stringify(updates),
         },
       );
@@ -86,6 +92,10 @@ export const AdminApi = () => {
         `${apiUrl}/api/products/deleteProduct/${id}`,
         {
           method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
         },
       );
       const json = await response.json();
@@ -108,7 +118,10 @@ export const AdminApi = () => {
   const fetchAllOrders = async () => {
     try {
       const response = await fetch(`${apiUrl}/api/orders/allOrders`, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
       });
       const json = await response.json();
 
@@ -142,7 +155,10 @@ export const AdminApi = () => {
     try {
       const response = await fetch(`${apiUrl}/api/orders/updateOrderStatus`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
         body: JSON.stringify({ orderId, status }),
       });
 

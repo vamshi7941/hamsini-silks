@@ -4,17 +4,20 @@ const router = Router();
 /** import controllers */
 import * as adminController from '../controllers/adminController.js';
 import Customer from '../models/CustomerSchema.js';
+import jwt from 'jsonwebtoken';
 
-/** Questions Routes API */
+const createToken = (_id) => {
+  return jwt.sign({ _id }, process.env.SECRET, { expiresIn: '3d' });
+};
 
 router.route('/admin/login').post(adminController.loginUser);
 
 router.route('/admin/signup').post(adminController.signupUser);
 
 router.post('/google', async (req, res) => {
-  const { user, idToken } = req.body;
+  const { uid, name, email } = req.body;
 
-  if (!user || !user.uid)
+  if (!uid)
     return res
       .status(400)
       .json({ success: false, message: 'Missing user info' });
@@ -24,20 +27,20 @@ router.post('/google', async (req, res) => {
     const istString = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
     const saved = await Customer.findByIdAndUpdate(
-      user.uid,
+      uid,
       {
-        _id: user.uid,
-        fullName: user.name,
-        email: user.email,
+        _id: uid,
+        fullName: name,
+        email: email,
         loggedInAtIST: istString,
-        role: process.env.CUSTOMER
+        role: process.env.CUSTOMER,
       },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
-    if (idToken) console.log('idToken length:', String(idToken).length);
+    const token = createToken(saved._id);
 
-    return res.json({ success: true, customer: saved });
+    return res.json({ success: true, customer: saved, token });
   } catch (err) {
     console.error('Error saving Google user:', err);
     return res.status(500).json({ success: false, message: 'Server error' });

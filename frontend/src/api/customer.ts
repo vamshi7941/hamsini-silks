@@ -16,10 +16,17 @@ export const CustomerApi = () => {
     buyNowItem,
     cartTotal,
   } = useStore();
+
   const getCustomerData = async () => {
     try {
       const response = await fetch(
         `${apiUrl}/api/customer/getUser?_id=${user._id}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
+        },
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

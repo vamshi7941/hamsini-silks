@@ -12,7 +12,8 @@ export const Auth = () => {
     email: string,
     role: 'customer' | 'admin',
     name?: string,
-    _id?: string,
+    _id: string = '',
+    token: string = '',
   ) => {
     const displayName =
       name ||
@@ -23,6 +24,7 @@ export const Auth = () => {
       role,
       loggedIn: true,
       _id,
+      token,
     } as User;
     setUser(newUser);
     try {
@@ -36,7 +38,7 @@ export const Auth = () => {
 
   const loginWithGoogle = async () => {
     try {
-      const { user, idToken } = await signInWithGooglePopup();
+      const { user } = await signInWithGooglePopup();
       const name = user.displayName ?? user.email?.split('@')[0] ?? 'Patron';
       const email = user.email ?? '';
 
@@ -44,14 +46,15 @@ export const Auth = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user: { name, email, uid: user.uid },
-          idToken,
+          name,
+          email,
+          uid: user.uid,
         }),
       });
       const json = await response.json();
 
       if (json.success) {
-        login(email, 'customer', name, json.customer._id ?? '');
+        login(email, 'customer', name, user.uid ?? '', json.token);
       } else {
         showToast('Google sign-in failed. Please try again.', 'error');
       }
@@ -74,13 +77,17 @@ export const Auth = () => {
       const json = await response.json();
 
       if (json.success) {
+        const _id = json.user._id ?? '';
         const name =
           json.user.fullName ?? json.user.email?.split('@')[0] ?? 'Admin';
         const token = json.user.token ?? '';
-        login(email, 'admin', name, token);
+        login(email, 'admin', name, _id, token);
         showToast(`Welcome back, ${name}!`, 'success');
       } else {
-        showToast(json.message || json.error || 'Invalid email or password', 'error');
+        showToast(
+          json.message || json.error || 'Invalid email or password',
+          'error',
+        );
       }
     } catch (err) {
       console.error('Admin login failed', err);

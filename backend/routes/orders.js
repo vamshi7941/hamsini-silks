@@ -2,10 +2,11 @@ import { Router } from 'express';
 import OrderSchema from '../models/OrdersSchema.js';
 import * as customerController from '../controllers/customerController.js';
 import * as adminController from '../controllers/adminController.js';
+import { requireAdminAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
 
-router.route('/allOrders').get(async (req, res) => {
+router.route('/allOrders').get(requireAdminAuth, async (req, res) => {
   try {
     const orders = await OrderSchema.find().sort({ orderedDate: -1 });
 
@@ -23,6 +24,8 @@ router.route('/allOrders').get(async (req, res) => {
   }
 });
 
-router.route('/updateOrderStatus').post(adminController.updateOrderStatus);
+router
+  .route('/updateOrderStatus')
+  .post(requireAdminAuth, adminController.updateOrderStatus);
 
 export default router;

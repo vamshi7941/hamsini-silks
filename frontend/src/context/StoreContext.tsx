@@ -24,8 +24,8 @@ export type User = {
   email: string;
   role: 'customer' | 'admin';
   loggedIn: boolean;
-  token?: string;
-  _id?: string;
+  token: string;
+  _id: string;
 };
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
