@@ -30,7 +30,7 @@ export default function LoginPage() {
             </div>
             <div className="relative z-10">
               <h1 className="font-display text-2xl font-bold text-gold-200">
-                Hamsini Patron Portal
+                Hamsini {user.role === 'admin' ? 'Admin' : 'Patron'} Portal
               </h1>
               <p className="text-xs text-gold-100/70 mt-1">
                 Access your orders, wishlist & exclusive privileges

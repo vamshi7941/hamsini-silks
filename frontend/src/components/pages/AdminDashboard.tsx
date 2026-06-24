@@ -1115,6 +1115,27 @@ export default function AdminDashboard() {
     { id: 'media', label: 'Media', icon: Icon.image },
   ];
 
+  if (user.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f5ede3]">
+        <div className="bg-white p-8 rounded-3xl shadow-lg text-center">
+          <h1 className="text-2xl font-bold text-maroon-900 mb-4">
+            Access Denied
+          </h1>
+          <p className="text-sm text-maroon-700 mb-6">
+            You do not have permission to access the admin dashboard.
+          </p>
+          <button
+            onClick={logout}
+            className="px-4 py-2 bg-maroon-900 text-white rounded-lg hover:bg-maroon-800 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f5ede3] flex">
       {/* ── Sidebar ── */}

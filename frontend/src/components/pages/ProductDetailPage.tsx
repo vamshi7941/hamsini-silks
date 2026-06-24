@@ -10,6 +10,7 @@ export default function ProductDetailPage() {
     products,
     isInWishlist,
     setBuyNowItem,
+    user,
   } = useStore();
 
   const {addToCart, toggleWishlist} = CustomerApi()
@@ -35,6 +36,7 @@ export default function ProductDetailPage() {
     );
   }
 
+  const isAdmin = user.role === 'admin';
   const p = selectedProduct;
   const discount = p.originalPrice
     ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
@@ -115,7 +117,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
               <button
-                onClick={() => toggleWishlist(p._id)}
+                onClick={() => !isAdmin ? toggleWishlist(p._id) : null}
                 className={`absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all z-10 cursor-pointer ${
                   liked
                     ? 'bg-maroon-900 text-gold-300'
@@ -334,13 +336,14 @@ export default function ProductDetailPage() {
               ) : (
                 <>
                   <button
-                    onClick={() => addToCart(p, qty)}
+                    onClick={() => !isAdmin ? addToCart(p, qty) : null}
                     className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99] cursor-pointer"
                   >
                     🛍️ Add to Bag · {qty > 1 ? `${qty} pieces` : '1 piece'}
                   </button>
                   <button
                     onClick={() => {
+                      if(isAdmin) return;
                       setBuyNowItem({ product: p, quantity: qty });
                       navigateTo('checkout');
                     }}

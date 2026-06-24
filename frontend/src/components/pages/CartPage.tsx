@@ -3,7 +3,8 @@ import { useStore } from '../../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
 
 export default function CartPage() {
-  const { cart, cartTotal, navigateTo, showToast, setBuyNowItem } = useStore();
+  const { cart, cartTotal, navigateTo, showToast, setBuyNowItem, user } =
+    useStore();
   const { updateQuantity, removeFromCart } = CustomerApi();
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -21,6 +22,28 @@ export default function CartPage() {
   const savings = Math.round(cartTotal * discount);
   const finalTotal = cartTotal - savings;
   const shippingFree = cartTotal >= 5000;
+
+  if (user.role === 'admin') {
+    return (
+      <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
+        <div className="text-center py-24 max-w-md mx-auto">
+          <div className="text-7xl mb-5">🚫</div>
+          <h2 className="font-display text-2xl font-bold text-maroon-900 mb-2">
+            Admins cannot access the cart
+          </h2>
+          <p className="text-sm text-maroon-700/70 mb-6">
+            Please log in as a customer to view and manage your shopping bag.
+          </p>
+          <button
+            onClick={() => navigateTo('shop')}
+            className="px-8 py-3 bg-maroon-900 text-gold-100 rounded-full font-bold text-sm hover:bg-maroon-800 transition-colors cursor-pointer shadow-md"
+          >
+            Explore Catalogue
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fdf8f1]">

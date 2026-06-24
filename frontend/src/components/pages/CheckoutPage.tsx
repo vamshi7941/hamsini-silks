@@ -10,7 +10,7 @@ const PAYMENT_METHODS = [
 
 export default function CheckoutPage() {
   const { cart, cartTotal, navigateTo, user, buyNowItem } = useStore();
-  const { placeOrder } = CustomerApi();
+  const { placeOrder, clearCart } = CustomerApi();
 
   if (!user.loggedIn && user.role !== 'customer') return;
 
@@ -42,20 +42,19 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const id = await placeOrder(
-      {
-        name,
-        email,
-        phone,
-        address,
-        paymentMethod: payment,
-      },
-      buyNowItem,
-      cart,
-      cartTotal,
-      user,
-    );
-    setOrderId(id);
+    await placeOrder({
+      name,
+      email,
+      phone,
+      address,
+      paymentMethod: payment,
+    }).then((res) => {
+      console.log(res);
+      if (res.success) {
+        setOrderId(res.data._id);
+        clearCart();
+      }
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

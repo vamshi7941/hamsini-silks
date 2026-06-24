@@ -2,12 +2,20 @@ import { CartItem, Order, useStore } from '@/context/StoreContext';
 import { Product } from '@/data';
 
 export const CustomerApi = () => {
-  const { products, cart, setCart, user, showToast, wishlist, setWishlist } =
-    useStore();
-
   const apiUrl =
     (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
 
+  const {
+    products,
+    cart,
+    setCart,
+    user,
+    showToast,
+    wishlist,
+    setWishlist,
+    buyNowItem,
+    cartTotal,
+  } = useStore();
   const getCustomerData = async (
     customerId: string,
     onDataFetched?: (cartItems: any[], wishlist: string[]) => void,
@@ -111,10 +119,6 @@ export const CustomerApi = () => {
 
   const placeOrder = async (
     orderData: Omit<Order, '_id' | 'status' | 'date' | 'items' | 'total'>,
-    buyNowItem: CartItem | null,
-    cart: CartItem[],
-    cartTotal: number,
-    user: any,
   ) => {
     const orderItems = buyNowItem ? [buyNowItem] : cart;
     const orderTotal = buyNowItem
@@ -150,7 +154,7 @@ export const CustomerApi = () => {
       }
 
       const res = await response.json();
-      return res.data._id;
+      return res;
     } catch (error) {
       console.error('Error placing order:', error);
     }

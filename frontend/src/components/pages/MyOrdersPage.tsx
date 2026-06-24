@@ -151,7 +151,7 @@ function OrderRow({ order: order }: { order: Order }) {
               <h4 className="text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
                 Order Summary
               </h4>
-              <div className="mt-4 bg-gold-50 rounded-xl p-3 border border-gold-200">
+              <div className="h-[130px] bg-gold-50 rounded-xl p-3 border border-gold-200">
                 <div className="text-xs font-bold text-maroon-900 mb-1">
                   Summary
                 </div>
@@ -165,7 +165,7 @@ function OrderRow({ order: order }: { order: Order }) {
                   <span>Payment:</span>
                   <span className="font-bold">{order.paymentMethod}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold text-maroon-900 mt-2 pt-2 border-t border-gold-200">
+                <div className="flex justify-between text-sm font-bold text-maroon-900 mt-4 pt-4 border-t border-gold-200">
                   <span>Total:</span>
                   <span>₹{order.total.toLocaleString('en-IN')}</span>
                 </div>
