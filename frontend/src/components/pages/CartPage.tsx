@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
+import { generateSlug } from '@/utils/slug';
 
 export default function CartPage() {
-  const { cart, cartTotal, navigateTo, showToast, setBuyNowItem, user } =
+  const navigate = useNavigate();
+  const { cart, cartTotal, showToast, setBuyNowItem, user } =
     useStore();
   const { updateQuantity, removeFromCart } = CustomerApi();
   const [coupon, setCoupon] = useState('');
@@ -35,7 +38,7 @@ export default function CartPage() {
             Please log in as a customer to view and manage your shopping bag.
           </p>
           <button
-            onClick={() => navigateTo('shop')}
+            onClick={() => navigate('/shop')}
             className="px-8 py-3 bg-maroon-900 text-gold-100 rounded-full font-bold text-sm hover:bg-maroon-800 transition-colors cursor-pointer shadow-md"
           >
             Explore Catalogue
@@ -57,7 +60,7 @@ export default function CartPage() {
             </span>
           </h1>
           <button
-            onClick={() => navigateTo('shop')}
+            onClick={() => navigate('/shop')}
             className="text-sm text-gold-600 font-bold hover:text-gold-700 cursor-pointer"
           >
             ← Continue shopping
@@ -78,7 +81,7 @@ export default function CartPage() {
               your heart.
             </p>
             <button
-              onClick={() => navigateTo('shop')}
+              onClick={() => navigate('/shop')}
               className="px-8 py-3 bg-maroon-900 text-gold-100 rounded-full font-bold text-sm hover:bg-maroon-800 transition-colors cursor-pointer shadow-md"
             >
               Explore Catalogue
@@ -101,7 +104,7 @@ export default function CartPage() {
                   >
                     {/* Image */}
                     <button
-                      onClick={() => navigateTo('product-detail', p)}
+                      onClick={() => navigate(`/product/${generateSlug(p._id, p.name)}`)}
                       className="shrink-0 cursor-pointer"
                     >
                       <img
@@ -118,7 +121,7 @@ export default function CartPage() {
                           {p.category}
                         </span>
                         <h3
-                          onClick={() => navigateTo('product-detail', p)}
+                          onClick={() => navigate(`/product/${generateSlug(p._id, p.name)}`)}
                           className="font-display text-base sm:text-lg font-bold text-maroon-900 cursor-pointer hover:text-maroon-700 transition-colors leading-snug"
                         >
                           {p.name}
@@ -277,7 +280,7 @@ export default function CartPage() {
                 <button
                   onClick={() => {
                     setBuyNowItem(null); // Clear any previous buy now item
-                    navigateTo('checkout');
+                    navigate('/checkout');
                   }}
                   className="w-full py-4 rounded-2xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wider shadow-lg transition-all cursor-pointer"
                 >

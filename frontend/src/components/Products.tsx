@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 import SectionHeader from "./SectionHeader";
 import { useStore } from "../context/StoreContext";
@@ -7,7 +8,7 @@ const tabs = ["All", "Kanjivaram", "Banarasi", "Pattu", "Designer"];
 
 export default function Products() {
   const [active, setActive] = useState("All");
-  const { products, navigateTo } = useStore();
+  const { products } = useStore();
 
   const categoryMap: Record<string, string> = {
     All: "All",
@@ -49,7 +50,7 @@ export default function Products() {
 
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
           {filtered.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
 
@@ -62,12 +63,12 @@ export default function Products() {
         )}
 
         <div className="text-center mt-10 sm:mt-12">
-          <button
-            onClick={() => navigateTo("shop")}
+          <Link
+            to="/shop"
             className="inline-block px-8 sm:px-10 py-3 sm:py-3.5 rounded-full border-2 border-maroon-700 text-maroon-800 font-semibold text-xs sm:text-sm tracking-wider hover:bg-maroon-800 hover:text-gold-100 transition-all cursor-pointer"
           >
             VIEW ALL SAREES IN STORE
-          </button>
+          </Link>
         </div>
       </div>
     </section>

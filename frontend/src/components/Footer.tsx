@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { InstagramIcon, FacebookIcon, WhatsAppIcon } from "./Icons";
 import { useStore } from "../context/StoreContext";
 
@@ -17,7 +18,7 @@ const cols = [
 ];
 
 export default function Footer() {
-  const { navigateTo, showToast } = useStore();
+  const { showToast } = useStore();
 
   return (
     <footer className="bg-[#1a0805] text-gold-100 pt-12 sm:pt-16 pb-6 sm:pb-8 relative overflow-hidden shrink-0">
@@ -28,16 +29,16 @@ export default function Footer() {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 pb-8 sm:pb-12 border-b border-gold-700/30">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-4">
-            <button 
-              onClick={() => navigateTo("home")}
-              className="flex items-center mb-4 sm:mb-5 text-left group cursor-pointer bg-white rounded-lg p-2"
+            <Link
+              to="/"
+              className="flex items-center mb-4 sm:mb-5 text-left group cursor-pointer bg-white rounded-lg p-2 inline-block"
             >
-              <img 
-                src="https://storage.googleapis.com/a1aa/image/wM9tOQer8g4eQ1vVvL6P0m38d_UjL-R3Qj0rQpYw848.jpg" 
-                alt="Hamsini Silks Logo" 
+              <img
+                src="https://storage.googleapis.com/a1aa/image/wM9tOQer8g4eQ1vVvL6P0m38d_UjL-R3Qj0rQpYw848.jpg"
+                alt="Hamsini Silks Logo"
                 className="h-14 sm:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
               />
-            </button>
+            </Link>
             <p className="text-gold-200/70 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 max-w-xs">
               Five decades of weaving stories into silk. From the temple looms of Kanchipuram, draping the women of India since 1972.
             </p>
@@ -78,18 +79,12 @@ export default function Footer() {
                 <ul className="space-y-2 sm:space-y-2.5">
                   {col.links.map((link) => (
                     <li key={link}>
-                      <button
-                        onClick={() => {
-                          if (link === "Track Order") {
-                            navigateTo("login");
-                          } else {
-                            navigateTo("shop");
-                          }
-                        }}
+                      <Link
+                        to={link === "Track Order" ? "/login" : "/shop"}
                         className="text-xs sm:text-sm text-gold-200/70 hover:text-gold-300 transition-colors text-left block cursor-pointer"
                       >
                         {link}
-                      </button>
+                      </Link>
                     </li>
                   ))}
                 </ul>

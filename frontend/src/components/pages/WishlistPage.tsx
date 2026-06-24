@@ -1,8 +1,9 @@
+import { Link } from "react-router-dom";
 import { useStore } from "../../context/StoreContext";
 import ProductCard from "../ProductCard";
 
 export default function WishlistPage() {
-  const { products, wishlist, navigateTo } = useStore();
+  const { products, wishlist } = useStore();
   let savedItems = products.filter((p) => wishlist.includes(p._id));
 
   return (
@@ -31,12 +32,12 @@ export default function WishlistPage() {
             <p className="text-sm text-maroon-700/70 mb-6 max-w-md mx-auto">
               Click the heart icon on any saree to save your favourite traditional weaves here.
             </p>
-            <button
-              onClick={() => navigateTo("shop")}
-              className="px-7 py-3 bg-maroon-900 text-gold-100 rounded-full font-bold text-sm hover:bg-maroon-800 transition-colors cursor-pointer shadow-md"
+            <Link
+              to="/shop"
+              className="px-7 py-3 bg-maroon-900 text-gold-100 rounded-full font-bold text-sm hover:bg-maroon-800 transition-colors cursor-pointer shadow-md inline-block"
             >
               Explore Catalogue
-            </button>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">

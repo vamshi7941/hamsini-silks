@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
 
@@ -9,7 +10,8 @@ const PAYMENT_METHODS = [
 ];
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, navigateTo, user, buyNowItem } = useStore();
+  const navigate = useNavigate();
+  const { cart, cartTotal, user, buyNowItem } = useStore();
   const { placeOrder, clearCart } = CustomerApi();
 
   if (!user.loggedIn && user.role !== 'customer') return;
@@ -30,7 +32,7 @@ export default function CheckoutPage() {
             Your bag is empty.
           </p>
           <button
-            onClick={() => navigateTo('shop')}
+            onClick={() => navigate('/shop')}
             className="px-6 py-3 bg-maroon-900 text-gold-100 rounded-full font-bold text-sm cursor-pointer"
           >
             Explore Catalogue
@@ -111,7 +113,7 @@ export default function CheckoutPage() {
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
-                  onClick={() => navigateTo('shop')}
+                  onClick={() => navigate('/shop')}
                   className="flex-1 py-3 rounded-xl bg-gold-50 text-maroon-900 text-sm font-bold border border-gold-200 hover:bg-gold-100 transition-colors cursor-pointer"
                 >
                   Continue Shopping
@@ -130,21 +132,15 @@ export default function CheckoutPage() {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gold-100 px-4 sm:px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center gap-2 text-xs text-maroon-700">
-          <button
-            onClick={() => navigateTo('home')}
-            className="hover:text-maroon-900 cursor-pointer"
-          >
+          <Link to="/" className="hover:text-maroon-900">
             Home
-          </button>
+          </Link>
           <span>›</span>
           {!buyNowItem && (
             <>
-              <button
-                onClick={() => navigateTo('cart')}
-                className="hover:text-maroon-900 cursor-pointer"
-              >
+              <Link to="/cart" className="hover:text-maroon-900">
                 Bag
-              </button>
+              </Link>
               <span>›</span>
             </>
           )}

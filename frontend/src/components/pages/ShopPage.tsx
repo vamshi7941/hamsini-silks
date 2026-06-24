@@ -40,7 +40,7 @@ export default function ShopPage() {
 
   return (
     <div className="bg-[#fdf8f1] min-h-screen">
-      {/* ── Hero banner ── */}
+      {/* Hero banner */}
       <div className="bg-gradient-to-r from-maroon-900 to-maroon-800 text-white px-4 sm:px-8 py-8 sm:py-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-mandala opacity-20 pointer-events-none" />
         <div className="relative max-w-7xl mx-auto">
@@ -53,7 +53,7 @@ export default function ShopPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* ── Category pills ── */}
+        {/* Category pills */}
         <div className="flex gap-2 flex-wrap mb-6">
           {CATEGORIES.map((cat) => (
             <button
@@ -74,7 +74,7 @@ export default function ShopPage() {
           ))}
         </div>
 
-        {/* ── Search + sort bar ── */}
+        {/* Search + sort bar */}
         <div className="bg-white rounded-2xl p-3 border border-gold-100 shadow-xs flex flex-wrap gap-3 items-center mb-8">
           <div className="relative flex-1 min-w-[180px]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-maroon-400">
@@ -107,7 +107,7 @@ export default function ShopPage() {
           )}
         </div>
 
-        {/* ── Grid ── */}
+        {/* Grid */}
         {filtered.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filtered.map((product) => (

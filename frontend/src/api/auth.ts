@@ -1,12 +1,13 @@
+import { useNavigate } from 'react-router-dom';
 import { User, useStore } from '@/context/StoreContext';
 import { signInWithGooglePopup } from '../firebase';
 
 export const Auth = () => {
-  const { setUser, showToast, setCurrentPage } = useStore();
+  const { setUser, showToast } = useStore();
+  const navigate = useNavigate();
   const apiUrl =
     (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
 
-  // ── User ──
   const login = (
     email: string,
     role: 'customer' | 'admin',
@@ -30,7 +31,7 @@ export const Auth = () => {
       // ignore storage errors
     }
     showToast(`Welcome back, ${displayName}!`);
-    setCurrentPage(role === 'admin' ? 'admin' : 'home');
+    navigate(role === 'admin' ? '/admin' : '/');
   };
 
   const loginWithGoogle = async () => {
@@ -71,8 +72,6 @@ export const Auth = () => {
           json.user.fullName ?? json.user.email?.split('@')[0] ?? 'Admin';
         const token = json.user.token ?? '';
         login(email, 'admin', name, token);
-      } else {
-        // show toast notification for failed login
       }
     } catch (err) {
       console.error('Admin login failed', err);
@@ -93,7 +92,7 @@ export const Auth = () => {
       // ignore
     }
     showToast('Logged out successfully');
-    setCurrentPage('home');
+    navigate('/');
   };
 
   return { loginWithGoogle, adminLogin, logout };

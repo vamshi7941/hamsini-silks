@@ -1,10 +1,12 @@
+import { useNavigate } from "react-router-dom";
 import { categories } from "../data";
 import SectionHeader from "./SectionHeader";
 import { ChevronRightIcon } from "./Icons";
 import { useStore } from "../context/StoreContext";
 
 export default function Categories() {
-  const { setSelectedCategory, navigateTo } = useStore();
+  const navigate = useNavigate();
+  const { setSelectedCategory } = useStore();
 
   return (
     <section id="collections" className="py-12 sm:py-16 lg:py-20 bg-[#fdf8f1]">
@@ -21,7 +23,7 @@ export default function Categories() {
               key={cat.name}
               onClick={() => {
                 setSelectedCategory(cat.name);
-                navigateTo("shop");
+                navigate("/shop");
               }}
               className="group relative overflow-hidden rounded-2xl sm:rounded-3xl aspect-[3/4] bg-maroon-900 text-left block w-full cursor-pointer transition-transform duration-300 hover:-translate-y-1"
             >

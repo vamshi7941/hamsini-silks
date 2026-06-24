@@ -24,26 +24,14 @@ export type User = {
   email: string;
   role: 'customer' | 'admin';
   loggedIn: boolean;
-  token?: string; // for admin
-  _id?: string; // for customer
+  token?: string;
+  _id?: string;
 };
-
-type PageType =
-  | 'home'
-  | 'shop'
-  | 'product-detail'
-  | 'cart'
-  | 'checkout'
-  | 'login'
-  | 'admin'
-  | 'wishlist'
-  | 'my-orders';
 
 interface StoreContextType {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
 
-  // Cart
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
 
@@ -53,14 +41,12 @@ interface StoreContextType {
   buyNowItem: CartItem | null;
   setBuyNowItem: (item: CartItem | null) => void;
 
-  // Wishlist — full state
   wishlist: string[];
   setWishlist: React.Dispatch<React.SetStateAction<string[]>>;
 
   isInWishlist: (productId: string) => boolean;
   wishlistCount: number;
 
-  // Orders
   orders: Order[];
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
 
@@ -70,19 +56,12 @@ interface StoreContextType {
   user: User;
   setUser: React.Dispatch<React.SetStateAction<User>>;
 
-  currentPage: PageType;
-  setCurrentPage: React.Dispatch<React.SetStateAction<PageType>>;
-
-  navigateTo: (page: PageType, param?: any) => void;
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
-  selectedProduct: Product | null;
 
-  // Theme / Design Option Switcher ("both" Option A and Option B support)
   themeOption: 'A' | 'B';
   setThemeOption: (option: 'A' | 'B') => void;
 
-  // Notification toast
   toast: string | null;
   showToast: (msg: string) => void;
 }
@@ -127,9 +106,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   });
 
-  const [currentPage, setCurrentPage] = useState<PageType>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -142,7 +119,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     showToast(`Switched to Option ${opt} Design Theme!`);
   };
 
-  // ── Cart ──
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0,
@@ -151,15 +127,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const isInWishlist = (productId: string) => wishlist.includes(productId);
   const wishlistCount = wishlist.length;
-
-  // ── Navigation ──
-  const navigateTo = (page: PageType, param?: any) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (page === 'product-detail' && param) setSelectedProduct(param);
-    if (page === 'shop' && typeof param === 'string')
-      setSelectedCategory(param);
-  };
 
   return (
     <StoreContext.Provider
@@ -191,16 +158,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
         isInWishlist,
         wishlistCount,
 
-        currentPage,
-        setCurrentPage,
-
-        navigateTo,
-
         selectedCategory,
         setSelectedCategory,
 
-        selectedProduct,
-        
         themeOption,
         setThemeOption,
 
@@ -210,7 +170,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     >
       {children}
 
-      {/* Universal Floating Toast */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 bg-maroon-900 text-gold-100 px-6 py-3.5 rounded-2xl shadow-2xl border border-gold-400/40 flex items-center gap-3 animate-float transition-all max-w-sm">
           <span className="text-gold-400 text-lg">🪷</span>

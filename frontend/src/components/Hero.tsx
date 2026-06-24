@@ -1,8 +1,10 @@
+import { useNavigate } from "react-router-dom";
 import { ChevronRightIcon } from "./Icons";
 import { useStore } from "../context/StoreContext";
 
 export default function Hero() {
-  const { navigateTo, setSelectedCategory, themeOption } = useStore();
+  const navigate = useNavigate();
+  const { setSelectedCategory, themeOption } = useStore();
 
   const isB = themeOption === "B";
 
@@ -46,7 +48,7 @@ export default function Hero() {
               <button
                 onClick={() => {
                   setSelectedCategory("Bridal Kanjivaram");
-                  navigateTo("shop");
+                  navigate("/shop");
                 }}
                 className={`group inline-flex items-center gap-2 px-5 sm:px-7 py-3 sm:py-3.5 rounded-full font-semibold text-xs sm:text-sm tracking-wider shadow-lg hover:scale-[1.02] transition-all cursor-pointer ${
                   isB ? "bg-white text-amber-950 shadow-gold-500/20 hover:bg-gold-100" : "bg-gradient-to-r from-gold-500 to-gold-400 text-maroon-900 shadow-gold-900/40"
@@ -58,7 +60,7 @@ export default function Hero() {
               <button
                 onClick={() => {
                   setSelectedCategory("All");
-                  navigateTo("shop");
+                  navigate("/shop");
                 }}
                 className="inline-flex items-center gap-2 px-5 sm:px-7 py-3 sm:py-3.5 rounded-full border border-gold-400/60 text-gold-100 font-semibold text-xs sm:text-sm tracking-wider hover:bg-gold-500/10 transition-all cursor-pointer"
               >

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   SearchIcon,
   HeartIcon,
@@ -11,11 +12,10 @@ import { useStore } from '../context/StoreContext';
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const {
     cartCount,
     user,
-    navigateTo,
-    currentPage,
     setSelectedCategory,
     wishlistCount,
     themeOption,
@@ -24,7 +24,7 @@ export default function Header() {
 
   const handleNav = (cat: string) => {
     setSelectedCategory(cat);
-    navigateTo('shop');
+    navigate('/shop');
     setOpen(false);
   };
 
@@ -58,8 +58,8 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           {/* Logo */}
-          <button
-            onClick={() => navigateTo('home')}
+          <Link
+            to="/"
             className="flex items-center gap-2 sm:gap-3 group text-left cursor-pointer"
           >
             <img
@@ -67,7 +67,7 @@ export default function Header() {
               alt="Hamsini Silks Logo"
               className="h-10 sm:h-12 w-auto object-contain transition-transform duration-500 group-hover:scale-105 rounded"
             />
-          </button>
+          </Link>
 
           {/* Search bar */}
           <div className="hidden lg:flex flex-1 max-w-md mx-6 lg:mx-10">
@@ -78,7 +78,7 @@ export default function Header() {
                 className="w-full pl-10 pr-4 py-2 rounded-full border border-gold-300 bg-white/80 text-xs sm:text-sm text-maroon-900 placeholder:text-maroon-400 focus:outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-100 transition-all font-medium"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    navigateTo('shop');
+                    navigate('/shop');
                   }
                 }}
               />
@@ -88,7 +88,7 @@ export default function Header() {
 
           {/* Icons & Actions */}
           <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Theme switcher toggle celebrating "both" */}
+            {/* Theme switcher toggle */}
             <div className="hidden xl:inline-flex items-center bg-gold-50 border border-gold-200 rounded-lg p-0.5 shadow-xs">
               <button
                 onClick={() => setThemeOption('A')}
@@ -113,8 +113,8 @@ export default function Header() {
             </div>
 
             {user.role === 'customer' && (
-              <button
-                onClick={() => navigateTo('wishlist')}
+              <Link
+                to="/wishlist"
                 className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all hidden sm:inline-flex cursor-pointer"
                 title="Saved Favs"
               >
@@ -124,11 +124,11 @@ export default function Header() {
                     {wishlistCount}
                   </span>
                 )}
-              </button>
+              </Link>
             )}
 
-            <button
-              onClick={() => navigateTo('login')}
+            <Link
+              to="/login"
               className={`p-1.5 sm:p-2 rounded-full relative transition-colors cursor-pointer ${
                 user.loggedIn
                   ? 'text-gold-600 bg-gold-50'
@@ -142,11 +142,11 @@ export default function Header() {
               {user.loggedIn && (
                 <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-600" />
               )}
-            </button>
+            </Link>
 
             {user.role === 'customer' && (
-              <button
-                onClick={() => navigateTo('cart')}
+              <Link
+                to="/cart"
                 className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all cursor-pointer"
                 title="Shopping Bag"
               >
@@ -156,7 +156,7 @@ export default function Header() {
                     {cartCount}
                   </span>
                 )}
-              </button>
+              </Link>
             )}
 
             <button
@@ -169,16 +169,12 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Option A & B Premium Layout Desktop nav */}
+        {/* Desktop nav */}
         <nav className="hidden lg:flex justify-center gap-8 xl:gap-12 pb-2.5 border-t border-gold-200/50 pt-2.5 bg-gradient-to-r from-transparent via-maroon-50/20 to-transparent">
           {[
-            { label: 'Home', page: 'home', isCat: false },
+            { label: 'Home', to: '/', isCat: false },
             { label: 'All Weaves', cat: 'All', isCat: true },
-            {
-              label: 'Bridal Kanjivaram',
-              cat: 'Bridal Kanjivaram',
-              isCat: true,
-            },
+            { label: 'Bridal Kanjivaram', cat: 'Bridal Kanjivaram', isCat: true },
             { label: 'Banarasi Heritage', cat: 'Banarasi Silk', isCat: true },
             { label: 'Soft Silk Pattu', cat: 'Soft Silk Pattu', isCat: true },
             { label: 'Designer Atelier', cat: 'Designer Silk', isCat: true },
@@ -189,7 +185,7 @@ export default function Header() {
                 if (item.isCat) {
                   handleNav(item.cat!);
                 } else {
-                  navigateTo('home');
+                  navigate('/');
                 }
               }}
               className="text-xs sm:text-sm tracking-widest uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative group py-1 cursor-pointer"
@@ -232,7 +228,7 @@ export default function Header() {
 
           <button
             onClick={() => {
-              navigateTo('home');
+              navigate('/');
               setOpen(false);
             }}
             className="w-full text-left py-2 text-maroon-900 font-semibold text-xs tracking-wider border-b border-gold-100 flex items-center justify-between uppercase cursor-pointer"
@@ -277,7 +273,7 @@ export default function Header() {
           </button>
           <button
             onClick={() => {
-              navigateTo('admin');
+              navigate('/admin');
               setOpen(false);
             }}
             className="w-full text-left py-2 text-maroon-900 font-bold text-xs tracking-wider bg-gold-50/50 px-2 rounded mt-1 flex items-center justify-between cursor-pointer"

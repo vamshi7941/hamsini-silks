@@ -1,21 +1,25 @@
 import { useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
+import { generateSlug, findProductBySlug } from '@/utils/slug';
 
 export default function ProductDetailPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const {
-    selectedProduct,
-    navigateTo,
-    showToast,
     products,
+    showToast,
     isInWishlist,
     setBuyNowItem,
     user,
   } = useStore();
 
-  const {addToCart, toggleWishlist} = CustomerApi()
+  const { addToCart, toggleWishlist } = CustomerApi();
   const [qty, setQty] = useState(1);
   const [activeSize, setActiveSize] = useState('6.2m (with blouse)');
+
+  const selectedProduct = slug ? findProductBySlug(products, slug) : undefined;
 
   if (!selectedProduct) {
     return (
@@ -23,14 +27,14 @@ export default function ProductDetailPage() {
         <div className="text-center py-20 px-4">
           <div className="text-5xl mb-4">🪷</div>
           <p className="text-maroon-800 font-serif italic text-lg mb-4">
-            No saree selected.
+            {products.length === 0 ? 'Loading...' : 'No saree selected.'}
           </p>
-          <button
-            onClick={() => navigateTo('shop')}
-            className="px-6 py-3 rounded-full bg-maroon-900 text-gold-100 text-sm font-bold cursor-pointer hover:bg-maroon-800 transition-colors"
+          <Link
+            to="/shop"
+            className="px-6 py-3 rounded-full bg-maroon-900 text-gold-100 text-sm font-bold cursor-pointer hover:bg-maroon-800 transition-colors inline-block"
           >
             Return to Catalogue
-          </button>
+          </Link>
         </div>
       </div>
     );
@@ -65,19 +69,13 @@ export default function ProductDetailPage() {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gold-100 px-4 sm:px-8 py-3">
         <div className="max-w-6xl mx-auto flex items-center gap-2 text-xs text-maroon-700">
-          <button
-            onClick={() => navigateTo('home')}
-            className="hover:text-maroon-900 cursor-pointer"
-          >
+          <Link to="/" className="hover:text-maroon-900">
             Home
-          </button>
+          </Link>
           <span>›</span>
-          <button
-            onClick={() => navigateTo('shop')}
-            className="hover:text-maroon-900 cursor-pointer"
-          >
+          <Link to="/shop" className="hover:text-maroon-900">
             Catalogue
-          </button>
+          </Link>
           <span>›</span>
           <span className="text-maroon-900 font-semibold truncate">
             {p.name}
@@ -87,7 +85,7 @@ export default function ProductDetailPage() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
-          {/* ── Left: Image ── */}
+          {/* Left: Image */}
           <div className="space-y-4">
             <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg">
               <img
@@ -117,7 +115,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
               <button
-                onClick={() => !isAdmin ? toggleWishlist(p._id) : null}
+                onClick={() => (!isAdmin ? toggleWishlist(p._id) : null)}
                 className={`absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all z-10 cursor-pointer ${
                   liked
                     ? 'bg-maroon-900 text-gold-300'
@@ -163,9 +161,8 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* ── Right: Details ── */}
+          {/* Right: Details */}
           <div className="flex flex-col">
-            {/* Category & name */}
             <div className="mb-4">
               <span className="text-xs font-bold text-gold-600 tracking-widest uppercase">
                 {p.category}
@@ -228,7 +225,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* ── Size / Length Selection ── */}
+            {/* Size / Length Selection */}
             <div className="mb-6 space-y-2">
               <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider">
                 📏 Traditional Size / Cut Specs
@@ -336,16 +333,16 @@ export default function ProductDetailPage() {
               ) : (
                 <>
                   <button
-                    onClick={() => !isAdmin ? addToCart(p, qty) : null}
+                    onClick={() => (!isAdmin ? addToCart(p, qty) : null)}
                     className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99] cursor-pointer"
                   >
                     🛍️ Add to Bag · {qty > 1 ? `${qty} pieces` : '1 piece'}
                   </button>
                   <button
                     onClick={() => {
-                      if(isAdmin) return;
+                      if (isAdmin) return;
                       setBuyNowItem({ product: p, quantity: qty });
-                      navigateTo('checkout');
+                      navigate('/checkout');
                     }}
                     className="w-full py-3.5 rounded-2xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wider transition-colors cursor-pointer shadow-md"
                   >
@@ -357,7 +354,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* ── Related Products ── */}
+        {/* Related Products */}
         {related.length > 0 && (
           <div className="mt-16">
             <div className="flex items-center gap-4 mb-6">
@@ -375,9 +372,9 @@ export default function ProductDetailPage() {
                     )
                   : 0;
                 return (
-                  <button
+                  <Link
                     key={r._id}
-                    onClick={() => navigateTo('product-detail', r)}
+                    to={`/product/${generateSlug(r._id, r.name)}`}
                     className="text-left bg-white rounded-2xl border border-gold-100 shadow-xs hover:shadow-md hover:border-gold-300 overflow-hidden group transition-all cursor-pointer flex flex-col"
                   >
                     <div className="aspect-[3/4] overflow-hidden bg-maroon-50 relative w-full">
@@ -400,7 +397,7 @@ export default function ProductDetailPage() {
                         ₹{r.price.toLocaleString('en-IN')}
                       </p>
                     </div>
-                  </button>
+                  </Link>
                 );
               })}
             </div>

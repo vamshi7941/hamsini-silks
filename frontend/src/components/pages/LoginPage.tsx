@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { Auth } from '../../api/auth';
 
 export default function LoginPage() {
-  const { user, navigateTo } = useStore();
+  const { user } = useStore();
   const { loginWithGoogle, adminLogin, logout } = Auth();
   const [tab, setTab] = useState<'patron' | 'admin'>('patron');
 
@@ -59,23 +60,19 @@ export default function LoginPage() {
                 <div
                   className={`grid gap-3 pt-2 ${user.role === 'admin' ? 'grid-cols-2' : 'grid-cols-3'}`}
                 >
-                  <button
-                    onClick={() =>
-                      user.role === 'admin'
-                        ? navigateTo('admin')
-                        : navigateTo('shop')
-                    }
-                    className="py-3 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 transition-colors cursor-pointer"
+                  <Link
+                    to={user.role === 'admin' ? '/admin' : '/shop'}
+                    className="py-3 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 transition-colors cursor-pointer text-center"
                   >
                     {user.role === 'admin' ? 'Go to Admin' : 'Shop Now'}
-                  </button>
+                  </Link>
                   {user.role === 'customer' && (
-                    <button
-                      onClick={() => navigateTo('my-orders')}
-                      className="py-3 rounded-xl bg-gold-500 text-white text-sm font-bold hover:bg-gold-600 transition-colors cursor-pointer"
+                    <Link
+                      to="/my-orders"
+                      className="py-3 rounded-xl bg-gold-500 text-white text-sm font-bold hover:bg-gold-600 transition-colors cursor-pointer text-center"
                     >
                       My Orders
-                    </button>
+                    </Link>
                   )}
                   <button
                     onClick={logout}
@@ -213,12 +210,12 @@ export default function LoginPage() {
                 )}
 
                 <div className="text-center mt-4">
-                  <button
-                    onClick={() => navigateTo('home')}
+                  <Link
+                    to="/"
                     className="text-xs text-maroon-600 hover:text-maroon-800 cursor-pointer underline"
                   >
                     Continue browsing as guest
-                  </button>
+                  </Link>
                 </div>
               </div>
             )}

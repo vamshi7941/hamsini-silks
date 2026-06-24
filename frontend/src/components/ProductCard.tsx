@@ -1,10 +1,12 @@
+import { Link } from 'react-router-dom';
 import type { Product } from '../data';
 import { BagIcon, StarIcon } from './Icons';
 import { useStore } from '../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
+import { generateSlug } from '@/utils/slug';
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { navigateTo, isInWishlist, user } = useStore();
+  const { isInWishlist, user } = useStore();
   const { addToCart, toggleWishlist } = CustomerApi();
   const discount = product.originalPrice
     ? Math.round(
@@ -15,13 +17,14 @@ export default function ProductCard({ product }: { product: Product }) {
   const liked = isInWishlist(product._id);
   const outOfStock = product.inStock === false;
   const isAdmin = user.role === 'admin';
+  const productUrl = `/product/${generateSlug(product._id, product.name)}`;
 
   return (
     <div className="group relative bg-white rounded-2xl overflow-hidden border border-gold-100 hover:border-gold-400 hover:shadow-xl hover:shadow-maroon-900/10 transition-all duration-300 flex flex-col h-full shadow-xs">
       {/* Image section */}
-      <div
-        onClick={() => navigateTo('product-detail', product)}
-        className="relative aspect-[3/4] overflow-hidden bg-maroon-50 cursor-pointer"
+      <Link
+        to={productUrl}
+        className="relative aspect-[3/4] overflow-hidden bg-maroon-50 cursor-pointer block"
       >
         <img
           src={product.image}
@@ -54,10 +57,11 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        {/* Wishlist toggle — real state */}
+        {/* Wishlist toggle */}
         {!isAdmin && (
           <button
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               toggleWishlist(product._id);
             }}
@@ -85,6 +89,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10">
             <button
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 addToCart(product);
               }}
@@ -95,22 +100,22 @@ export default function ProductCard({ product }: { product: Product }) {
             </button>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Info section */}
       <div className="p-3.5 sm:p-4 flex flex-col flex-1">
-        <div
-          onClick={() => navigateTo('product-detail', product)}
+        <Link
+          to={productUrl}
           className="text-[9px] sm:text-[10px] tracking-[0.2em] text-gold-700 mb-1 uppercase font-bold cursor-pointer hover:underline"
         >
           {product.category}
-        </div>
-        <h3
-          onClick={() => navigateTo('product-detail', product)}
+        </Link>
+        <Link
+          to={productUrl}
           className="font-display text-sm sm:text-base lg:text-lg text-maroon-900 mb-1.5 leading-tight font-bold cursor-pointer hover:text-maroon-700 transition-colors"
         >
           {product.name}
-        </h3>
+        </Link>
 
         {/* Stars */}
         <div className="flex items-center gap-1 mb-2">

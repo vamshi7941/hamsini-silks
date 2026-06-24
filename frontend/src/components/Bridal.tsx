@@ -1,8 +1,10 @@
+import { useNavigate } from "react-router-dom";
 import { ChevronRightIcon } from "./Icons";
 import { useStore } from "../context/StoreContext";
 
 export default function Bridal() {
-  const { navigateTo, setSelectedCategory, showToast } = useStore();
+  const navigate = useNavigate();
+  const { setSelectedCategory, showToast } = useStore();
 
   return (
     <section
@@ -82,7 +84,7 @@ export default function Bridal() {
               <button
                 onClick={() => {
                   setSelectedCategory("Bridal Kanjivaram");
-                  navigateTo("shop");
+                  navigate("/shop");
                 }}
                 className="group inline-flex items-center gap-2 px-5 sm:px-7 py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-gold-500 to-gold-400 text-maroon-900 font-semibold text-xs sm:text-sm tracking-wider shadow-lg shadow-black/40 hover:scale-[1.02] transition-all cursor-pointer"
               >
