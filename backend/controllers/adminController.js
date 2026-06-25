@@ -34,6 +34,12 @@ export async function loginUser(req, res) {
 export async function signupUser(req, res) {
   const { _id, fullName, email, password } = req.body;
 
+  const adminSecret = req.headers['x-admin-secret'];
+
+  if (adminSecret === undefined || adminSecret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ message: 'Forbidden' });
+  }
+
   try {
     const user = await AdminSchema.signup(_id, fullName, email, password);
 
