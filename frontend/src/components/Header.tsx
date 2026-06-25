@@ -115,7 +115,7 @@ export default function Header() {
             {user.loggedIn && user.role === 'customer' && (
               <Link
                 to="/wishlist"
-                className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all hidden sm:inline-flex cursor-pointer"
+                className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all sm:inline-flex cursor-pointer"
                 title="Saved Favs"
               >
                 <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -237,7 +237,7 @@ export default function Header() {
             }}
             className="w-full text-left py-2 text-maroon-900 font-semibold text-xs tracking-wider border-b border-gold-100 flex items-center justify-between uppercase cursor-pointer"
           >
-            Home Overview
+            Home
             <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500" />
           </button>
           <button
@@ -275,16 +275,18 @@ export default function Header() {
             Designer Atelier
             <ChevronRightIcon className="h-3.5 w-3.5 text-gold-400" />
           </button>
-          <button
-            onClick={() => {
-              navigate('/admin');
-              setOpen(false);
-            }}
-            className="w-full text-left py-2 text-maroon-900 font-bold text-xs tracking-wider bg-gold-50/50 px-2 rounded mt-1 flex items-center justify-between cursor-pointer"
-          >
-            ⚙️ Atelier Admin Control
-            <ChevronRightIcon className="h-3.5 w-3.5 text-maroon-900" />
-          </button>
+          {user.loggedIn && user.role === 'admin' && (
+            <button
+              onClick={() => {
+                navigate('/admin');
+                setOpen(false);
+              }}
+              className="w-full text-left py-2 text-maroon-900 font-bold text-xs tracking-wider bg-gold-50/50 px-2 rounded mt-1 flex items-center justify-between cursor-pointer"
+            >
+              ⚙️ Atelier Admin Control
+              <ChevronRightIcon className="h-3.5 w-3.5 text-maroon-900" />
+            </button>
+          )}
         </div>
       )}
     </header>

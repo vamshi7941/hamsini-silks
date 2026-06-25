@@ -198,7 +198,7 @@ export default function ProductDetailPage() {
 
             {/* Price block */}
             <div className="bg-maroon-50 rounded-2xl p-4 mb-5 flex items-center justify-between">
-              <div>
+              <div className="flex items-center flex-wrap">
                 <span className="font-display text-3xl font-bold text-maroon-900">
                   ₹{p.price.toLocaleString('en-IN')}
                 </span>
@@ -215,11 +215,11 @@ export default function ProductDetailPage() {
                 )}
               </div>
               {outOfStock ? (
-                <span className="text-xs bg-maroon-100 text-maroon-800 font-bold px-3 py-1.5 rounded-full">
+                <span className="text-xs bg-maroon-100 text-maroon-800 font-bold px-3 py-1.5 rounded-full whitespace-nowrap">
                   Sold Out
                 </span>
               ) : (
-                <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1.5 rounded-full">
+                <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1.5 rounded-full whitespace-nowrap">
                   ✓ In Stock
                 </span>
               )}

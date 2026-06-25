@@ -36,7 +36,7 @@ export default function CartPage() {
       <div className="bg-white border-b border-gold-100 px-4 sm:px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <h1 className="font-display text-xl sm:text-2xl font-bold text-maroon-900">
-            Shopping Bag{' '}
+            Shopping Bag{' '} <br/>
             <span className="text-maroon-400 text-sm font-normal">
               ({cart.length} {cart.length === 1 ? 'item' : 'items'})
             </span>
