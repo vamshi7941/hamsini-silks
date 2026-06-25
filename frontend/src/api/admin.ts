@@ -4,7 +4,7 @@ import { ProductsApi } from './products';
 
 export const AdminApi = () => {
   const apiUrl =
-    (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
+    (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
 
   const { products, showToast, setOrders, user } = useStore();
   const { fetchAllProducts } = ProductsApi();

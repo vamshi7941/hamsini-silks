@@ -3,7 +3,7 @@ import { Product } from '@/data';
 
 export const CustomerApi = () => {
   const apiUrl =
-    (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
+    (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
 
   const {
     products,

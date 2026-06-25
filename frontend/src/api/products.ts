@@ -1,7 +1,8 @@
 import { useStore } from '@/context/StoreContext';
 import { Product } from '@/data';
 
-const apiUrl = (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
+const apiUrl =
+  (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
 const IMAGE_CACHE_KEY = 'hamsini_product_image_cache';
 
 type ImageCacheEntry = {
@@ -32,6 +33,7 @@ export const ProductsApi = () => {
   const { setProducts, setImagesLoaded } = useStore();
 
   const fetchAllProducts = async () => {
+    console.log('apiUrl: ', apiUrl);
     try {
       const response = await fetch(`${apiUrl}/api/products`);
       if (!response.ok) throw new Error('Failed to fetch products');
@@ -44,7 +46,10 @@ export const ProductsApi = () => {
       const productsWithImages = await Promise.all(
         data.map(async (product) => {
           const cached = imageCache[product._id];
-          if (cached && (!product.updatedAt || cached.updatedAt === product.updatedAt)) {
+          if (
+            cached &&
+            (!product.updatedAt || cached.updatedAt === product.updatedAt)
+          ) {
             return { ...product, image: cached.image };
           }
 

@@ -6,7 +6,7 @@ export const Auth = () => {
   const { setUser, showToast, setCart, setWishlist } = useStore();
   const navigate = useNavigate();
   const apiUrl =
-    (import.meta as any).env.BACKEND_URL || 'http://localhost:4001';
+    (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
 
   const login = (
     email: string,
