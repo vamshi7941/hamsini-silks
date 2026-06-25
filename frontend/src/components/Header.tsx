@@ -55,22 +55,58 @@ export default function Header() {
       </div>
 
       {/* Main nav */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-center">
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 sm:gap-3 group p-4 text-left cursor-pointer"
+            className="flex items-center gap-2 sm:gap-3 p-4 text-left cursor-pointer"
           >
             <img
               src="/logo.png"
               alt="Hamsini Silks Logo"
-              className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
+              className="w-[100px] h-auto transition-transform duration-500 group-hover:scale-105 rounded block"
             />
           </Link>
 
+          {/* Desktop nav */}
+          <nav className="hidden lg:flex justify-center gap-8 xl:gap-12 pb-2.5 pt-2.5 bg-gradient-to-r from-transparent via-maroon-50/20 to-transparent">
+            {[
+              { label: 'Home', to: '/', isCat: false },
+              { label: 'All Weaves', cat: 'All', isCat: true },
+              {
+                label: 'Bridal Kanjivaram',
+                cat: 'Bridal Kanjivaram',
+                isCat: true,
+              },
+              { label: 'Banarasi Heritage', cat: 'Banarasi Silk', isCat: true },
+              { label: 'Soft Silk Pattu', cat: 'Soft Silk Pattu', isCat: true },
+              { label: 'Designer Atelier', cat: 'Designer Silk', isCat: true },
+            ].map((item) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  if (item.isCat) {
+                    handleNav(item.cat!);
+                  } else {
+                    navigate('/');
+                  }
+                }}
+                className="text-xs whitespace-nowrap sm:text-sm tracking-widest uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative group py-1 cursor-pointer"
+              >
+                {item.label}
+                {item.label.includes('Bridal') && (
+                  <span className="ml-1 text-[8px] bg-gold-500 text-white px-1.5 py-0.2 rounded-xs align-super font-bold">
+                    30% OFF
+                  </span>
+                )}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gold-500 transition-all duration-300 group-hover:w-full" />
+              </button>
+            ))}
+          </nav>
+
           {/* Icons & Actions */}
-          <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="flex items-center px-4 gap-1.5 sm:gap-3">
             {user.loggedIn && user.role === 'customer' && (
               <Link
                 to="/wishlist"
@@ -127,42 +163,6 @@ export default function Header() {
             </button>
           </div>
         </div>
-
-        {/* Desktop nav */}
-        <nav className="hidden lg:flex justify-center gap-8 xl:gap-12 pb-2.5 border-t border-gold-200/50 pt-2.5 bg-gradient-to-r from-transparent via-maroon-50/20 to-transparent">
-          {[
-            { label: 'Home', to: '/', isCat: false },
-            { label: 'All Weaves', cat: 'All', isCat: true },
-            {
-              label: 'Bridal Kanjivaram',
-              cat: 'Bridal Kanjivaram',
-              isCat: true,
-            },
-            { label: 'Banarasi Heritage', cat: 'Banarasi Silk', isCat: true },
-            { label: 'Soft Silk Pattu', cat: 'Soft Silk Pattu', isCat: true },
-            { label: 'Designer Atelier', cat: 'Designer Silk', isCat: true },
-          ].map((item) => (
-            <button
-              key={item.label}
-              onClick={() => {
-                if (item.isCat) {
-                  handleNav(item.cat!);
-                } else {
-                  navigate('/');
-                }
-              }}
-              className="text-xs sm:text-sm tracking-widest uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative group py-1 cursor-pointer"
-            >
-              {item.label}
-              {item.label.includes('Bridal') && (
-                <span className="ml-1 text-[8px] bg-gold-500 text-white px-1.5 py-0.2 rounded-xs align-super font-bold">
-                  30% OFF
-                </span>
-              )}
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gold-500 transition-all duration-300 group-hover:w-full" />
-            </button>
-          ))}
-        </nav>
       </div>
 
       {/* Mobile drop-down menu */}
