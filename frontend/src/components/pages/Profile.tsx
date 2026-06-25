@@ -17,16 +17,21 @@ export default function ProfilePage() {
           {/* Top banner */}
           <div className="bg-gradient-to-br from-maroon-900 to-maroon-800 p-8 text-center relative overflow-hidden flex flex-col items-center">
             <div className="absolute inset-0 bg-mandala opacity-20 pointer-events-none" />
-            <div className="relative z-10 bg-white p-2 rounded-xl inline-block mb-3">
-              <img
-                src="https://storage.googleapis.com/a1aa/image/wM9tOQer8g4eQ1vVvL6P0m38d_UjL-R3Qj0rQpYw848.jpg"
-                alt="Hamsini Logo"
-                className="h-16 w-auto object-contain"
-              />
+            <div className="relative z-10 p-2 rounded-xl inline-block mb-3">
+              <Link
+                to="/"
+                className="flex items-center gap-2 sm:gap-3 group text-left cursor-pointer"
+              >
+                <img
+                  src="/logo.png"
+                  alt="Hamsini Silks Logo"
+                  className="h-auto w-[160px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
+                />
+              </Link>
             </div>
             <div className="relative z-10">
               <h1 className="font-display text-2xl font-bold text-gold-200">
-                Hamsini {user.role === 'admin' ? 'Admin' : 'Patron'} Portal
+                {user.role === 'admin' ? 'Admin' : 'Customer'} Portal
               </h1>
               <p className="text-xs text-gold-100/70 mt-1">
                 Access your orders, wishlist & exclusive privileges
@@ -51,22 +56,14 @@ export default function ProfilePage() {
                 </span>
               </div>
               <div
-                className={`grid gap-3 pt-2 ${user.role === 'admin' ? 'grid-cols-2' : 'grid-cols-3'}`}
+                className={`grid gap-3 pt-2 grid-cols-2`}
               >
                 <Link
-                  to={user.role === 'admin' ? '/admin' : '/shop'}
+                  to={user.role === 'admin' ? '/admin' : '/my-orders'}
                   className="py-3 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 transition-colors cursor-pointer text-center"
                 >
-                  {user.role === 'admin' ? 'Go to Admin' : 'Shop Now'}
+                  {user.role === 'admin' ? 'Go to Admin' : 'My Orders'}
                 </Link>
-                {user.role === 'customer' && (
-                  <Link
-                    to="/my-orders"
-                    className="py-3 rounded-xl bg-gold-500 text-white text-sm font-bold hover:bg-gold-600 transition-colors cursor-pointer text-center"
-                  >
-                    My Orders
-                  </Link>
-                )}
                 <button
                   onClick={logout}
                   className="py-3 rounded-xl border-2 border-gold-200 text-maroon-900 text-sm font-bold hover:bg-gold-50 transition-colors cursor-pointer"

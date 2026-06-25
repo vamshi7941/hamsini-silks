@@ -42,16 +42,16 @@ export default function LoginPage() {
           <div className="bg-white rounded-3xl shadow-xl border border-gold-100 overflow-hidden">
             <div className="bg-gradient-to-br from-maroon-900 to-maroon-800 p-8 text-center relative overflow-hidden flex flex-col items-center">
               <div className="absolute inset-0 bg-mandala opacity-20 pointer-events-none" />
-              <div className="relative z-10 bg-white p-2 rounded-xl inline-block mb-3">
+              <div className="relative z-10 p-2 rounded-xl inline-block mb-3">
                 <img
-                  src="https://storage.googleapis.com/a1aa/image/wM9tOQer8g4eQ1vVvL6P0m38d_UjL-R3Qj0rQpYw848.jpg"
-                  alt="Hamsini Logo"
-                  className="h-16 w-auto object-contain"
+                  src="/logo.png"
+                  alt="Hamsini Silks Logo"
+                  className="h-auto w-[160px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
                 />
               </div>
               <div className="relative z-10">
                 <h1 className="font-display text-2xl font-bold text-gold-200">
-                  Hamsini {user.role === 'admin' ? 'Admin' : 'Patron'} Portal
+                  {user.role === 'admin' ? 'Admin' : 'Patron'} Portal
                 </h1>
                 <p className="text-xs text-gold-100/70 mt-1">
                   Access your orders, wishlist & exclusive privileges
@@ -86,17 +86,19 @@ export default function LoginPage() {
           {/* Top banner */}
           <div className="bg-gradient-to-br from-maroon-900 to-maroon-800 p-8 text-center relative overflow-hidden flex flex-col items-center">
             <div className="absolute inset-0 bg-mandala opacity-20 pointer-events-none" />
-            <div className="relative z-10 bg-white p-2 rounded-xl inline-block mb-3">
-              <img
-                src="https://storage.googleapis.com/a1aa/image/wM9tOQer8g4eQ1vVvL6P0m38d_UjL-R3Qj0rQpYw848.jpg"
-                alt="Hamsini Logo"
-                className="h-16 w-auto object-contain"
-              />
+            <div className="relative z-10 p-2 rounded-xl inline-block mb-3">
+              <Link
+                to="/"
+                className="flex items-center gap-2 sm:gap-3 group text-left cursor-pointer"
+              >
+                <img
+                  src="/logo.png"
+                  alt="Hamsini Silks Logo"
+                  className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
+                />
+              </Link>
             </div>
             <div className="relative z-10">
-              <h1 className="font-display text-2xl font-bold text-gold-200">
-                Hamsini {user.role === 'admin' ? 'Admin' : 'Patron'} Portal
-              </h1>
               <p className="text-xs text-gold-100/70 mt-1">
                 Access your orders, wishlist & exclusive privileges
               </p>

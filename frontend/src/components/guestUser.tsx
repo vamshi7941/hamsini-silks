@@ -28,8 +28,7 @@ export default function GuestUser({ page }: { page: string }) {
         'You are currently not logged in. Please log in to view your orders.';
       break;
     case 'admin':
-      message =
-        'You cannot access the admin dashboard as a guest user.';
+      message = 'You cannot access the admin dashboard as a guest user.';
       break;
     default:
       message =
@@ -42,16 +41,16 @@ export default function GuestUser({ page }: { page: string }) {
         <div className="bg-white rounded-3xl shadow-xl border border-gold-100 overflow-hidden">
           <div className="bg-gradient-to-br from-maroon-900 to-maroon-800 p-8 text-center relative overflow-hidden flex flex-col items-center">
             <div className="absolute inset-0 bg-mandala opacity-20 pointer-events-none" />
-            <div className="relative z-10 bg-white p-2 rounded-xl inline-block mb-3">
+            <div className="relative z-10 p-2 rounded-xl inline-block mb-3">
               <img
-                src="https://storage.googleapis.com/a1aa/image/wM9tOQer8g4eQ1vVvL6P0m38d_UjL-R3Qj0rQpYw848.jpg"
-                alt="Hamsini Logo"
-                className="h-16 w-auto object-contain"
+                src="/logo.png"
+                alt="Hamsini Silks Logo"
+                className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
               />
             </div>
             <div className="relative z-10">
               <h1 className="font-display text-2xl font-bold text-gold-200">
-                Hamsini {user.role === 'admin' ? 'Admin' : 'Patron'} Portal
+                Guest User Portal
               </h1>
             </div>
           </div>
