@@ -56,7 +56,7 @@ export default function Header() {
 
       {/* Main nav */}
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-center">
+        <div className="flex items-center lg:justify-center justify-between">
           {/* Logo */}
           <Link
             to="/"
