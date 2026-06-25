@@ -178,7 +178,7 @@ export const AdminApi = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}aa`,
+          Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({ orderId, status }),
       });
