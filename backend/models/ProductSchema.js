@@ -27,6 +27,11 @@ const ProductSchema = new Schema(
       type: String,
       required: true,
     },
+    images: {
+      type: [String],
+      required: false,
+      default: [],
+    },
     badge: {
       type: String,
       required: false,

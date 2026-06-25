@@ -5,6 +5,7 @@ export type Product = {
   price: number;
   originalPrice?: number;
   image: string;
+  images?: string[];
   badge?: string;
   rating: number;
   inStock?: boolean;

@@ -211,9 +211,27 @@ function EditProductModal({
   const [origPrice, setOrigPrice] = useState(product.originalPrice ?? '');
   const [badge, setBadge] = useState(product.badge ?? '');
   const [image, setImage] = useState(product.image);
+  const [additionalImages, setAdditionalImages] = useState<string[]>(
+    product.images ?? [],
+  );
   const [category, setCategory] = useState(product.category);
   const [inStock, setInStock] = useState(product.inStock !== false);
   const [size, setSize] = useState(product.size ?? '6.2m (incl. blouse)');
+
+  const fileListToBase64 = async (files: FileList | null) => {
+    if (!files) return [] as string[];
+    const readers = Array.from(files).map(
+      (file) =>
+        new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        }),
+    );
+
+    return Promise.all(readers);
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
@@ -242,9 +260,52 @@ function EditProductModal({
         <div className="p-6 space-y-5">
           <div>
             <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
-              📸 Image
+              📸 Main Image
             </label>
             <ImageUploadZone value={image} onChange={setImage} />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
+              🖼️ Additional Images
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="w-full text-xs text-maroon-700 rounded-xl border-2 border-gold-200 p-3"
+              onChange={async (e) => {
+                const newImages = await fileListToBase64(e.target.files);
+                setAdditionalImages((prev) => [...prev, ...newImages]);
+                if (e.target) e.target.value = '';
+              }}
+            />
+            {additionalImages.length > 0 && (
+              <div className="mt-4 grid grid-cols-4 gap-2">
+                {additionalImages.map((src, index) => (
+                  <div
+                    key={index}
+                    className="relative rounded-xl overflow-hidden border border-gold-200"
+                  >
+                    <img
+                      src={src}
+                      alt={`Additional ${index + 1}`}
+                      className="w-full h-24 object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAdditionalImages((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        )
+                      }
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-maroon-900 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -396,6 +457,8 @@ function EditProductModal({
                 originalPrice: origPrice ? Number(origPrice) : undefined,
                 badge: badge || undefined,
                 image,
+                images:
+                  additionalImages.length > 0 ? additionalImages : undefined,
                 category,
                 inStock,
                 size,
@@ -425,8 +488,23 @@ function AddProductModal({
   const [origPrice, setOrigPrice] = useState('');
   const [badge, setBadge] = useState('');
   const [image, setImage] = useState('');
+  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
   const [inStock, setInStock] = useState(true);
   const [size, setSize] = useState('6.2m (incl. blouse)');
+
+  const fileListToBase64 = async (files: FileList | null) => {
+    if (!files) return [] as string[];
+    const readers = Array.from(files).map(
+      (file) =>
+        new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        }),
+    );
+    return Promise.all(readers);
+  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,6 +517,7 @@ function AddProductModal({
       originalPrice: origPrice ? Number(origPrice) : undefined,
       badge: badge || undefined,
       image,
+      images: additionalImages.length > 0 ? additionalImages : undefined,
       rating: 4.9, // hardcoded
       inStock,
       size,
@@ -469,9 +548,52 @@ function AddProductModal({
         <form onSubmit={handleAdd} className="p-6 space-y-5">
           <div>
             <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
-              📸 Image
+              📸 Main Image
             </label>
             <ImageUploadZone value={image} onChange={setImage} />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
+              🖼️ Additional Images
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="w-full text-xs text-maroon-700 rounded-xl border-2 border-gold-200 p-3"
+              onChange={async (e) => {
+                const newImages = await fileListToBase64(e.target.files);
+                setAdditionalImages((prev) => [...prev, ...newImages]);
+                if (e.target) e.target.value = '';
+              }}
+            />
+            {additionalImages.length > 0 && (
+              <div className="mt-4 grid grid-cols-4 gap-2">
+                {additionalImages.map((src, index) => (
+                  <div
+                    key={index}
+                    className="relative rounded-xl overflow-hidden border border-gold-200"
+                  >
+                    <img
+                      src={src}
+                      alt={`Additional ${index + 1}`}
+                      className="w-full h-24 object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAdditionalImages((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        )
+                      }
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-maroon-900 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -1125,8 +1247,8 @@ export default function AdminDashboard() {
     { id: 'media', label: 'Media', icon: Icon.image },
   ];
 
-  if(!user.loggedIn) return <GuestUser page='admin'/>
-  if(user.role !== 'admin') return <AccessDenied page='admin'/>
+  if (!user.loggedIn) return <GuestUser page="admin" />;
+  if (user.role !== 'admin') return <AccessDenied page="admin" />;
 
   return (
     <div className="min-h-screen bg-[#f5ede3] flex">
@@ -1686,7 +1808,10 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => {
                               setActiveTab('catalogue');
-                              showToast('Go to Catalogue to assign this image', 'warning');
+                              showToast(
+                                'Go to Catalogue to assign this image',
+                                'warning',
+                              );
                             }}
                             className="px-3 py-2 bg-maroon-900 text-gold-100 rounded-xl text-xs font-bold hover:bg-maroon-800 flex items-center gap-1.5 cursor-pointer shadow-lg transition-transform hover:scale-105"
                           >

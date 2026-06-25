@@ -7,19 +7,15 @@ import { generateSlug, findProductBySlug } from '@/utils/slug';
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const {
-    products,
-    showToast,
-    isInWishlist,
-    setBuyNowItem,
-    user,
-  } = useStore();
+  const { products, showToast, isInWishlist, setBuyNowItem, user } = useStore();
 
   const { addToCart, toggleWishlist } = CustomerApi();
   const [qty, setQty] = useState(1);
   const [activeSize, setActiveSize] = useState('6.2m (with blouse)');
 
   const selectedProduct = slug ? findProductBySlug(products, slug) : undefined;
+
+  const [activeImage, setActiveImage] = useState<string>('');
 
   if (!selectedProduct) {
     return (
@@ -42,6 +38,7 @@ export default function ProductDetailPage() {
 
   const isAdmin = user.role === 'admin';
   const p = selectedProduct;
+  const displayedImage = activeImage || p.image;
   const discount = p.originalPrice
     ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
     : 0;
@@ -89,7 +86,7 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg">
               <img
-                src={p.image}
+                src={displayedImage}
                 alt={p.name}
                 className={`w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${
                   outOfStock ? 'opacity-75 grayscale-[20%]' : ''
@@ -137,19 +134,15 @@ export default function ProductDetailPage() {
 
             {/* Thumbnail strip */}
             <div className="grid grid-cols-4 gap-2">
-              {[
-                p.image,
-                '/images/artisan.jpg',
-                '/images/model1.jpg',
-                '/images/model2.jpg',
-              ].map((img, i) => (
+              {p.images?.map((img, i) => (
                 <div
                   key={i}
-                  className={`aspect-square rounded-xl overflow-hidden border-2 cursor-pointer ${
-                    i === 0
+                  onClick={() => setActiveImage(img)}
+                  className={`aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-colors ${
+                    displayedImage === img
                       ? 'border-maroon-800'
                       : 'border-gold-100 hover:border-gold-400'
-                  } transition-colors`}
+                  }`}
                 >
                   <img
                     src={img}
@@ -322,7 +315,8 @@ export default function ProductDetailPage() {
                   <button
                     onClick={() =>
                       showToast(
-                        `We will notify you when ${p.name} is back on looms!`, 'info'
+                        `We will notify you when ${p.name} is back on looms!`,
+                        'info',
                       )
                     }
                     className="w-full py-3.5 rounded-2xl border-2 border-maroon-900 text-maroon-900 hover:bg-maroon-50 font-bold text-sm tracking-wider transition-colors cursor-pointer shadow-xs"
@@ -333,7 +327,9 @@ export default function ProductDetailPage() {
               ) : (
                 <>
                   <button
-                    onClick={() => (!isAdmin ? addToCart(p, qty, activeSize) : null)}
+                    onClick={() =>
+                      !isAdmin ? addToCart(p, qty, activeSize) : null
+                    }
                     className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99] cursor-pointer"
                   >
                     🛍️ Add to Bag · {qty > 1 ? `${qty} pieces` : '1 piece'}
@@ -341,7 +337,11 @@ export default function ProductDetailPage() {
                   <button
                     onClick={() => {
                       if (isAdmin) return;
-                      setBuyNowItem({ product: p, quantity: qty, size: activeSize });
+                      setBuyNowItem({
+                        product: p,
+                        quantity: qty,
+                        size: activeSize,
+                      });
                       navigate('/checkout');
                     }}
                     className="w-full py-3.5 rounded-2xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wider transition-colors cursor-pointer shadow-md"

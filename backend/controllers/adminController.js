@@ -58,6 +58,7 @@ export async function addProduct(req, res) {
     price,
     originalPrice,
     image,
+    images,
     badge,
     rating,
     inStock,
@@ -80,6 +81,7 @@ export async function addProduct(req, res) {
       price,
       originalPrice,
       image,
+      images: Array.isArray(images) ? images : [],
       badge,
       rating,
       inStock,
@@ -106,6 +108,7 @@ export async function updateProduct(req, res) {
     price,
     originalPrice,
     image,
+    images,
     badge,
     rating,
     inStock,
@@ -126,6 +129,7 @@ export async function updateProduct(req, res) {
     product.price = price || product.price;
     product.originalPrice = originalPrice || product.originalPrice;
     product.image = image || product.image;
+    product.images = Array.isArray(images) ? images : product.images;
     product.badge = badge || product.badge;
     product.rating = rating || product.rating;
     product.inStock = inStock !== undefined ? inStock : product.inStock;
