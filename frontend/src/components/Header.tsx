@@ -56,62 +56,21 @@ export default function Header() {
 
       {/* Main nav */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
+        <div className="flex items-center justify-between">
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 sm:gap-3 group text-left cursor-pointer"
+            className="flex items-center gap-2 sm:gap-3 group p-4 text-left cursor-pointer"
           >
             <img
-              src="https://storage.googleapis.com/a1aa/image/wM9tOQer8g4eQ1vVvL6P0m38d_UjL-R3Qj0rQpYw848.jpg"
+              src="/logo.png"
               alt="Hamsini Silks Logo"
-              className="h-10 sm:h-12 w-auto object-contain transition-transform duration-500 group-hover:scale-105 rounded"
+              className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
             />
           </Link>
 
-          {/* Search bar */}
-          <div className="hidden lg:flex flex-1 max-w-md mx-6 lg:mx-10">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search Kanjivaram, Banarasi, Pattu weaves..."
-                className="w-full pl-10 pr-4 py-2 rounded-full border border-gold-300 bg-white/80 text-xs sm:text-sm text-maroon-900 placeholder:text-maroon-400 focus:outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-100 transition-all font-medium"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    navigate('/shop');
-                  }
-                }}
-              />
-              <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-maroon-500" />
-            </div>
-          </div>
-
           {/* Icons & Actions */}
           <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Theme switcher toggle */}
-            <div className="hidden xl:inline-flex items-center bg-gold-50 border border-gold-200 rounded-lg p-0.5 shadow-xs">
-              <button
-                onClick={() => setThemeOption('A')}
-                className={`px-2.5 py-1 text-[10px] font-bold tracking-widest rounded transition-all cursor-pointer ${
-                  themeOption === 'A'
-                    ? 'bg-maroon-900 text-gold-200 shadow-xs'
-                    : 'text-maroon-800 hover:text-maroon-900'
-                }`}
-              >
-                OPTION A (CLASSIC)
-              </button>
-              <button
-                onClick={() => setThemeOption('B')}
-                className={`px-2.5 py-1 text-[10px] font-bold tracking-widest rounded transition-all cursor-pointer ${
-                  themeOption === 'B'
-                    ? 'bg-gold-500 text-white shadow-xs'
-                    : 'text-maroon-800 hover:text-maroon-900'
-                }`}
-              >
-                OPTION B (FESTIVE)
-              </button>
-            </div>
-
             {user.loggedIn && user.role === 'customer' && (
               <Link
                 to="/wishlist"
@@ -139,9 +98,9 @@ export default function Header() {
               }
             >
               <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-              {user.loggedIn && (
+              {user.loggedIn ? (
                 <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-600" />
-              )}
+              ) : null}
             </Link>
 
             {user.loggedIn && user.role === 'customer' && (
@@ -209,27 +168,6 @@ export default function Header() {
       {/* Mobile drop-down menu */}
       {open && (
         <div className="lg:hidden bg-white border-t border-gold-200/60 px-4 sm:px-6 py-2 space-y-1">
-          {/* Mobile theme toggle */}
-          <div className="flex items-center justify-between py-2 border-b border-gold-100 bg-gold-50/50 px-3 rounded-lg">
-            <span className="text-xs font-bold text-maroon-900">
-              Design Theme:
-            </span>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setThemeOption('A')}
-                className={`px-2 py-1 text-[10px] font-bold rounded ${themeOption === 'A' ? 'bg-maroon-900 text-white' : 'bg-white text-maroon-900 border'}`}
-              >
-                Option A
-              </button>
-              <button
-                onClick={() => setThemeOption('B')}
-                className={`px-2 py-1 text-[10px] font-bold rounded ${themeOption === 'B' ? 'bg-gold-500 text-white' : 'bg-white text-maroon-900 border'}`}
-              >
-                Option B
-              </button>
-            </div>
-          </div>
-
           <button
             onClick={() => {
               navigate('/');

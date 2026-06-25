@@ -52,12 +52,12 @@ export default function Footer() {
           <div className="col-span-2 lg:col-span-4">
             <Link
               to="/"
-              className="flex items-center mb-4 sm:mb-5 text-left group cursor-pointer bg-white rounded-lg p-2 inline-block"
+              className="flex items-center gap-2 sm:gap-3 group p-4 text-left cursor-pointer"
             >
               <img
-                src="https://storage.googleapis.com/a1aa/image/wM9tOQer8g4eQ1vVvL6P0m38d_UjL-R3Qj0rQpYw848.jpg"
+                src="/logo.png"
                 alt="Hamsini Silks Logo"
-                className="h-14 sm:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
               />
             </Link>
             <p className="text-gold-200/70 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 max-w-xs">
