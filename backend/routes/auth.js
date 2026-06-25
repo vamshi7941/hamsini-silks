@@ -47,4 +47,36 @@ router.post('/google', async (req, res) => {
   }
 });
 
+router.post('/phone', async (req, res) => {
+  const { uid, name, phone } = req.body;
+
+  if (!uid || !name || !phone)
+    return res
+      .status(400)
+      .json({ success: false, message: 'Missing user info' });
+
+  try {
+    const now = new Date();
+    const istString = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+    const saved = await Customer.findByIdAndUpdate(
+      uid,
+      {
+        _id: uid,
+        fullName: name,
+        phone,
+        loggedInAtIST: istString,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+
+    const token = createToken(saved._id);
+
+    return res.json({ success: true, customer: saved, token });
+  } catch (err) {
+    console.error('Error saving phone user:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 export default router;

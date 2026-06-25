@@ -1,5 +1,11 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  RecaptchaVerifier,
+  signInWithPopup,
+  signInWithPhoneNumber,
+} from 'firebase/auth';
 
 // Firebase config (from your SDK snippet)
 const firebaseConfig = {
@@ -15,9 +21,41 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+let phoneConfirmationResult: any = null;
 
 export async function signInWithGooglePopup() {
   const result = await signInWithPopup(auth, provider);
+  const user = result.user;
+  const idToken = await user.getIdToken();
+  return { user, idToken };
+}
+
+export async function sendPhoneOtp(phone: string) {
+  const windowAny = window as any;
+
+  if (!windowAny.recaptchaVerifier) {
+    windowAny.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      'recaptcha-container',
+      {
+        size: 'invisible',
+      },
+    );
+    await windowAny.recaptchaVerifier.render();
+  }
+
+  phoneConfirmationResult = await signInWithPhoneNumber(
+    auth,
+    phone,
+    windowAny.recaptchaVerifier,
+  );
+}
+
+export async function verifyPhoneOtp(code: string) {
+  if (!phoneConfirmationResult)
+    throw new Error('OTP verification has not been initiated');
+
+  const result = await phoneConfirmationResult.confirm(code);
   const user = result.user;
   const idToken = await user.getIdToken();
   return { user, idToken };

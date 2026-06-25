@@ -6,11 +6,15 @@ import { Auth } from '../../api/auth';
 export default function LoginPage() {
   const { user } = useStore();
 
-  const { loginWithGoogle, adminLogin } = Auth();
+  const { loginWithGoogle, sendPhoneOtp, loginWithPhone, adminLogin } = Auth();
   const [tab, setTab] = useState<'patron' | 'admin'>('patron');
 
   const [patronName, setPatronName] = useState('');
-  const [patronEmail, setPatronEmail] = useState('');
+  const [patronPhone, setPatronPhone] = useState('');
+  const [patronOtp, setPatronOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -111,7 +115,10 @@ export default function LoginPage() {
 
               {tab === 'patron' ? (
                 <>
-                  <form className="space-y-4">
+                  <form
+                    className="space-y-4"
+                    onSubmit={(e) => e.preventDefault()}
+                  >
                     <div>
                       <label className="block text-xs font-bold text-maroon-900 mb-1.5">
                         Your Name
@@ -122,30 +129,77 @@ export default function LoginPage() {
                         value={patronName}
                         onChange={(e) => setPatronName(e.target.value)}
                         className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors font-medium"
+                        placeholder=""
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-maroon-900 mb-1.5">
-                        Email Address
+                        Mobile Number
                       </label>
                       <input
-                        type="email"
+                        type="tel"
                         required
-                        value={patronEmail}
-                        onChange={(e) => setPatronEmail(e.target.value)}
+                        value={patronPhone}
+                        onChange={(e) => setPatronPhone(e.target.value)}
                         className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
+                        placeholder=""
                       />
                     </div>
-                    <div className="bg-gold-50 rounded-xl p-3 text-xs text-maroon-800 border border-gold-200">
-                      💡 <strong>Demo mode:</strong> Any email works. No real
-                      authentication required.
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full py-3.5 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
-                    >
-                      Sign In as Patron
-                    </button>
+                    {!otpSent ? (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSendingOtp(true);
+                          try {
+                            await sendPhoneOtp(patronPhone);
+                            setOtpSent(true);
+                          } catch (error) {
+                            console.error('Send OTP failed', error);
+                          }
+                          setSendingOtp(false);
+                        }}
+                        className="w-full py-3.5 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                      >
+                        {sendingOtp ? 'Sending OTP…' : 'Send OTP'}
+                      </button>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                            Enter OTP
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={patronOtp}
+                            onChange={(e) => setPatronOtp(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
+                            placeholder="123456"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setVerifyingOtp(true);
+                            try {
+                              await loginWithPhone(
+                                patronName,
+                                patronPhone,
+                                patronOtp,
+                              );
+                            } catch (error) {
+                              console.error('OTP verify failed', error);
+                            }
+                            setVerifyingOtp(false);
+                          }}
+                          className="w-full py-3.5 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                        >
+                          {verifyingOtp
+                            ? 'Verifying OTP…'
+                            : 'Verify OTP & Sign In'}
+                        </button>
+                      </>
+                    )}
                   </form>
                   <div className="mt-3">
                     <button
@@ -217,6 +271,7 @@ export default function LoginPage() {
                   Continue browsing as guest
                 </Link>
               </div>
+              <div id="recaptcha-container" />
             </div>
           </div>
         </div>

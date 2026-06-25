@@ -1,6 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { User, useStore } from '@/context/StoreContext';
-import { signInWithGooglePopup } from '../firebase';
+import {
+  signInWithGooglePopup,
+  sendPhoneOtp as firebaseSendPhoneOtp,
+  verifyPhoneOtp as firebaseVerifyPhoneOtp,
+} from '../firebase';
 
 export const Auth = () => {
   const { setUser, showToast, setCart, setWishlist } = useStore();
@@ -14,10 +18,13 @@ export const Auth = () => {
     name?: string,
     _id: string = '',
     token: string = '',
+    phone: string = '',
   ) => {
     const displayName =
       name ||
-      (role === 'admin' ? 'Hamsini Atelier Admin' : email.split('@')[0]);
+      (role === 'admin'
+        ? 'Hamsini Atelier Admin'
+        : email.split('@')[0] || phone);
     const newUser = {
       name: displayName,
       email,
@@ -25,6 +32,7 @@ export const Auth = () => {
       loggedIn: true,
       _id,
       token,
+      phone,
     } as User;
     setUser(newUser);
     try {
@@ -67,6 +75,41 @@ export const Auth = () => {
     }
   };
 
+  const sendPhoneOtp = async (phone: string) => {
+    await firebaseSendPhoneOtp(phone);
+  };
+
+  const loginWithPhone = async (name: string, phone: string, otp: string) => {
+    try {
+      const { user } = await firebaseVerifyPhoneOtp(otp);
+      const response = await fetch(`${apiUrl}/api/auth/phone/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: user.uid,
+          name,
+          phone,
+        }),
+      });
+      const json = await response.json();
+
+      if (json.success) {
+        login('', 'customer', name, user.uid ?? '', json.token, phone);
+      } else {
+        showToast(
+          json.message || 'Phone sign-in failed. Please try again.',
+          'error',
+        );
+      }
+    } catch (err) {
+      console.error('Phone sign-in failed', err);
+      showToast(
+        'Phone sign-in failed. Please check your phone number and OTP.',
+        'error',
+      );
+    }
+  };
+
   const adminLogin = async (email: string, password: string) => {
     try {
       const response = await fetch(`${apiUrl}/api/auth/admin/login`, {
@@ -99,8 +142,11 @@ export const Auth = () => {
     const guest = {
       name: 'Guest Patron',
       email: '',
+      phone: '',
       role: 'customer',
       loggedIn: false,
+      token: '',
+      _id: '',
     } as User;
     setUser(guest);
     try {
@@ -114,5 +160,11 @@ export const Auth = () => {
     navigate('/');
   };
 
-  return { loginWithGoogle, adminLogin, logout };
+  return {
+    loginWithGoogle,
+    sendPhoneOtp,
+    loginWithPhone,
+    adminLogin,
+    logout,
+  };
 };
