@@ -19,6 +19,22 @@ export default function LoginPage() {
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
 
+  const formatIndianPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (!digits) return '';
+    let normalized = digits;
+
+    if (normalized.startsWith('0')) {
+      normalized = normalized.slice(1);
+    }
+    if (normalized.startsWith('91')) {
+      normalized = normalized.slice(2);
+    }
+
+    normalized = normalized.slice(0, 10);
+    return `+91 ${normalized}`;
+  };
+
   if (user.loggedIn) {
     return (
       <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center p-4">
@@ -140,9 +156,11 @@ export default function LoginPage() {
                         type="tel"
                         required
                         value={patronPhone}
-                        onChange={(e) => setPatronPhone(e.target.value)}
+                        onChange={(e) =>
+                          setPatronPhone(formatIndianPhone(e.target.value))
+                        }
                         className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
-                        placeholder=""
+                        placeholder="+91 XXXXXXXXXX"
                       />
                     </div>
                     {!otpSent ? (

@@ -4,6 +4,7 @@ import {
   signInWithGooglePopup,
   sendPhoneOtp as firebaseSendPhoneOtp,
   verifyPhoneOtp as firebaseVerifyPhoneOtp,
+  getFirebaseAuthErrorMessage,
 } from '../firebase';
 
 export const Auth = () => {
@@ -68,15 +69,19 @@ export const Auth = () => {
       }
     } catch (err) {
       console.error('Google sign-in failed', err);
-      showToast(
-        'Google sign-in failed. Please check your connection.',
-        'error',
-      );
+      const message = getFirebaseAuthErrorMessage(err);
+      showToast(message, 'error');
     }
   };
 
   const sendPhoneOtp = async (phone: string) => {
-    await firebaseSendPhoneOtp(phone);
+    try {
+      await firebaseSendPhoneOtp(phone);
+    } catch (err) {
+      const message = getFirebaseAuthErrorMessage(err);
+      showToast(message, 'error');
+      throw err;
+    }
   };
 
   const loginWithPhone = async (name: string, phone: string, otp: string) => {
@@ -103,10 +108,8 @@ export const Auth = () => {
       }
     } catch (err) {
       console.error('Phone sign-in failed', err);
-      showToast(
-        'Phone sign-in failed. Please check your phone number and OTP.',
-        'error',
-      );
+      const message = getFirebaseAuthErrorMessage(err);
+      showToast(message, 'error');
     }
   };
 
