@@ -115,6 +115,9 @@ export default function Catalogue({
                   <span className="text-[9px] font-bold text-gold-600 uppercase tracking-wider block">
                     {p.category}
                   </span>
+                  <span className="text-[9px] font-medium text-maroon-700/70 uppercase tracking-wider block">
+                    {p.subcategory}
+                  </span>
                   <h4 className="font-display text-sm font-bold text-maroon-900 mt-0.5 truncate">
                     {p.name}
                   </h4>

@@ -1,5 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 import {
   HeartIcon,
   BagIcon,
@@ -12,14 +19,15 @@ import { useStore } from '../context/StoreContext';
 export default function Header() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { cartCount, user, setSelectedCategory, wishlistCount } = useStore();
+  const { cartCount, user, setSelectedCategory, wishlistCount, siteContent } =
+    useStore();
 
-  const handleNav = (cat: string) => {
-    setSelectedCategory(cat);
-    navigate('/shop');
+  const handleNav = (name: string, slug: string = 'all') => {
+    setSelectedCategory(name);
+    navigate(`/category/${slug}`);
     setOpen(false);
   };
-
+  console.log('siteContent: ', siteContent);
   return (
     <header className="sticky top-0 z-50 bg-[#fdf8f1]/95 backdrop-blur-md border-b border-gold-200/60 shadow-xs">
       {/* Top announcement bar */}
@@ -65,36 +73,58 @@ export default function Header() {
           <nav className="hidden lg:flex justify-center gap-8 xl:gap-12 pb-2.5 pt-2.5 bg-gradient-to-r from-transparent via-maroon-50/20 to-transparent">
             {[
               { label: 'Home', to: '/', isCat: false },
-              { label: 'All Weaves', cat: 'All', isCat: true },
-              {
-                label: 'Bridal Kanjivaram',
-                cat: 'Bridal Kanjivaram',
-                isCat: true,
-              },
-              { label: 'Banarasi Heritage', cat: 'Banarasi Silk', isCat: true },
-              { label: 'Soft Silk Pattu', cat: 'Soft Silk Pattu', isCat: true },
-              { label: 'Designer Atelier', cat: 'Designer Silk', isCat: true },
-            ].map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  if (item.isCat) {
-                    handleNav(item.cat!);
-                  } else {
-                    navigate('/');
-                  }
-                }}
-                className="text-[clamp(0.65rem,0.95vw,0.95rem)] whitespace-nowrap tracking-widest uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative group py-1 cursor-pointer"
-              >
-                {item.label}
-                {item.label.includes('Bridal') && (
-                  <span className="ml-1 text-[8px] bg-gold-500 text-white px-1.5 py-0.2 rounded-xs align-super font-bold">
-                    30% OFF
-                  </span>
-                )}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gold-500 transition-all duration-300 group-hover:w-full" />
-              </button>
-            ))}
+              { label: 'All Weaves', name: 'All', slug: 'all', isCat: true },
+              ...siteContent?.categories
+                ?.filter((cat) => cat.type !== 'subcategory')
+                ?.map((cat) => ({
+                  label: cat.name,
+                  name: cat.name,
+                  slug: slugify(cat.slug || cat.name),
+                  isCat: true,
+                  subcategories: siteContent.categories?.filter(
+                    (item) =>
+                      item.type === 'subcategory' && item.parentId === cat._id,
+                  ),
+                })),
+            ].map((item: any) => {
+              const hasSubmenu = Boolean(item.subcategories?.length);
+
+              return (
+                <div key={item.label} className="relative group">
+                  <button
+                    onClick={() => {
+                      if (item.isCat) {
+                        handleNav(item.name, item.slug);
+                      } else {
+                        navigate('/');
+                      }
+                    }}
+                    className="text-[clamp(0.65rem,0.95vw,0.95rem)] whitespace-nowrap tracking-widest uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative py-1 cursor-pointer"
+                  >
+                    {item.label}
+                  </button>
+
+                  {hasSubmenu && (
+                    <div className="absolute left-1/2 top-full mt-2 w-56 -translate-x-1/2 rounded-2xl border border-gold-200 bg-white/95 p-2 shadow-xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
+                      {item.subcategories?.map((subcat: any) => (
+                        <button
+                          key={subcat._id}
+                          onClick={() =>
+                            handleNav(
+                              subcat.name,
+                              slugify(subcat.slug || subcat.name),
+                            )
+                          }
+                          className="block w-full rounded-xl px-3 py-2 text-left text-sm text-maroon-800 hover:bg-gold-50 hover:text-maroon-700 transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                          {subcat.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
 
           {/* Icons & Actions */}
@@ -171,40 +201,26 @@ export default function Header() {
             <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500" />
           </button>
           <button
-            onClick={() => handleNav('All')}
+            onClick={() => handleNav('All', 'all')}
             className="w-full text-left py-2 text-maroon-900 font-semibold text-xs tracking-wider border-b border-gold-100 flex items-center justify-between uppercase cursor-pointer"
           >
             All Collections
             <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500" />
           </button>
-          <button
-            onClick={() => handleNav('Bridal Kanjivaram')}
-            className="w-full text-left py-2 text-maroon-800 text-xs tracking-wider border-b border-gold-100 flex items-center justify-between cursor-pointer"
-          >
-            Bridal Kanjivaram
-            <ChevronRightIcon className="h-3.5 w-3.5 text-gold-400" />
-          </button>
-          <button
-            onClick={() => handleNav('Banarasi Silk')}
-            className="w-full text-left py-2 text-maroon-800 text-xs tracking-wider border-b border-gold-100 flex items-center justify-between cursor-pointer"
-          >
-            Banarasi Brocades
-            <ChevronRightIcon className="h-3.5 w-3.5 text-gold-400" />
-          </button>
-          <button
-            onClick={() => handleNav('Soft Silk Pattu')}
-            className="w-full text-left py-2 text-maroon-800 text-xs tracking-wider border-b border-gold-100 flex items-center justify-between cursor-pointer"
-          >
-            Soft Silk Pattu
-            <ChevronRightIcon className="h-3.5 w-3.5 text-gold-400" />
-          </button>
-          <button
-            onClick={() => handleNav('Designer Silk')}
-            className="w-full text-left py-2 text-maroon-800 text-xs tracking-wider border-b border-gold-100 flex items-center justify-between cursor-pointer"
-          >
-            Designer Atelier
-            <ChevronRightIcon className="h-3.5 w-3.5 text-gold-400" />
-          </button>
+          {siteContent.categories
+            .filter((cat) => cat.type !== 'subcategory')
+            .map((cat) => (
+              <button
+                key={cat._id}
+                onClick={() =>
+                  handleNav(cat.name, slugify(cat.slug || cat.name))
+                }
+                className="w-full text-left py-2 text-maroon-800 text-xs tracking-wider border-b border-gold-100 flex items-center justify-between cursor-pointer"
+              >
+                {cat.name}
+                <ChevronRightIcon className="h-3.5 w-3.5 text-gold-400" />
+              </button>
+            ))}
           {user.loggedIn && user.role === 'admin' && (
             <button
               onClick={() => {

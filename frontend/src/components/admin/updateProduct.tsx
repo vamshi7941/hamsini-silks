@@ -1,6 +1,8 @@
 import { Product } from '@/data';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useStore } from '../../context/StoreContext';
 import { Icon } from '../Icons';
+import { fileToBase64, fileListToBase64 } from '../../utils/image';
 
 // ── Image upload zone (used in edit/add modals) ───────────────────────────────
 function ImageUploadZone({
@@ -23,22 +25,6 @@ function ImageUploadZone({
       onChange(url);
     };
     reader.readAsDataURL(file);
-  };
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.readAsDataURL(file);
-
-      reader.onload = () => {
-        resolve(reader.result as string);
-      };
-
-      reader.onerror = (error) => {
-        reject(error);
-      };
-    });
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,6 +153,10 @@ export function EditProductModal({
   onClose: () => void;
   onSave: (id: string, updates: Partial<Product>) => void;
 }) {
+  const { categories } = useStore();
+  const categoryOptions = categories.filter(
+    (cat) => cat.type !== 'subcategory',
+  );
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price);
   const [origPrice, setOrigPrice] = useState(product.originalPrice ?? '');
@@ -175,24 +165,41 @@ export function EditProductModal({
   const [additionalImages, setAdditionalImages] = useState<string[]>(
     product.images ?? [],
   );
-  const [category, setCategory] = useState(product.category);
+  const initialCategoryId =
+    categoryOptions.find((cat) => cat.name === product.category)?._id ??
+    categoryOptions[0]?._id ??
+    '';
+  const initialSubcategoryId =
+    categories.find(
+      (cat) => cat.type === 'subcategory' && cat.name === product.subcategory,
+    )?._id ?? '';
+  const [selectedCategoryId, setSelectedCategoryId] =
+    useState(initialCategoryId);
+  const [subcategoryId, setSubcategoryId] = useState(initialSubcategoryId);
   const [inStock, setInStock] = useState(product.inStock !== false);
   const [size, setSize] = useState(product.size ?? '6.2m (incl. blouse)');
 
-  const fileListToBase64 = async (files: FileList | null) => {
-    if (!files) return [] as string[];
-    const readers = Array.from(files).map(
-      (file) =>
-        new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        }),
-    );
+  useEffect(() => {
+    if (!selectedCategoryId && categoryOptions.length) {
+      setSelectedCategoryId(categoryOptions[0]._id);
+    }
+    if (
+      selectedCategoryId &&
+      !categoryOptions.some((cat) => cat._id === selectedCategoryId)
+    ) {
+      setSelectedCategoryId(categoryOptions[0]?._id ?? '');
+      setSubcategoryId('');
+    }
+  }, [categoryOptions, selectedCategoryId]);
 
-    return Promise.all(readers);
-  };
+  const subcategoryOptions = categories.filter(
+    (cat) => cat.type === 'subcategory' && cat.parentId === selectedCategoryId,
+  );
+  const selectedCategoryName =
+    categoryOptions.find((cat) => cat._id === selectedCategoryId)?.name ??
+    product.category;
+  const selectedSubcategoryName =
+    subcategoryOptions.find((cat) => cat._id === subcategoryId)?.name ?? '';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
@@ -204,7 +211,7 @@ export function EditProductModal({
             </div>
             <div>
               <h2 className="font-display text-lg font-bold text-maroon-900">
-                Edit Saree
+                Edit Product
               </h2>
               <p className="text-xs text-maroon-700/70">
                 Changes go live immediately
@@ -285,14 +292,36 @@ export function EditProductModal({
                 Category
               </label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={selectedCategoryId}
+                onChange={(e) => {
+                  setSelectedCategoryId(e.target.value);
+                  setSubcategoryId('');
+                }}
                 className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 bg-white cursor-pointer transition-colors"
               >
-                <option>Bridal Kanjivaram</option>
-                <option>Banarasi Silk</option>
-                <option>Soft Silk Pattu</option>
-                <option>Designer Silk</option>
+                {categoryOptions.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-maroon-900 mb-1">
+                Subcategory{' '}
+                <span className="text-maroon-400 font-normal">optional</span>
+              </label>
+              <select
+                value={subcategoryId}
+                onChange={(e) => setSubcategoryId(e.target.value)}
+                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 bg-white cursor-pointer transition-colors"
+              >
+                <option value="">None</option>
+                {subcategoryOptions.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -375,7 +404,8 @@ export function EditProductModal({
             />
             <div>
               <span className="text-[10px] text-gold-700 font-bold uppercase block">
-                {category}
+                {selectedCategoryName}
+                {selectedSubcategoryName ? ` • ${selectedSubcategoryName}` : ''}
               </span>
               <h4 className="font-display text-base font-bold text-maroon-900">
                 {name || '—'}
@@ -420,7 +450,8 @@ export function EditProductModal({
                 image,
                 images:
                   additionalImages.length > 0 ? additionalImages : undefined,
-                category,
+                category: selectedCategoryName,
+                subcategory: selectedSubcategoryName || undefined,
                 inStock,
                 size,
               });
@@ -443,8 +474,15 @@ export function AddProductModal({
   onClose: () => void;
   onAdd: (p: Product) => void;
 }) {
+  const { categories } = useStore();
+  const categoryOptions = categories.filter(
+    (cat) => cat.type !== 'subcategory',
+  );
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Bridal Kanjivaram');
+  const [selectedCategoryId, setSelectedCategoryId] = useState(
+    categoryOptions[0]?._id ?? '',
+  );
+  const [subcategoryId, setSubcategoryId] = useState('');
   const [price, setPrice] = useState<number | ''>('');
   const [origPrice, setOrigPrice] = useState('');
   const [badge, setBadge] = useState('');
@@ -452,6 +490,28 @@ export function AddProductModal({
   const [additionalImages, setAdditionalImages] = useState<string[]>([]);
   const [inStock, setInStock] = useState(true);
   const [size, setSize] = useState('6.2m (incl. blouse)');
+
+  useEffect(() => {
+    if (!selectedCategoryId && categoryOptions.length) {
+      setSelectedCategoryId(categoryOptions[0]._id);
+    }
+    if (
+      selectedCategoryId &&
+      !categoryOptions.some((cat) => cat._id === selectedCategoryId)
+    ) {
+      setSelectedCategoryId(categoryOptions[0]?._id ?? '');
+      setSubcategoryId('');
+    }
+  }, [categoryOptions, selectedCategoryId]);
+
+  const subcategoryOptions = categories.filter(
+    (cat) => cat.type === 'subcategory' && cat.parentId === selectedCategoryId,
+  );
+  const selectedCategoryName =
+    categoryOptions.find((cat) => cat._id === selectedCategoryId)?.name ??
+    'Bridal Kanjivaram';
+  const selectedSubcategoryName =
+    subcategoryOptions.find((cat) => cat._id === subcategoryId)?.name ?? '';
 
   const fileListToBase64 = async (files: FileList | null) => {
     if (!files) return [] as string[];
@@ -473,7 +533,8 @@ export function AddProductModal({
     onAdd({
       _id: `HSPID-${Date.now()}`,
       name,
-      category,
+      category: selectedCategoryName,
+      subcategory: selectedSubcategoryName || undefined,
       price: Number(price),
       originalPrice: origPrice ? Number(origPrice) : undefined,
       badge: badge || undefined,
@@ -494,7 +555,7 @@ export function AddProductModal({
             </div>
             <div>
               <h2 className="font-display text-lg font-bold text-maroon-900">
-                Add New Saree
+                Add Product
               </h2>
               <p className="text-xs text-maroon-700/70">Publishes instantly</p>
             </div>
@@ -575,14 +636,36 @@ export function AddProductModal({
                 Category
               </label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={selectedCategoryId}
+                onChange={(e) => {
+                  setSelectedCategoryId(e.target.value);
+                  setSubcategoryId('');
+                }}
                 className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 bg-white cursor-pointer"
               >
-                <option>Bridal Kanjivaram</option>
-                <option>Banarasi Silk</option>
-                <option>Soft Silk Pattu</option>
-                <option>Designer Silk</option>
+                {categoryOptions.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-maroon-900 mb-1">
+                Subcategory{' '}
+                <span className="text-maroon-400 font-normal">optional</span>
+              </label>
+              <select
+                value={subcategoryId}
+                onChange={(e) => setSubcategoryId(e.target.value)}
+                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 bg-white cursor-pointer"
+              >
+                <option value="">None</option>
+                {subcategoryOptions.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

@@ -29,6 +29,21 @@ router
   .route('/updateOrderStatus')
   .post(requireAdminAuth, adminController.updateOrderStatus);
 
+router
+  .route('/categories')
+  .get(requireAdminAuth, adminController.getCategories)
+  .post(requireAdminAuth, adminController.createCategory);
+
+router
+  .route('/categories/:id')
+  .put(requireAdminAuth, adminController.updateCategory)
+  .delete(requireAdminAuth, adminController.deleteCategory);
+
+router
+  .route('/hero-content')
+  .get(requireAdminAuth, adminController.getHeroContent)
+  .post(requireAdminAuth, adminController.saveHeroContent);
+
 // ==== Promotor Routes ====
 router
   .route('/promoter/create')

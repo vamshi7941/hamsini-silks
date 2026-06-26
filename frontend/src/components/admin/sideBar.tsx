@@ -32,6 +32,7 @@ export default function SideBar({
     },
     { id: 'media', label: 'Media', icon: Icon.image },
     { id: 'promoters', label: 'Promoters', icon: Icon.users },
+    { id: 'site-customize', label: 'Site Customize', icon: Icon.catalogue },
   ];
 
   return (

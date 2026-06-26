@@ -28,6 +28,30 @@ router.get('/:id/image', async (req, res) => {
   }
 });
 
+router.get('/categories', adminController.getCategories);
+router.get('/site-content', async (req, res) => {
+  try {
+    const siteConfig = await (
+      await import('../models/SiteConfigSchema.js')
+    ).default.findOne();
+    if (!siteConfig) {
+      return res
+        .status(200)
+        .json({ success: true, categories: [], heroContent: null });
+    }
+
+    return res.status(200).json({
+      success: true,
+      categories: (siteConfig.categories || []).filter(
+        (item) => item.isActive !== false,
+      ),
+      heroContent: siteConfig.hero || null,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.route('/addProduct').post(requireAdminAuth, adminController.addProduct);
 
 router

@@ -1,6 +1,35 @@
-import { Order, useStore } from '@/context/StoreContext';
-import { Product } from '@/data';
+import { useStore } from '@/context/StoreContext';
 import { ProductsApi } from './products';
+import { Order, Product } from '@/context/contextTypes';
+
+export type CategoryItem = {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  parentId?: string | null;
+  type?: 'category' | 'subcategory';
+  isActive?: boolean;
+  order?: number;
+};
+
+export type HeroContent = {
+  _id?: string;
+  eyebrow?: string;
+  titleLine1?: string;
+  titleLine2?: string;
+  subtitle?: string;
+  description?: string;
+  primaryButtonLabel?: string;
+  primaryButtonTarget?: string;
+  secondaryButtonLabel?: string;
+  secondaryButtonTarget?: string;
+  image?: string;
+  featuredTitle?: string;
+  featuredPrice?: string;
+  badgeText?: string;
+};
 
 export const AdminApi = () => {
   const apiUrl =
@@ -201,11 +230,136 @@ export const AdminApi = () => {
     }
   };
 
+  const saveCategory = async (category: Partial<CategoryItem>) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/categories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify(category),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save category');
+      }
+      showToast('Category saved successfully', 'success');
+      return json.category;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to save category',
+        'error',
+      );
+      return null;
+    }
+  };
+
+  const updateCategory = async (id: string, updates: Partial<CategoryItem>) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/categories/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to update category');
+      }
+      showToast('Category updated successfully', 'success');
+      return json.category;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to update category',
+        'error',
+      );
+      return null;
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/categories/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to delete category');
+      }
+      showToast('Category deleted successfully', 'success');
+      return true;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to delete category',
+        'error',
+      );
+      return false;
+    }
+  };
+
+  const fetchSiteContent = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/products/site-content`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to fetch hero content');
+      }
+      return json || null;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to fetch hero content',
+        'error',
+      );
+      return null;
+    }
+  };
+
+  const saveHeroContent = async (content: HeroContent) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/hero-content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify(content),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save hero content');
+      }
+      showToast('Hero section updated successfully', 'success');
+      return json.heroContent;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to save hero content',
+        'error',
+      );
+      return null;
+    }
+  };
+
   return {
     addProduct,
     updateProduct,
     deleteProduct,
     fetchAllOrders,
     updateOrderStatus,
+    fetchSiteContent,
+    saveCategory,
+    updateCategory,
+    deleteCategory,
+    saveHeroContent,
   };
 };

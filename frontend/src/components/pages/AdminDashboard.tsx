@@ -11,6 +11,7 @@ import Orders from '../admin/orders';
 import Catalogue from '../admin/catalogue';
 import Media from '../admin/media';
 import Promoters from '../admin/promoters';
+import SiteCustomize from '../admin/siteCustomize';
 import { AddProductModal, EditProductModal } from '../admin/updateProduct';
 import ImageEditor from '../admin/imageEditor';
 import DeleteConfirmModal from '../admin/deleteConfirmationModel';
@@ -22,7 +23,8 @@ export type AdminTab =
   | 'orders'
   | 'catalogue'
   | 'media'
-  | 'promoters';
+  | 'promoters'
+  | 'site-customize';
 
 // ── MAIN ADMIN DASHBOARD ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
@@ -64,7 +66,9 @@ export default function AdminDashboard() {
                     ? 'Catalogue'
                     : activeTab === 'media'
                       ? 'Media Studio'
-                      : 'Promoters'}
+                      : activeTab === 'promoters'
+                        ? 'Promoters'
+                        : 'Site Customize'}
             </h1>
             <p className="text-xs text-maroon-700/60 hidden sm:block mt-0.5">
               {new Date().toLocaleDateString('en-IN', {
@@ -126,6 +130,9 @@ export default function AdminDashboard() {
 
           {/* ═══════════════════ PROMOTERS ═══════════════════ */}
           {activeTab === 'promoters' && <Promoters />}
+
+          {/* ═══════════════════ SITE CUSTOMIZE ═══════════════════ */}
+          {activeTab === 'site-customize' && <SiteCustomize />}
         </main>
       </div>
 

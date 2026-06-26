@@ -110,6 +110,9 @@ export default function ProductCard({ product }: { product: Product }) {
         >
           {product.category}
         </Link>
+        <p className="text-[9px] sm:text-[10px] text-maroon-700/70 mb-1.5 font-medium truncate">
+          {product.subcategory}
+        </p>
         <Link
           to={productUrl}
           className="font-display text-sm sm:text-base lg:text-lg text-maroon-900 mb-1.5 leading-tight font-bold cursor-pointer hover:text-maroon-700 transition-colors"

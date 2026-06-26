@@ -46,9 +46,9 @@ function HomePage() {
 }
 
 export default function App() {
-  const { user, imagesLoaded } = useStore();
+  const { user, imagesLoaded, setSiteContent } = useStore();
   const { fetchAllProducts } = ProductsApi();
-  const { fetchAllOrders } = AdminApi();
+  const { fetchAllOrders, fetchSiteContent } = AdminApi();
   const { getCustomerData } = CustomerApi();
 
   const hasFetchedProducts = useRef(false);
@@ -58,6 +58,12 @@ export default function App() {
     if (hasFetchedProducts.current) return;
     hasFetchedProducts.current = true;
     fetchAllProducts();
+    fetchSiteContent().then((content) =>
+      setSiteContent({
+        categories: content.categories || [],
+        heroContent: content.heroContent || null,
+      }),
+    );
   }, []);
 
   useEffect(() => {
@@ -82,6 +88,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/shop" element={<ShopPage />} />
+          <Route path="/category/:slug" element={<ShopPage />} />
           <Route path="/product/:slug" element={<ProductDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/cart" element={<CartPage />} />
