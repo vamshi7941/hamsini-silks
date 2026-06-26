@@ -194,7 +194,52 @@ export async function getPromoterOrders(req, res) {
 
     const orderDetails = orders.map((order) => ({
       _id: order._id,
+      customerName: order.name,
+      email: order.email,
+      phone: order.phone,
       address: order.address,
+      paymentMethod: order.paymentMethod,
+      status: order.status,
+      items: order.items,
+      total: order.total,
+      discountApplied: order.discountApplied || 0,
+      originalTotal: order.total + (order.discountApplied || 0),
+      promoCode: order.promoCode || null,
+      orderedDate: order.orderedDate,
+    }));
+
+    res.status(200).json({ orders: orderDetails, success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.message, success: false });
+  }
+}
+
+export async function getOwnPromoterOrders(req, res) {
+  const { promoterId } = req.params;
+
+  try {
+    const promoter = await PromoterSchema.findById(promoterId);
+
+    if (!promoter) {
+      return res
+        .status(404)
+        .json({ error: 'Promoter not found', success: false });
+    }
+
+    const promoCodes = promoter.promoCodes.map((pc) => pc.code);
+    const orders = await OrderSchema.find({
+      promoCode: { $in: promoCodes },
+    }).sort({ orderedDate: -1 });
+
+    const orderDetails = orders.map((order) => ({
+      _id: order._id,
+      customerName: order.name,
+      email: order.email,
+      phone: order.phone,
+      address: order.address,
+      paymentMethod: order.paymentMethod,
+      status: order.status,
+      items: order.items,
       total: order.total,
       discountApplied: order.discountApplied || 0,
       originalTotal: order.total + (order.discountApplied || 0),

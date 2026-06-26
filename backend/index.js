@@ -42,6 +42,12 @@ app.get(
   promoterController.getPromoterStats,
 );
 
+app.get(
+  '/api/promoter/:promoterId/orders',
+  requirePromoterAuth,
+  promoterController.getOwnPromoterOrders,
+);
+
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 mongoose.set('strictQuery', false);

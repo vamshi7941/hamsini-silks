@@ -86,6 +86,33 @@ export const PromoterApi = () => {
     }
   };
 
+  const getOwnPromoterOrders = async (promoterId: string) => {
+    try {
+      const response = await fetch(
+        `${apiUrl}/api/promoter/${promoterId}/orders`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
+        },
+      );
+      const json = await response.json();
+
+      if (json.success) {
+        return json.orders;
+      } else {
+        showToast(
+          json.error || 'Failed to fetch your promoter orders',
+          'error',
+        );
+      }
+    } catch (error) {
+      showToast('Failed to fetch your promoter orders', 'error');
+    }
+  };
+
   const updatePromoter = async (
     promoterId: string,
     payload: {
@@ -180,6 +207,7 @@ export const PromoterApi = () => {
     createPromoter,
     getAllPromoters,
     getPromoterOrders,
+    getOwnPromoterOrders,
     updatePromoter,
     deletePromoter,
     getPromoterStats,

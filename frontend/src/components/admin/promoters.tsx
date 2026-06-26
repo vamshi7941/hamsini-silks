@@ -481,12 +481,7 @@ export default function PromotersManagement() {
         )}
 
       {/* Promoters Table */}
-      {loading ? (
-        <div className="bg-white rounded-2xl p-12 text-center border border-gold-100">
-          <div className="text-2xl mb-3">⏳</div>
-          <p className="font-semibold text-maroon-900">Loading promoters...</p>
-        </div>
-      ) : filteredPromoters.length === 0 ? (
+      {filteredPromoters.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gold-100">
           <div className="text-4xl mb-3">🎯</div>
           <p className="font-semibold text-maroon-900">No promoters found</p>
