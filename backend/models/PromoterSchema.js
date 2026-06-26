@@ -126,7 +126,7 @@ PromoterSchema.statics.login = async function (phone, password) {
     throw Error('Phone and password are required');
   }
 
-  const promoter = await this.findOne({ phone, isActive: true });
+  const promoter = await this.findOne({ phone });
 
   if (!promoter) {
     throw Error('Invalid phone number');

@@ -315,6 +315,7 @@ export async function getPromoterStats(req, res) {
         })),
         ordersCount,
         revenue,
+        isActive: promoter.isActive,
       },
       success: true,
     });

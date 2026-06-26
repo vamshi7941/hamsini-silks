@@ -15,6 +15,7 @@ export type PromoterStats = {
   }>;
   ordersCount: number;
   revenue: number;
+  isActive: boolean;
 };
 
 export default function PromotersDashboard() {
@@ -191,9 +192,15 @@ export default function PromotersDashboard() {
                   <span className="text-sm font-semibold text-maroon-700/70">
                     Status:
                   </span>
-                  <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                  {stats.isActive ? (
+                    <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
                     Active
                   </span>
+                  ) : (
+                    <span className="text-sm font-medium text-red-600 bg-red-50 px-3 py-1 rounded-full">
+                      Inactive
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

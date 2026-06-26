@@ -157,7 +157,10 @@ export const PromoterApi = () => {
         `${apiUrl}/api/promoter/stats/${promoterId}`,
         {
           method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
         },
       );
       const json = await response.json();

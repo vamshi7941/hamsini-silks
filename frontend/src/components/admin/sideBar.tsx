@@ -36,21 +36,14 @@ export default function SideBar({
 
   return (
     <aside className="w-16 md:w-60 admin-sidebar flex flex-col shrink-0 sticky top-0 h-screen z-40">
-      <div className="px-3 md:px-5 py-4 border-b border-white/10 flex justify-center">
-        <div className="p-1.5 rounded-lg inline-flex max-w-full">
-          <img
-            src="/logo.png"
-            alt="Hamsini Silks Logo"
-            className="w-[100px] h-auto transition-transform duration-500 group-hover:scale-105 rounded block"
-          />
-        </div>
-      </div>
       <nav className="flex-1 px-2 md:px-3 py-4 space-y-1 overflow-y-auto admin-scroll">
         {sidebarItems.map((item: any, i: number) => (
           <button
             key={i}
             onClick={() => setActiveTab(item.id as AdminTab)}
-            className={`w-full flex items-center gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer relative group ${
+            aria-label={item.label}
+            title={item.label}
+            className={`w-full flex items-center justify-center md:justify-start gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer relative group ${
               activeTab === item.id
                 ? 'bg-gold-500/20 text-gold-200 border border-gold-500/30'
                 : 'text-white/60 hover:bg-white/10 hover:text-white'
@@ -63,7 +56,7 @@ export default function SideBar({
                 {item.badge}
               </span>
             )}
-            <span className="md:hidden absolute left-full ml-2 bg-maroon-900 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-lg z-50">
+            <span className="absolute left-full ml-2 bg-maroon-900 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-lg z-50 md:hidden">
               {item.label}
             </span>
           </button>
@@ -72,21 +65,25 @@ export default function SideBar({
       <div className="px-2 md:px-3 pb-4 border-t border-white/10 pt-4 space-y-1">
         <button
           onClick={() => navigate('/')}
-          className="w-full flex items-center gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:bg-white/10 hover:text-white transition-all cursor-pointer group relative"
+          aria-label="View Store"
+          title="View Store"
+          className="w-full flex items-center justify-center md:justify-start gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:bg-white/10 hover:text-white transition-all cursor-pointer group relative"
         >
           <Icon.home />
           <span className="hidden md:block">View Store</span>
-          <span className="md:hidden absolute left-full ml-2 bg-maroon-900 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-lg z-50">
+          <span className="absolute left-full ml-2 bg-maroon-900 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-lg z-50 md:hidden">
             View Store
           </span>
         </button>
         <button
           onClick={logout}
-          className="w-full flex items-center gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:bg-white/10 hover:text-white transition-all cursor-pointer group relative"
+          aria-label="Logout"
+          title="Logout"
+          className="w-full flex items-center justify-center md:justify-start gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:bg-white/10 hover:text-white transition-all cursor-pointer group relative"
         >
           <Icon.logout />
           <span className="hidden md:block">Logout</span>
-          <span className="md:hidden absolute left-full ml-2 bg-maroon-900 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-lg z-50">
+          <span className="absolute left-full ml-2 bg-maroon-900 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-lg z-50 md:hidden">
             Logout
           </span>
         </button>

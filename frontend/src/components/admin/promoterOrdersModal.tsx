@@ -63,7 +63,7 @@ export default function PromoterOrdersModal({
                       key={order._id}
                       className="hover:bg-maroon-50 transition-colors"
                     >
-                      <td className="px-4 py-4 font-mono text-xs text-maroon-900">
+                      <td className="px-4 py-4 font-mono text-xs text-maroon-900 whitespace-nowrap">
                         {order._id}
                       </td>
                       <td className="px-4 py-4 text-xs text-maroon-700 whitespace-pre-line">
