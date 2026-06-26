@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { Promoter, PromoterOrder } from './promoters';
 import { Icon } from '../Icons';
 
@@ -13,10 +14,29 @@ export default function PromoterOrdersModal({
   orders,
   onClose,
 }: Props) {
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.max(1, Math.ceil(orders.length / rowsPerPage));
+
+  useEffect(() => {
+    setPage(1);
+  }, [orders]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const paginatedOrders = useMemo(
+    () => orders.slice((page - 1) * rowsPerPage, page * rowsPerPage),
+    [orders, page],
+  );
+
   return typeof document !== 'undefined'
     ? createPortal(
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl overflow-hidden shadow-xl border border-gold-100 absolute w-[85%] ">
+          <div className="bg-white rounded-2xl max-w-4xl max-h-[85vh] overflow-hidden shadow-xl border border-gold-100 absolute w-[85%] sm:w-[95%]">
             <div className="flex items-center justify-between border-b border-gold-100 px-6 py-4 ">
               <div>
                 <h2 className="text-lg font-display font-bold text-maroon-900">
@@ -42,53 +62,96 @@ export default function PromoterOrdersModal({
                   No orders found for this promoter yet.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left border-collapse">
-                    <thead className="bg-maroon-50 text-maroon-900">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold">Order ID</th>
-                        <th className="px-4 py-3 font-semibold">Address</th>
-                        <th className="px-4 py-3 font-semibold">Coupon</th>
-                        <th className="px-4 py-3 font-semibold text-right">
-                          Original Total
-                        </th>
-                        <th className="px-4 py-3 font-semibold text-right">
-                          Discount
-                        </th>
-                        <th className="px-4 py-3 font-semibold text-right">
-                          After Coupon
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gold-100">
-                      {orders.map((order) => (
-                        <tr
-                          key={order._id}
-                          className="hover:bg-maroon-50 transition-colors"
-                        >
-                          <td className="px-4 py-4 font-mono text-xs text-maroon-900 whitespace-nowrap">
-                            {order._id}
-                          </td>
-                          <td className="px-4 py-4 text-xs text-maroon-700 whitespace-pre-line min-w-[260px] max-w-[360px]">
-                            {order.address}
-                          </td>
-                          <td className="px-4 py-4 text-xs text-maroon-900 font-semibold">
-                            {order.promoCode || 'None'}
-                          </td>
-                          <td className="px-4 py-4 text-right font-semibold text-maroon-900">
-                            ₹{order.originalTotal.toLocaleString('en-IN')}
-                          </td>
-                          <td className="px-4 py-4 text-right text-sm text-green-700 font-semibold">
-                            -₹{order.discountApplied.toLocaleString('en-IN')}
-                          </td>
-                          <td className="px-4 py-4 text-right font-semibold text-purple-600">
-                            ₹{order.total.toLocaleString('en-IN')}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <>
+                  <div className="overflow-x-auto rounded-2xl border border-gold-100">
+                    <div className="max-h-[55vh] min-h-[24rem] overflow-y-auto">
+                      <table className="w-full text-sm text-left border-collapse">
+                        <thead className="sticky top-0 z-10 bg-maroon-50 text-maroon-900">
+                          <tr>
+                            <th className="px-4 py-3 font-semibold">
+                              Order ID
+                            </th>
+                            <th className="px-4 py-3 font-semibold">Address</th>
+                            <th className="px-4 py-3 font-semibold">Coupon</th>
+                            <th className="px-4 py-3 font-semibold text-right">
+                              Original Total
+                            </th>
+                            <th className="px-4 py-3 font-semibold text-right">
+                              Discount
+                            </th>
+                            <th className="px-4 py-3 font-semibold text-right">
+                              After Coupon
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gold-100">
+                          {paginatedOrders.map((order) => (
+                            <tr
+                              key={order._id}
+                              className="hover:bg-maroon-50 transition-colors"
+                            >
+                              <td className="px-4 py-4 font-mono text-xs text-maroon-900 whitespace-nowrap">
+                                {order._id}
+                              </td>
+                              <td className="px-4 py-4 text-xs text-maroon-700 whitespace-pre-line min-w-[260px] max-w-[360px]">
+                                {order.address}
+                              </td>
+                              <td className="px-4 py-4 text-xs text-maroon-900 font-semibold">
+                                {order.promoCode || 'None'}
+                              </td>
+                              <td className="px-4 py-4 text-right font-semibold text-maroon-900">
+                                ₹{order.originalTotal.toLocaleString('en-IN')}
+                              </td>
+                              <td className="px-4 py-4 text-right text-sm text-green-700 font-semibold">
+                                -₹
+                                {order.discountApplied.toLocaleString('en-IN')}
+                              </td>
+                              <td className="px-4 py-4 text-right font-semibold text-purple-600">
+                                ₹{order.total.toLocaleString('en-IN')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-maroon-700">
+                    <div>
+                      Showing {paginatedOrders.length} of {orders.length} orders
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={page === 1}
+                        className={`px-3 py-2 rounded-full border transition-colors ${
+                          page === 1
+                            ? 'border-gold-200 bg-gold-50 text-maroon-400 cursor-not-allowed'
+                            : 'border-gold-200 bg-white text-maroon-900 hover:bg-maroon-50'
+                        }`}
+                      >
+                        Previous
+                      </button>
+                      <span className="font-semibold">
+                        Page {page} of {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPage((prev) => Math.min(prev + 1, totalPages))
+                        }
+                        disabled={page === totalPages}
+                        className={`px-3 py-2 rounded-full border transition-colors ${
+                          page === totalPages
+                            ? 'border-gold-200 bg-gold-50 text-maroon-400 cursor-not-allowed'
+                            : 'border-gold-200 bg-white text-maroon-900 hover:bg-maroon-50'
+                        }`}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

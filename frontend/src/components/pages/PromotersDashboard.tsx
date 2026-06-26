@@ -332,7 +332,7 @@ export default function PromotersDashboard() {
                           }}
                         >
                           <div className="min-w-[110px]">
-                            <span className="font-display text-sm font-bold text-maroon-900 block">
+                            <span className="font-display text-sm font-bold text-maroon-900 block whitespace-nowrap">
                               #{order._id}
                             </span>
                             <span className="text-[11px] text-maroon-700/60">
