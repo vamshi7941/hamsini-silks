@@ -94,8 +94,7 @@ export default function PromotersDashboard() {
       order._id.toLowerCase().includes(searchValue) ||
       order.customerName.toLowerCase().includes(searchValue) ||
       (order.promoCode || '').toLowerCase().includes(searchValue);
-    const matchesFilter =
-      orderFilter === 'All' || order.status === orderFilter;
+    const matchesFilter = orderFilter === 'All' || order.status === orderFilter;
 
     return matchesSearch && matchesFilter;
   });
@@ -290,17 +289,21 @@ export default function PromotersDashboard() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {['All', 'Pending', 'Processing', 'Dispatched', 'Delivered'].map(
-                    (filter) => (
-                      <button
-                        key={filter}
-                        onClick={() => setOrderFilter(filter)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${orderFilter === filter ? 'bg-maroon-900 text-gold-200' : 'bg-maroon-50 text-maroon-900 hover:bg-maroon-100'}`}
-                      >
-                        {filter}
-                      </button>
-                    ),
-                  )}
+                  {[
+                    'All',
+                    'Pending',
+                    'Processing',
+                    'Dispatched',
+                    'Delivered',
+                  ].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setOrderFilter(filter)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${orderFilter === filter ? 'bg-maroon-900 text-gold-200' : 'bg-maroon-50 text-maroon-900 hover:bg-maroon-100'}`}
+                    >
+                      {filter}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -319,7 +322,7 @@ export default function PromotersDashboard() {
                         className={`rounded-2xl border border-gold-100 bg-[#fdf8f1] shadow-xs overflow-hidden transition-all ${isExpanded ? 'shadow-md' : ''}`}
                       >
                         <div
-                          className="flex flex-wrap md:flex-nowrap items-center gap-4 p-4 cursor-pointer hover:bg-maroon-50/30 transition-colors"
+                          className="flex flex-wrap md:flex-nowrap items-center justify-between gap-4 p-4 cursor-pointer hover:bg-maroon-50/30 transition-colors"
                           onClick={() => {
                             setExpandedOrders((current) =>
                               current.includes(order._id)
@@ -338,12 +341,12 @@ export default function PromotersDashboard() {
                               )}
                             </span>
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="hidden sm:flex items-center flex-1 min-w-0">
                             <span className="font-semibold text-sm text-maroon-900 block truncate">
                               {order.customerName}
                             </span>
                             <span className="text-[11px] text-maroon-700/70 truncate block">
-                              {order.email}
+                              {order.phone} · {order.email}
                             </span>
                           </div>
                           <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
@@ -436,11 +439,15 @@ export default function PromotersDashboard() {
                                           {item.name}
                                         </span>
                                         <span className="text-[10px] text-maroon-700/70">
-                                          Size: {item.size} · Qty: {item.quantity}
+                                          Size: {item.size} · Qty:{' '}
+                                          {item.quantity}
                                         </span>
                                       </div>
                                       <span className="text-xs font-bold text-maroon-900 shrink-0">
-                                        ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                                        ₹
+                                        {(
+                                          item.price * item.quantity
+                                        ).toLocaleString('en-IN')}
                                       </span>
                                     </div>
                                   ))}
@@ -472,18 +479,26 @@ export default function PromotersDashboard() {
                                   <div className="flex justify-between pt-2 border-t border-gold-200">
                                     <span>Original Total</span>
                                     <span className="font-semibold text-maroon-900">
-                                      ₹{order.originalTotal.toLocaleString('en-IN')}
+                                      ₹
+                                      {order.originalTotal.toLocaleString(
+                                        'en-IN',
+                                      )}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span>Discount</span>
                                     <span className="font-semibold text-green-700">
-                                      -₹{order.discountApplied.toLocaleString('en-IN')}
+                                      -₹
+                                      {order.discountApplied.toLocaleString(
+                                        'en-IN',
+                                      )}
                                     </span>
                                   </div>
                                   <div className="flex justify-between text-base font-bold text-maroon-900 pt-2 border-t border-gold-200">
                                     <span>Total</span>
-                                    <span>₹{order.total.toLocaleString('en-IN')}</span>
+                                    <span>
+                                      ₹{order.total.toLocaleString('en-IN')}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
