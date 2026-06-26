@@ -64,12 +64,22 @@ export default function PromotersManagement() {
     phone: '',
     discountPercentage: 10,
     password: '',
+    promoCode: '',
   });
   const [existingPhoneMatch, setExistingPhoneMatch] = useState<Promoter | null>(
     null,
   );
 
   const normalizePhone = (phone: string) => phone.replace(/\D/g, '');
+
+  const generatePromoCode = (fullName: string, discountPercentage: number) => {
+    const nameShortcut = fullName
+      .split(' ')
+      .map((word) => word[0].toUpperCase())
+      .join('')
+      .slice(0, 3);
+    return `HS${nameShortcut}${discountPercentage}`;
+  };
 
   useEffect(() => {
     if (!hasFetchedPromoters.current) {
@@ -135,11 +145,13 @@ export default function PromotersManagement() {
           phone: '',
           discountPercentage: 10,
           password: '',
+          promoCode: '',
         });
         setExistingPhoneMatch(null);
         setShowForm(false);
         loadPromoters();
       },
+      formData.promoCode,
     );
   };
 
@@ -148,8 +160,11 @@ export default function PromotersManagement() {
 
     if (!editingPromoter) return;
 
-    if (formData.discountPercentage <= 0) {
-      showToast('Please enter a valid discount percentage', 'error');
+    if (formData.discountPercentage <= 0 || !formData.promoCode.trim()) {
+      showToast(
+        'Please enter a valid discount percentage and promo code',
+        'error',
+      );
       return;
     }
 
@@ -165,10 +180,12 @@ export default function PromotersManagement() {
           phone: '',
           discountPercentage: 10,
           password: '',
+          promoCode: '',
         });
         setShowForm(false);
         loadPromoters();
       },
+      formData.promoCode,
     );
   };
 
@@ -190,6 +207,7 @@ export default function PromotersManagement() {
           phone: '',
           discountPercentage: 10,
           password: '',
+          promoCode: '',
         });
         setShowForm(false);
         loadPromoters();
@@ -255,6 +273,7 @@ export default function PromotersManagement() {
       phone: promoter.phone,
       discountPercentage: 10,
       password: '',
+      promoCode: '',
     });
     setShowForm(true);
   };
@@ -268,6 +287,7 @@ export default function PromotersManagement() {
       phone: promoter.phone,
       discountPercentage: 10,
       password: '',
+      promoCode: '',
     });
     setShowForm(true);
   };
@@ -308,6 +328,7 @@ export default function PromotersManagement() {
               phone: '',
               discountPercentage: 10,
               password: '',
+              promoCode: '',
             });
           }}
           className="px-4 py-2 bg-maroon-900 hover:bg-maroon-800 text-gold-200 rounded-xl font-semibold text-sm transition-colors cursor-pointer flex items-center gap-2"
@@ -417,6 +438,51 @@ export default function PromotersManagement() {
                       className="w-full px-4 py-2 border border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700"
                       placeholder="e.g., 15"
                     />
+                  </div>
+                )}
+
+                {(formMode === 'create' || formMode === 'addPromo') && (
+                  <div>
+                    <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                      Promo Code
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={formData.promoCode}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            promoCode: e.target.value.toUpperCase(),
+                          })
+                        }
+                        className="flex-1 px-4 py-2 border border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 font-mono"
+                        placeholder="e.g., HSJD20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (formData.fullName.trim()) {
+                            const generated = generatePromoCode(
+                              formData.fullName,
+                              formData.discountPercentage,
+                            );
+                            setFormData({
+                              ...formData,
+                              promoCode: generated,
+                            });
+                          } else {
+                            showToast(
+                              'Please enter a full name first',
+                              'error',
+                            );
+                          }
+                        }}
+                        className="px-3 py-2 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-xl font-semibold text-xs transition-colors cursor-pointer whitespace-nowrap"
+                      >
+                        Generate
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -559,7 +625,7 @@ export default function PromotersManagement() {
                         </p>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 max-w-[20vw] ">
                       <div className="flex flex-wrap gap-2">
                         {promoter.promoCodes.map((pc) => (
                           <button

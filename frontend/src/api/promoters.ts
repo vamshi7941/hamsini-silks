@@ -11,6 +11,7 @@ export const PromoterApi = () => {
     discountPercentage: number,
     password?: string,
     onSuccess?: () => void,
+    promoCode?: string,
   ) => {
     try {
       const response = await fetch(`${apiUrl}/api/admin/promoter/create`, {
@@ -19,7 +20,13 @@ export const PromoterApi = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
         },
-        body: JSON.stringify({ fullName, phone, discountPercentage, password }),
+        body: JSON.stringify({
+          fullName,
+          phone,
+          discountPercentage,
+          password,
+          ...(promoCode && { promoCode }),
+        }),
       });
       const json = await response.json();
 

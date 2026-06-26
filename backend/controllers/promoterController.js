@@ -54,7 +54,7 @@ export async function loginPromoter(req, res) {
 }
 
 export async function createPromoter(req, res) {
-  const { fullName, phone, discountPercentage, password } = req.body;
+  const { fullName, phone, discountPercentage, password, promoCode } = req.body;
 
   try {
     // Check if promoter with this phone already exists
@@ -66,12 +66,13 @@ export async function createPromoter(req, res) {
         existingPromoter.fullName = fullName;
       }
 
-      // Generate new promo code for the additional discount tier
-      const promoCode = generatePromoCode(fullName, discountPercentage);
+      // Use provided promo code or generate new one
+      const finalPromoCode =
+        promoCode || generatePromoCode(fullName, discountPercentage);
 
       // Check if this promo code already exists
       const codeExists = await PromoterSchema.findOne({
-        'promoCodes.code': promoCode,
+        'promoCodes.code': finalPromoCode,
       });
       if (codeExists) {
         return res.status(400).json({
@@ -82,7 +83,7 @@ export async function createPromoter(req, res) {
 
       // Add new promo code to existing promoter
       existingPromoter.promoCodes.push({
-        code: promoCode,
+        code: finalPromoCode,
         discountPercentage,
         isActive: true,
       });
@@ -104,7 +105,8 @@ export async function createPromoter(req, res) {
     }
 
     // Create new promoter
-    const promoCode = generatePromoCode(fullName, discountPercentage);
+    const finalPromoCode =
+      promoCode || generatePromoCode(fullName, discountPercentage);
     const _id = generatePromoterId();
 
     const promoter = await PromoterSchema.signup(
@@ -112,7 +114,7 @@ export async function createPromoter(req, res) {
       fullName,
       phone,
       discountPercentage,
-      promoCode,
+      finalPromoCode,
       password,
     );
 
