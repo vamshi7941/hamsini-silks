@@ -625,7 +625,7 @@ export default function PromotersManagement() {
                         </p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 max-w-[20vw] ">
+                    <td className="px-4 py-3 max-w-[28vw] ">
                       <div className="flex flex-wrap gap-2">
                         {promoter.promoCodes.map((pc) => (
                           <button
