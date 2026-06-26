@@ -322,7 +322,7 @@ export default function PromotersDashboard() {
                         className={`rounded-2xl border border-gold-100 bg-[#fdf8f1] shadow-xs overflow-hidden transition-all ${isExpanded ? 'shadow-md' : ''}`}
                       >
                         <div
-                          className="flex flex-wrap md:flex-nowrap items-center justify-between gap-4 p-4 cursor-pointer hover:bg-maroon-50/30 transition-colors"
+                          className="flex flex-nowrap items-center justify-between gap-4 p-4 cursor-pointer hover:bg-maroon-50/30 transition-colors"
                           onClick={() => {
                             setExpandedOrders((current) =>
                               current.includes(order._id)
