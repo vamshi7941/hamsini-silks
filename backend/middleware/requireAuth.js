@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import AdminSchema from '../models/AdminSchema.js';
 import CustomerSchema from '../models/CustomerSchema.js';
+import PromoterSchema from '../models/PromoterSchema.js';
 
 const requireAuth = async (req, res, next, schema) => {
   // verify authentication
@@ -31,4 +32,8 @@ const requireCustomerAuth = (req, res, next) => {
   return requireAuth(req, res, next, CustomerSchema);
 };
 
-export { requireAdminAuth, requireCustomerAuth };
+const requirePromoterAuth = (req, res, next) => {
+  return requireAuth(req, res, next, PromoterSchema);
+}
+
+export { requireAdminAuth, requireCustomerAuth, requirePromoterAuth };

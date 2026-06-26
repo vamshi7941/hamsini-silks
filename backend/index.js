@@ -8,6 +8,7 @@ import productsRouter from './routes/products.js';
 import customerRouter from './routes/customer.js';
 import adminRouter from './routes/admin.js';
 import * as promoterController from './controllers/promoterController.js';
+import { requirePromoterAuth } from './middleware/requireAuth.js';
 
 dotenv.config();
 
@@ -35,7 +36,11 @@ app.use('/api/products', productsRouter);
 app.use('/api/customer', customerRouter);
 app.use('/api/admin', adminRouter);
 
-app.get('/api/promoter/stats/:promoterId', promoterController.getPromoterStats);
+app.get(
+  '/api/promoter/stats/:promoterId',
+  requirePromoterAuth,
+  promoterController.getPromoterStats,
+);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

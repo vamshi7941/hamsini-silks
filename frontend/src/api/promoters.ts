@@ -9,7 +9,7 @@ export const PromoterApi = () => {
     fullName: string,
     phone: string,
     discountPercentage: number,
-    password: string,
+    password?: string,
     onSuccess?: () => void,
   ) => {
     try {
@@ -38,13 +38,16 @@ export const PromoterApi = () => {
 
   const getAllPromoters = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/admin/promoter/allPromoters`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
+      const response = await fetch(
+        `${apiUrl}/api/admin/promoter/allPromoters`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
         },
-      });
+      );
       const json = await response.json();
 
       if (json.success) {
@@ -60,10 +63,14 @@ export const PromoterApi = () => {
 
   const updatePromoter = async (
     promoterId: string,
-    fullName?: string,
-    phone?: string,
-    discountPercentage?: number,
-    isActive?: boolean,
+    payload: {
+      fullName?: string;
+      phone?: string;
+      password?: string;
+      isActive?: boolean;
+      promoCode?: string;
+      promoCodeIsActive?: boolean;
+    },
     onSuccess?: () => void,
   ) => {
     try {
@@ -75,22 +82,13 @@ export const PromoterApi = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${user?.token}`,
           },
-          body: JSON.stringify({
-            fullName,
-            phone,
-            isActive,
-          }),
+          body: JSON.stringify(payload),
         },
       );
       const json = await response.json();
 
       if (json.success) {
-        // If discountPercentage is provided, treat as adding new promo code
-        if (discountPercentage) {
-          showToast('Promo code added successfully', 'success');
-        } else {
-          showToast('Promoter updated successfully', 'success');
-        }
+        showToast('Promoter updated successfully', 'success');
         onSuccess?.();
         return json.promoter;
       } else {

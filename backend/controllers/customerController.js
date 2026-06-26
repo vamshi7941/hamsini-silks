@@ -87,6 +87,7 @@ export async function validateCoupon(req, res) {
   try {
     const normalizedCode = couponCode.trim().toUpperCase();
     const promoter = await PromoterSchema.findOne({
+      isActive: true,
       'promoCodes.code': normalizedCode,
       'promoCodes.isActive': true,
     });

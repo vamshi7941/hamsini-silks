@@ -50,7 +50,6 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-[#fdf8f1]">
-      {/* Header bar */}
       <div className="bg-white border-b border-gold-100 px-4 sm:px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <h1 className="font-display text-xl sm:text-2xl font-bold text-maroon-900">
@@ -70,7 +69,6 @@ export default function CartPage() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {cart.length === 0 ? (
-          /* ── Empty state ── */
           <div className="text-center py-24 max-w-md mx-auto">
             <div className="text-7xl mb-5">🛍️</div>
             <h2 className="font-display text-2xl font-bold text-maroon-900 mb-2">
@@ -89,7 +87,6 @@ export default function CartPage() {
           </div>
         ) : (
           <div className="grid lg:grid-cols-12 gap-8">
-            {/* ── Item list ── */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-4">
               {cart.map(({ product: p, quantity, size }) => {
                 const d = p.originalPrice
@@ -102,7 +99,6 @@ export default function CartPage() {
                     key={p._id}
                     className="bg-white rounded-2xl border border-gold-100 shadow-xs p-4 flex gap-4 hover:border-gold-300 transition-colors"
                   >
-                    {/* Image */}
                     <button
                       onClick={() =>
                         navigate(`/product/${generateSlug(p._id, p.name)}`)
@@ -116,7 +112,6 @@ export default function CartPage() {
                       />
                     </button>
 
-                    {/* Details */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
                         <span className="text-[10px] font-bold text-gold-600 uppercase tracking-wider">
@@ -152,7 +147,6 @@ export default function CartPage() {
                       </div>
 
                       <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-                        {/* Quantity stepper */}
                         <div className="inline-flex items-center border-2 border-gold-200 rounded-xl overflow-hidden">
                           <button
                             onClick={() => updateQuantity(p._id, quantity - 1)}
@@ -198,7 +192,6 @@ export default function CartPage() {
                 );
               })}
 
-              {/* Shipping indicator */}
               <div
                 className={`rounded-2xl p-4 border-2 text-sm font-medium ${shippingFree ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-gold-50 border-gold-200 text-gold-800'}`}
               >
@@ -208,14 +201,12 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* ── Order summary ── */}
             <div className="lg:col-span-5 xl:col-span-4">
               <div className="bg-white rounded-2xl border border-gold-100 shadow-xs p-5 sticky top-24 space-y-5">
                 <h2 className="font-display text-base font-bold text-maroon-900 border-b border-gold-100 pb-3">
                   Order Summary
                 </h2>
 
-                {/* Price breakdown */}
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-maroon-700">
@@ -255,7 +246,6 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Coupon */}
                 <form onSubmit={handleCoupon} className="space-y-2">
                   <label className="text-xs font-bold text-maroon-900 uppercase tracking-wider block">
                     Voucher Code
@@ -278,17 +268,30 @@ export default function CartPage() {
                     </button>
                   </div>
                   {couponCode && (
-                    <p className="text-[10px] text-emerald-700">
-                      Coupon <strong>{couponCode}</strong> applied for{' '}
-                      <strong>{couponDiscountPercentage}%</strong> off.
-                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[10px] text-emerald-700">
+                        Coupon <strong>{couponCode}</strong> applied for{' '}
+                        <strong>{couponDiscountPercentage}%</strong> off.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCouponCode('');
+                          setCouponDiscountPercentage(0);
+                          setCoupon('');
+                          showToast('Coupon removed', 'success');
+                        }}
+                        className="text-xs font-semibold text-maroon-900 bg-maroon-50 border border-maroon-100 rounded-full px-3 py-2 hover:bg-maroon-100 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   )}
                 </form>
 
-                {/* Checkout button */}
                 <button
                   onClick={() => {
-                    setBuyNowItem(null); // Clear any previous buy now item
+                    setBuyNowItem(null);
                     navigate('/checkout');
                   }}
                   className="w-full py-4 rounded-2xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wider shadow-lg transition-all cursor-pointer"
@@ -296,7 +299,6 @@ export default function CartPage() {
                   Proceed to Checkout →
                 </button>
 
-                {/* Trust badges */}
                 <div className="grid grid-cols-3 gap-2 pt-1">
                   {[
                     { icon: '🔒', label: 'Secure' },

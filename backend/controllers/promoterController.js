@@ -1,12 +1,12 @@
 import PromoterSchema from '../models/PromoterSchema.js';
 import OrderSchema from '../models/OrdersSchema.js';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const createToken = (_id) => {
   return jwt.sign({ _id }, process.env.SECRET, { expiresIn: '3d' });
 };
 
-// Generate promo code in format: HS<shortcut of name><disc percentage>
 const generatePromoCode = (fullName, discountPercentage) => {
   const nameShortcut = fullName
     .split(' ')
@@ -16,12 +16,10 @@ const generatePromoCode = (fullName, discountPercentage) => {
   return `HS${nameShortcut}${discountPercentage}`;
 };
 
-// Generate unique ID
 const generatePromoterId = () => {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
-/** Login promoter */
 export async function loginPromoter(req, res) {
   const { phone, password } = req.body;
 
@@ -55,7 +53,6 @@ export async function loginPromoter(req, res) {
   }
 }
 
-/** Create promoter (Admin only) - or add promo code to existing promoter */
 export async function createPromoter(req, res) {
   const { fullName, phone, discountPercentage, password } = req.body;
 
@@ -109,7 +106,7 @@ export async function createPromoter(req, res) {
     // Create new promoter
     const promoCode = generatePromoCode(fullName, discountPercentage);
     const _id = generatePromoterId();
-    console.log('Creating new promoter with ID:', _id, 'and promo code:', promoCode);
+
     const promoter = await PromoterSchema.signup(
       _id,
       fullName,
@@ -136,7 +133,6 @@ export async function createPromoter(req, res) {
   }
 }
 
-/** Get all promoters with stats (Admin only) */
 export async function getAllPromoters(req, res) {
   try {
     const promoters = await PromoterSchema.find({});
@@ -180,10 +176,10 @@ export async function getAllPromoters(req, res) {
   }
 }
 
-/** Update promoter (Admin only) */
 export async function updatePromoter(req, res) {
   const { _id } = req.params;
-  const { fullName, phone, isActive } = req.body;
+  const { fullName, phone, password, isActive, promoCode, promoCodeIsActive } =
+    req.body;
   try {
     const promoter = await PromoterSchema.findById(_id);
 
@@ -195,7 +191,23 @@ export async function updatePromoter(req, res) {
 
     if (fullName) promoter.fullName = fullName;
     if (phone) promoter.phone = phone;
-    if (isActive !== undefined) promoter.isActive = isActive;
+    if (typeof isActive !== 'undefined') promoter.isActive = isActive;
+
+    if (promoCode && typeof promoCodeIsActive !== 'undefined') {
+      const promo = promoter.promoCodes.find((pc) => pc.code === promoCode);
+      if (!promo) {
+        return res
+          .status(404)
+          .json({ error: 'Promo code not found', success: false });
+      }
+      promo.isActive = promoCodeIsActive;
+    }
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(password, salt);
+      promoter.password = hash;
+    }
     promoter.updatedAt = new Date();
 
     await promoter.save();
@@ -216,7 +228,6 @@ export async function updatePromoter(req, res) {
   }
 }
 
-/** Delete promoter (Admin only) */
 export async function deletePromoter(req, res) {
   const { _id } = req.params;
 
@@ -238,7 +249,6 @@ export async function deletePromoter(req, res) {
   }
 }
 
-/** Get promoter stats - get stats for all promo codes of a promoter */
 export async function getPromoterStats(req, res) {
   const { promoterId } = req.params;
 

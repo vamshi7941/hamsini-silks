@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  SearchIcon,
   HeartIcon,
   BagIcon,
   UserIcon,
@@ -13,14 +12,7 @@ import { useStore } from '../context/StoreContext';
 export default function Header() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const {
-    cartCount,
-    user,
-    setSelectedCategory,
-    wishlistCount,
-    themeOption,
-    setThemeOption,
-  } = useStore();
+  const { cartCount, user, setSelectedCategory, wishlistCount } = useStore();
 
   const handleNav = (cat: string) => {
     setSelectedCategory(cat);
@@ -92,7 +84,7 @@ export default function Header() {
                     navigate('/');
                   }
                 }}
-                className="text-xs whitespace-nowrap sm:text-sm tracking-widest uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative group py-1 cursor-pointer"
+                className="text-[clamp(0.65rem,0.95vw,0.95rem)] whitespace-nowrap tracking-widest uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative group py-1 cursor-pointer"
               >
                 {item.label}
                 {item.label.includes('Bridal') && (
@@ -113,7 +105,7 @@ export default function Header() {
                 className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all sm:inline-flex cursor-pointer"
                 title="Saved Favs"
               >
-                <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <HeartIcon className="h-[clamp(1rem,1.2vw,1.3rem)] w-[clamp(1rem,1.2vw,1.3rem)]" />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-gold-500 text-white text-[8px] flex items-center justify-center font-bold">
                     {wishlistCount}
@@ -133,7 +125,7 @@ export default function Header() {
                 user.loggedIn ? `Logged in as ${user.name}` : 'Patron Login'
               }
             >
-              <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <UserIcon className="h-[clamp(1rem,1.2vw,1.3rem)] w-[clamp(1rem,1.2vw,1.3rem)]" />
               {user.loggedIn ? (
                 <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-600" />
               ) : null}
@@ -145,7 +137,7 @@ export default function Header() {
                 className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all cursor-pointer"
                 title="Shopping Bag"
               >
-                <BagIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <BagIcon className="h-[clamp(1rem,1.2vw,1.3rem)] w-[clamp(1rem,1.2vw,1.3rem)]" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-maroon-700 text-gold-200 text-[9px] sm:text-[10px] font-bold flex items-center justify-center animate-pulse">
                     {cartCount}
@@ -159,7 +151,7 @@ export default function Header() {
               onClick={() => setOpen(!open)}
               aria-label="Menu"
             >
-              <MenuIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+              <MenuIcon className="h-[clamp(1.1rem,1.4vw,1.5rem)] w-[clamp(1.1rem,1.4vw,1.5rem)]" />
             </button>
           </div>
         </div>
