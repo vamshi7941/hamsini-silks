@@ -67,6 +67,14 @@ const OrdersSchema = new Schema({
     type: Number,
     required: true,
   },
+  promoCode: {
+    type: String,
+    default: null,
+  },
+  discountApplied: {
+    type: Number,
+    default: 0,
+  },
 });
 
 export default mongoose.model('Order', OrdersSchema);

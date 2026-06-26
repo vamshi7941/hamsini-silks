@@ -31,6 +31,7 @@ export default function SideBar({
       badge: products.length,
     },
     { id: 'media', label: 'Media', icon: Icon.image },
+    { id: 'promoters', label: 'Promoters', icon: Icon.users },
   ];
 
   return (

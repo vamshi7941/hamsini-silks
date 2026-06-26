@@ -17,6 +17,10 @@ router
   .post(requireCustomerAuth, customerController.updateWishlist);
 
 router
+  .route('/validateCoupon')
+  .post(requireCustomerAuth, customerController.validateCoupon);
+
+router
   .route('/placeOrder')
   .post(requireCustomerAuth, customerController.placeOrder);
 

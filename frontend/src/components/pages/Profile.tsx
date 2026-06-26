@@ -59,10 +59,10 @@ export default function ProfilePage() {
                 className={`grid gap-3 pt-2 grid-cols-2`}
               >
                 <Link
-                  to={user.role === 'admin' ? '/admin' : '/my-orders'}
+                  to={user.role === 'admin' ? '/admin' : '/promoter'}
                   className="py-3 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 transition-colors cursor-pointer text-center"
                 >
-                  {user.role === 'admin' ? 'Go to Admin' : 'My Orders'}
+                  {user.role === 'admin' ? 'Go to Admin' : 'My Dashboard'}
                 </Link>
                 <button
                   onClick={logout}

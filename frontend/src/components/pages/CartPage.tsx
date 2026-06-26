@@ -8,22 +8,40 @@ import AccessDenied from '../accessDenied';
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { cart, cartTotal, showToast, setBuyNowItem, user } = useStore();
-  const { updateQuantity, removeFromCart } = CustomerApi();
+  const {
+    cart,
+    cartTotal,
+    showToast,
+    setBuyNowItem,
+    user,
+    couponCode,
+    couponDiscountPercentage,
+    setCouponCode,
+    setCouponDiscountPercentage,
+  } = useStore();
+  const { updateQuantity, removeFromCart, validateCoupon } = CustomerApi();
   const [coupon, setCoupon] = useState('');
-  const [discount, setDiscount] = useState(0);
 
-  const handleCoupon = (e: React.FormEvent) => {
+  const handleCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (coupon.trim().toUpperCase() === 'BRIDE30') {
-      setDiscount(0.3);
-      showToast('🎉 BRIDE30 applied — 30% off!', 'success');
-    } else {
-      showToast('Invalid coupon. Try BRIDE30', 'warning');
+
+    if (!coupon.trim()) {
+      showToast('Please enter a coupon code', 'warning');
+      return;
+    }
+
+    const validation = await validateCoupon(coupon.trim().toUpperCase());
+    if (validation) {
+      setCouponCode(validation.promoCode);
+      setCouponDiscountPercentage(validation.discountPercentage);
+      showToast(
+        `🎉 ${validation.promoCode} applied — ${validation.discountPercentage}% off!`,
+        'success',
+      );
     }
   };
 
-  const savings = Math.round(cartTotal * discount);
+  const savings = Math.round(cartTotal * (couponDiscountPercentage / 100));
   const finalTotal = cartTotal - savings;
   const shippingFree = cartTotal >= 5000;
 
@@ -36,7 +54,7 @@ export default function CartPage() {
       <div className="bg-white border-b border-gold-100 px-4 sm:px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <h1 className="font-display text-xl sm:text-2xl font-bold text-maroon-900">
-            Shopping Bag{' '} <br/>
+            Shopping Bag <br />
             <span className="text-maroon-400 text-sm font-normal">
               ({cart.length} {cart.length === 1 ? 'item' : 'items'})
             </span>
@@ -247,21 +265,22 @@ export default function CartPage() {
                       type="text"
                       value={coupon}
                       onChange={(e) => setCoupon(e.target.value)}
-                      disabled={discount > 0}
+                      disabled={!!couponCode}
                       placeholder="e.g. BRIDE30"
                       className="flex-1 px-3 py-2.5 border-2 border-gold-200 rounded-xl text-xs text-maroon-900 uppercase focus:outline-none focus:border-maroon-700 disabled:opacity-50 disabled:bg-maroon-50 font-semibold"
                     />
                     <button
                       type="submit"
-                      disabled={discount > 0}
+                      disabled={!!couponCode}
                       className="px-3 py-2.5 bg-maroon-900 text-gold-100 text-xs font-bold rounded-xl hover:bg-maroon-800 disabled:opacity-50 cursor-pointer whitespace-nowrap transition-colors"
                     >
-                      {discount > 0 ? '✓ Applied' : 'Apply'}
+                      {couponCode ? '✓ Applied' : 'Apply'}
                     </button>
                   </div>
-                  {discount === 0 && (
-                    <p className="text-[10px] text-maroon-600/70">
-                      💡 Try <strong>BRIDE30</strong> for 30% bridal discount
+                  {couponCode && (
+                    <p className="text-[10px] text-emerald-700">
+                      Coupon <strong>{couponCode}</strong> applied for{' '}
+                      <strong>{couponDiscountPercentage}%</strong> off.
                     </p>
                   )}
                 </form>

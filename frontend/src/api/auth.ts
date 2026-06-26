@@ -15,17 +15,21 @@ export const Auth = () => {
 
   const login = (
     email: string,
-    role: 'customer' | 'admin',
+    role: 'customer' | 'admin' | 'promoter',
     name?: string,
     _id: string = '',
     token: string = '',
     phone: string = '',
+    promoCode: string = '',
+    discountPercentage: number = 0,
   ) => {
     const displayName =
       name ||
       (role === 'admin'
         ? 'Hamsini Atelier Admin'
-        : email.split('@')[0] || phone);
+        : role === 'promoter'
+          ? 'Promoter'
+          : email.split('@')[0] || phone);
     const newUser = {
       name: displayName,
       email,
@@ -34,7 +38,10 @@ export const Auth = () => {
       _id,
       token,
       phone,
+      promoCode,
+      discountPercentage,
     } as User;
+
     setUser(newUser);
     try {
       localStorage.setItem('hamsini_user', JSON.stringify(newUser));
@@ -42,7 +49,9 @@ export const Auth = () => {
       // ignore storage errors
     }
     showToast(`Welcome back, ${displayName}!`, 'success');
-    navigate(role === 'admin' ? '/admin' : '/');
+    navigate(
+      role === 'admin' ? '/admin' : role === 'promoter' ? '/promoter' : '/',
+    );
   };
 
   const loginWithGoogle = async () => {
@@ -141,6 +150,43 @@ export const Auth = () => {
     }
   };
 
+  const promoterLogin = async (phone: string, password: string) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/auth/promoter/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      });
+      const json = await response.json();
+
+      if (json.success) {
+        const _id = json.user._id ?? '';
+        const name = json.user.fullName ?? 'Promoter';
+        const token = json.user.token ?? '';
+        const userPhone = json.user.phone ?? '';
+
+        login(
+          '',
+          'promoter',
+          name,
+          _id,
+          token,
+          userPhone,
+          '', // promoCode - not needed anymore
+          0, // discountPercentage - now per promo code
+        );
+      } else {
+        showToast(
+          json.message || json.error || 'Invalid phone or password',
+          'error',
+        );
+      }
+    } catch (err) {
+      console.error('Promoter login failed', err);
+      showToast('Login failed. Please check your credentials.', 'error');
+    }
+  };
+
   const logout = () => {
     const guest = {
       name: 'Guest Patron',
@@ -168,6 +214,7 @@ export const Auth = () => {
     sendPhoneOtp,
     loginWithPhone,
     adminLogin,
+    promoterLogin,
     logout,
   };
 };

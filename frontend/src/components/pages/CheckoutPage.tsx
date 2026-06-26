@@ -13,7 +13,16 @@ const PAYMENT_METHODS = [
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { cart, cartTotal, user, buyNowItem } = useStore();
+  const {
+    cart,
+    cartTotal,
+    user,
+    buyNowItem,
+    couponCode,
+    couponDiscountPercentage,
+    setCouponCode,
+    setCouponDiscountPercentage,
+  } = useStore();
   const { placeOrder, clearCart } = CustomerApi();
 
   if (!user.loggedIn && user.role !== 'customer') return;
@@ -25,21 +34,32 @@ export default function CheckoutPage() {
   const [payment, setPayment] = useState('UPI');
   const [orderId, setOrderId] = useState<string | null>(null);
 
+  const orderSubtotal = buyNowItem
+    ? buyNowItem.product.price * buyNowItem.quantity
+    : cartTotal;
+  const discountAmount = Math.round(
+    orderSubtotal * (couponDiscountPercentage / 100),
+  );
+  const orderTotal = orderSubtotal - discountAmount;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await placeOrder({
+
+    const orderResult = await placeOrder({
       name,
       email,
       phone,
       address,
       paymentMethod: payment,
-    }).then((res) => {
-      console.log(res);
-      if (res.success) {
-        setOrderId(res.data._id);
-        clearCart();
-      }
     });
+
+    if (orderResult?.success) {
+      setOrderId(orderResult.data._id);
+      clearCart();
+      setCouponCode('');
+      setCouponDiscountPercentage(0);
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -293,11 +313,7 @@ export default function CheckoutPage() {
               type="submit"
               className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm sm:text-base tracking-wider shadow-lg transition-all cursor-pointer"
             >
-              🪷 Confirm Order · ₹
-              {(buyNowItem
-                ? buyNowItem.product.price * buyNowItem.quantity
-                : cartTotal
-              ).toLocaleString('en-IN')}
+              🪷 Confirm Order · ₹{orderTotal.toLocaleString('en-IN')}
             </button>
             <p className="text-center text-xs text-maroon-700/50">
               By confirming, you agree to our Terms & Silk Mark authenticity
@@ -362,13 +378,19 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-maroon-700">
                   <span>Subtotal</span>
                   <span className="font-semibold text-maroon-900">
-                    ₹
-                    {(buyNowItem
-                      ? buyNowItem.product.price * buyNowItem.quantity
-                      : cartTotal
-                    ).toLocaleString('en-IN')}
+                    ₹{orderSubtotal.toLocaleString('en-IN')}
                   </span>
                 </div>
+                {couponCode && discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-700">
+                    <span>
+                      Coupon <span className="font-semibold">{couponCode}</span>
+                    </span>
+                    <span className="font-semibold">
+                      - ₹{discountAmount.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-maroon-700">
                   <span>Shipping</span>
                   <span className="font-semibold text-emerald-700">FREE</span>
@@ -376,11 +398,7 @@ export default function CheckoutPage() {
                 <div className="flex justify-between font-bold text-base border-t border-gold-100 pt-2 mt-2">
                   <span className="text-maroon-900">Total</span>
                   <span className="font-display text-lg text-maroon-900">
-                    ₹
-                    {(buyNowItem
-                      ? buyNowItem.product.price * buyNowItem.quantity
-                      : cartTotal
-                    ).toLocaleString('en-IN')}
+                    ₹{orderTotal.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>

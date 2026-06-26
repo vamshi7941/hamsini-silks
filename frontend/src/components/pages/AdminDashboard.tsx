@@ -10,13 +10,19 @@ import SideBar from '../admin/sideBar';
 import Orders from '../admin/orders';
 import Catalogue from '../admin/catalogue';
 import Media from '../admin/media';
+import Promoters from '../admin/promoters';
 import { AddProductModal, EditProductModal } from '../admin/updateProduct';
 import ImageEditor from '../admin/imageEditor';
 import DeleteConfirmModal from '../admin/deleteConfirmationModel';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-export type AdminTab = 'overview' | 'orders' | 'catalogue' | 'media';
+export type AdminTab =
+  | 'overview'
+  | 'orders'
+  | 'catalogue'
+  | 'media'
+  | 'promoters';
 
 // ── MAIN ADMIN DASHBOARD ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
@@ -56,7 +62,9 @@ export default function AdminDashboard() {
                   ? 'Orders & Invoicing'
                   : activeTab === 'catalogue'
                     ? 'Catalogue'
-                    : 'Media Studio'}
+                    : activeTab === 'media'
+                      ? 'Media Studio'
+                      : 'Promoters'}
             </h1>
             <p className="text-xs text-maroon-700/60 hidden sm:block mt-0.5">
               {new Date().toLocaleDateString('en-IN', {
@@ -115,6 +123,9 @@ export default function AdminDashboard() {
               setShowAddModal={setShowAddModal}
             />
           )}
+
+          {/* ═══════════════════ PROMOTERS ═══════════════════ */}
+          {activeTab === 'promoters' && <Promoters />}
         </main>
       </div>
 

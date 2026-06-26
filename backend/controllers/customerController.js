@@ -1,5 +1,6 @@
 import CustomerSchema from '../models/CustomerSchema.js';
 import OrderSchema from '../models/OrdersSchema.js';
+import PromoterSchema from '../models/PromoterSchema.js';
 
 export async function getCustomerById(req, res) {
   const { _id } = req.query;
@@ -73,6 +74,58 @@ export async function updateWishlist(req, res) {
   }
 }
 
+export async function validateCoupon(req, res) {
+  const { couponCode } = req.body;
+
+  if (!couponCode) {
+    return res.status(400).json({
+      message: 'Coupon code is required',
+      success: false,
+    });
+  }
+
+  try {
+    const normalizedCode = couponCode.trim().toUpperCase();
+    const promoter = await PromoterSchema.findOne({
+      'promoCodes.code': normalizedCode,
+      'promoCodes.isActive': true,
+    });
+
+    if (!promoter) {
+      return res.status(404).json({
+        message: 'Invalid coupon code',
+        success: false,
+      });
+    }
+
+    const promo = promoter.promoCodes.find(
+      (pc) => pc.code === normalizedCode && pc.isActive,
+    );
+
+    if (!promo) {
+      return res.status(404).json({
+        message: 'Invalid coupon code',
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Coupon applied successfully',
+      success: true,
+      data: {
+        promoCode: promo.code,
+        discountPercentage: promo.discountPercentage,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error validating coupon',
+      success: false,
+      error: error.message,
+    });
+  }
+}
+
 export async function placeOrder(req, res) {
   const { customerId, orderData } = req.body;
 
@@ -94,10 +147,16 @@ export async function placeOrder(req, res) {
     const seconds = String(now.getSeconds()).padStart(2, '0');
     const orderId = `OD-${year}${month}${day}${hours}${minutes}${seconds}`;
 
+    const orderDataWithCoupon = {
+      ...orderData,
+      promoCode: orderData.promoCode || null,
+      discountApplied: orderData.discountApplied || 0,
+    };
+
     const newOrder = {
       _id: orderId,
       customerId,
-      ...orderData,
+      ...orderDataWithCoupon,
       orderedDate: now,
     };
 

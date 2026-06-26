@@ -20,7 +20,9 @@ import ProductDetailPage from './components/pages/ProductDetailPage';
 import CartPage from './components/pages/CartPage';
 import CheckoutPage from './components/pages/CheckoutPage';
 import LoginPage from './components/pages/LoginPage';
+import AdminLoginPage from './components/pages/AdminLoginPage';
 import AdminDashboard from './components/pages/AdminDashboard';
+import PromotersDashboard from './components/pages/PromotersDashboard';
 import WishlistPage from './components/pages/WishlistPage';
 import MyOrdersPage from './components/pages/MyOrdersPage';
 import { AdminApi } from './api/admin';
@@ -85,7 +87,9 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/promoter" element={<PromotersDashboard />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/my-orders" element={<MyOrdersPage />} />
         </Routes>

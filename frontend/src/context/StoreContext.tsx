@@ -24,10 +24,12 @@ export type User = {
   name: string;
   email: string;
   phone?: string;
-  role: 'customer' | 'admin';
+  role: 'customer' | 'admin' | 'promoter';
   loggedIn: boolean;
   token: string;
   _id: string;
+  promoCode?: string;
+  discountPercentage?: number;
 };
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -49,6 +51,11 @@ interface StoreContextType {
 
   buyNowItem: CartItem | null;
   setBuyNowItem: (item: CartItem | null) => void;
+
+  couponCode: string;
+  setCouponCode: React.Dispatch<React.SetStateAction<string>>;
+  couponDiscountPercentage: number;
+  setCouponDiscountPercentage: React.Dispatch<React.SetStateAction<number>>;
 
   wishlist: string[];
   setWishlist: React.Dispatch<React.SetStateAction<string[]>>;
@@ -84,6 +91,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [imagesLoaded, setImagesLoaded] = useState<Boolean>(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
+  const [couponCode, setCouponCode] = useState<string>('');
+  const [couponDiscountPercentage, setCouponDiscountPercentage] =
+    useState<number>(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [themeOption, setThemeOptionState] = useState<'A' | 'B'>('A');
@@ -97,7 +107,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
           name: parsed.name || 'Guest Patron',
           email: parsed.email || '',
           phone: parsed.phone || '',
-          role: parsed.role === 'admin' ? 'admin' : 'customer',
+          role:
+            parsed.role === 'admin'
+              ? 'admin'
+              : parsed.role === 'promoter'
+                ? 'promoter'
+                : 'customer',
           loggedIn: !!parsed.loggedIn,
           token: parsed.token || '',
           _id: parsed._id || '',
@@ -164,6 +179,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
         wishlist,
         setWishlist,
+
+        couponCode,
+        setCouponCode,
+        couponDiscountPercentage,
+        setCouponDiscountPercentage,
 
         isInWishlist,
         wishlistCount,

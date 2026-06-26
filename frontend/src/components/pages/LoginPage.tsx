@@ -6,8 +6,9 @@ import { Auth } from '../../api/auth';
 export default function LoginPage() {
   const { user } = useStore();
 
-  const { loginWithGoogle, sendPhoneOtp, loginWithPhone, adminLogin } = Auth();
-  const [tab, setTab] = useState<'patron' | 'admin'>('patron');
+  const { loginWithGoogle, sendPhoneOtp, loginWithPhone, promoterLogin } =
+    Auth();
+  const [tab, setTab] = useState<'patron' | 'promoter'>('patron');
 
   const [patronName, setPatronName] = useState('');
   const [patronPhone, setPatronPhone] = useState('');
@@ -16,24 +17,8 @@ export default function LoginPage() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
 
-  const [adminEmail, setAdminEmail] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
-
-  const formatIndianPhone = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    if (!digits) return '';
-    let normalized = digits;
-
-    if (normalized.startsWith('0')) {
-      normalized = normalized.slice(1);
-    }
-    if (normalized.startsWith('91')) {
-      normalized = normalized.slice(2);
-    }
-
-    normalized = normalized.slice(0, 10);
-    return `+91 ${normalized}`;
-  };
+  const [promoterPhone, setPromoterPhone] = useState('');
+  const [promoterPassword, setPromoterPassword] = useState('');
 
   if (user.loggedIn) {
     return (
@@ -51,10 +36,10 @@ export default function LoginPage() {
               </div>
               <div className="relative z-10">
                 <h1 className="font-display text-2xl font-bold text-gold-200">
-                  {user.role === 'admin' ? 'Admin' : 'Patron'} Portal
+                  {user.role === 'promoter' ? 'Promoter' : 'Patron'} Portal
                 </h1>
                 <p className="text-xs text-gold-100/70 mt-1">
-                  Access your orders, wishlist & exclusive privileges
+                  Access your account & exclusive benefits
                 </p>
               </div>
             </div>
@@ -66,10 +51,10 @@ export default function LoginPage() {
                 Please log out to access the login page.
               </p>
               <Link
-                to={user.role === 'admin' ? '/admin' : '/'}
+                to={user.role === 'promoter' ? '/promoter' : '/'}
                 className="inline-block mt-4 py-2 px-4 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 transition-colors cursor-pointer"
               >
-                {user.role === 'admin' ? 'Admin Dashboard' : 'Home'}
+                {user.role === 'promoter' ? 'Promoter Dashboard' : 'Home'}
               </Link>
             </div>
           </div>
@@ -99,8 +84,11 @@ export default function LoginPage() {
               </Link>
             </div>
             <div className="relative z-10">
+              <h1 className="font-display text-xl font-bold text-gold-200">
+                Welcome Back
+              </h1>
               <p className="text-xs text-gold-100/70 mt-1">
-                Access your orders, wishlist & exclusive privileges
+                Access your account & exclusive privileges
               </p>
             </div>
           </div>
@@ -108,7 +96,7 @@ export default function LoginPage() {
           <div className="p-6">
             <div>
               {/* Tab switcher */}
-              <div className="flex bg-maroon-50 rounded-xl p-1 mb-5">
+              <div className="flex bg-maroon-50 rounded-xl p-1 mb-5 gap-1">
                 <button
                   onClick={() => setTab('patron')}
                   className={`flex-1 py-2 rounded-lg text-xs font-bold tracking-wide transition-all cursor-pointer ${
@@ -120,14 +108,14 @@ export default function LoginPage() {
                   👑 Patron Login
                 </button>
                 <button
-                  onClick={() => setTab('admin')}
+                  onClick={() => setTab('promoter')}
                   className={`flex-1 py-2 rounded-lg text-xs font-bold tracking-wide transition-all cursor-pointer ${
-                    tab === 'admin'
+                    tab === 'promoter'
                       ? 'bg-white shadow text-maroon-900'
                       : 'text-maroon-600 hover:text-maroon-800'
                   }`}
                 >
-                  ⚙️ Admin Login
+                  🎯 Promoter Login
                 </button>
               </div>
 
@@ -159,7 +147,7 @@ export default function LoginPage() {
                         required
                         value={patronPhone}
                         onChange={(e) =>
-                          setPatronPhone(formatIndianPhone(e.target.value))
+                          setPatronPhone(e.target.value)
                         }
                         className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
                         placeholder="+91 XXXXXXXXXX"
@@ -237,48 +225,45 @@ export default function LoginPage() {
                   </div>
                 </>
               ) : (
-                <form className="space-y-4">
+                <form
+                  onSubmit={async (e: React.FormEvent) => {
+                    e.preventDefault();
+                    await promoterLogin(promoterPhone, promoterPassword);
+                  }}
+                  className="space-y-3"
+                >
                   <div>
                     <label className="block text-xs font-bold text-maroon-900 mb-1.5">
-                      Admin Email
+                      Phone Number
                     </label>
                     <input
-                      type="email"
-                      required
-                      value={adminEmail}
-                      onChange={(e) => setAdminEmail(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
-                      placeholder="admin@hamsinisilks.com"
+                      type="tel"
+                      value={promoterPhone}
+                      onChange={(e) =>
+                        setPromoterPhone(e.target.value)
+                      }
+                      placeholder="+91 XXXXXXXXXX"
+                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-blue-600 transition-colors"
                     />
                   </div>
-                  {/* password */}
 
                   <div>
                     <label className="block text-xs font-bold text-maroon-900 mb-1.5">
-                      Admin Password
+                      Password
                     </label>
                     <input
                       type="password"
-                      required
-                      value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
+                      value={promoterPassword}
+                      onChange={(e) => setPromoterPassword(e.target.value)}
                       placeholder="••••••••"
+                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
                     />
-                  </div>
-                  <div className="bg-maroon-50 rounded-xl p-3 text-xs text-maroon-800 border border-gold-100">
-                    🔐 <strong>Admin access</strong> unlocks full dashboard —
-                    orders, catalogue & media management.
                   </div>
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      await adminLogin(adminEmail, adminPassword);
-                    }}
+                    className="w-full py-3.5 rounded-xl bg-gold-500 hover:bg-gold-700 text-white font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
                   >
-                    Access Admin Panel
+                    Access Promoter Portal
                   </button>
                 </form>
               )}

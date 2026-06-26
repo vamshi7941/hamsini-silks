@@ -15,6 +15,8 @@ export const CustomerApi = () => {
     setWishlist,
     buyNowItem,
     cartTotal,
+    couponCode,
+    couponDiscountPercentage,
   } = useStore();
 
   const getCustomerData = async () => {
@@ -123,7 +125,7 @@ export const CustomerApi = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}aa`,
+          Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -140,6 +142,36 @@ export const CustomerApi = () => {
     }
   };
 
+  const validateCoupon = async (couponCode: string) => {
+    if (!user.loggedIn || user.role !== 'customer') {
+      showToast('Please log in as a customer to apply coupons.', 'warning');
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/customer/validateCoupon`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ couponCode }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        return data.data;
+      }
+
+      showToast(data.message || 'Invalid coupon code', 'warning');
+      return null;
+    } catch (error) {
+      showToast('Failed to validate coupon.', 'error');
+      console.error('Error validating coupon:', error);
+      return null;
+    }
+  };
+
   const placeOrder = async (
     orderData: Omit<Order, '_id' | 'status' | 'date' | 'items' | 'total'>,
   ) => {
@@ -147,6 +179,11 @@ export const CustomerApi = () => {
     const orderTotal = buyNowItem
       ? buyNowItem.product.price * buyNowItem.quantity
       : cartTotal;
+
+    const discountAmount = Math.round(
+      orderTotal * (couponDiscountPercentage / 100),
+    );
+    const totalAfterDiscount = orderTotal - discountAmount;
 
     const payload = {
       customerId: user._id,
@@ -159,7 +196,9 @@ export const CustomerApi = () => {
           quantity: item.quantity,
           size: item.size,
         })),
-        total: orderTotal,
+        total: totalAfterDiscount,
+        promoCode: couponCode || null,
+        discountApplied: discountAmount,
       },
     };
 
@@ -330,6 +369,7 @@ export const CustomerApi = () => {
     removeFromCart,
     clearCart,
     toggleWishlist,
+    validateCoupon,
     placeOrder,
     fetchMyOrders,
   };

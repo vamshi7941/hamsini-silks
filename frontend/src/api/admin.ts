@@ -132,7 +132,7 @@ export const AdminApi = () => {
 
   const fetchAllOrders = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/orders/allOrders`, {
+      const response = await fetch(`${apiUrl}/api/admin/allOrders`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
@@ -174,7 +174,7 @@ export const AdminApi = () => {
     status: Order['status'],
   ) => {
     try {
-      const response = await fetch(`${apiUrl}/api/orders/updateOrderStatus`, {
+      const response = await fetch(`${apiUrl}/api/admin/updateOrderStatus`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
