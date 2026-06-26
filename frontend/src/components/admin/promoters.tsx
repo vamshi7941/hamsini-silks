@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../Icons';
 import PromoterOrdersModal from './promoterOrdersModal';
 import { PromoterApi } from '@/api/promoters';
@@ -315,167 +316,169 @@ export default function PromotersManagement() {
         </button>
       </div>
 
-      {/* Add/Edit Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 border border-gold-100">
-            <h2 className="font-display text-lg font-bold text-maroon-900 mb-4">
-              {formMode === 'create'
-                ? 'Create Promoter'
-                : formMode === 'addPromo'
-                  ? 'Add New Promo Code'
-                  : 'Edit Promoter'}
-            </h2>
-            <form
-              onSubmit={
-                formMode === 'create'
-                  ? handleAddPromoter
+      {showForm &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 border border-gold-100">
+              <h2 className="font-display text-lg font-bold text-maroon-900 mb-4">
+                {formMode === 'create'
+                  ? 'Create Promoter'
                   : formMode === 'addPromo'
-                    ? handleAddPromoCode
-                    : handleUpdatePromoterDetails
-              }
-              className="space-y-4"
-            >
-              {(formMode === 'create' || formMode === 'editPromoter') && (
-                <>
-                  <div>
-                    <label className="block text-xs font-bold text-maroon-900 mb-1.5">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.fullName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, fullName: e.target.value })
-                      }
-                      disabled={
-                        formMode === 'create' ? !!existingPhoneMatch : false
-                      }
-                      className={`w-full px-4 py-2 border rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 ${
-                        formMode === 'create' && existingPhoneMatch
-                          ? 'bg-gold-50 border-gold-200 text-maroon-400 cursor-not-allowed'
-                          : 'border-gold-200 bg-white'
-                      }`}
-                      placeholder="e.g., John Doe"
-                    />
-                  </div>
-
-                  {formMode === 'create' && (
+                    ? 'Add New Promo Code'
+                    : 'Edit Promoter'}
+              </h2>
+              <form
+                onSubmit={
+                  formMode === 'create'
+                    ? handleAddPromoter
+                    : formMode === 'addPromo'
+                      ? handleAddPromoCode
+                      : handleUpdatePromoterDetails
+                }
+                className="space-y-4"
+              >
+                {(formMode === 'create' || formMode === 'editPromoter') && (
+                  <>
                     <div>
                       <label className="block text-xs font-bold text-maroon-900 mb-1.5">
-                        Phone Number
+                        Full Name
                       </label>
                       <input
-                        type="tel"
-                        value={formData.phone}
-                        maxLength={10}
-                        onChange={(e) => {
-                          const nextPhone = e.target.value;
-                          setFormData({ ...formData, phone: nextPhone });
-                          checkPhoneDuplicate(nextPhone);
-                        }}
-                        className="w-full px-4 py-2 border border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700"
-                        placeholder="e.g., +91 9876543210"
+                        type="text"
+                        value={formData.fullName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, fullName: e.target.value })
+                        }
+                        disabled={
+                          formMode === 'create' ? !!existingPhoneMatch : false
+                        }
+                        className={`w-full px-4 py-2 border rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 ${
+                          formMode === 'create' && existingPhoneMatch
+                            ? 'bg-gold-50 border-gold-200 text-maroon-400 cursor-not-allowed'
+                            : 'border-gold-200 bg-white'
+                        }`}
+                        placeholder="e.g., John Doe"
                       />
                     </div>
-                  )}
 
-                  {formMode === 'editPromoter' && editingPromoter && (
-                    <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
-                      <p className="text-xs font-bold text-blue-900">
-                        {editingPromoter.fullName}
-                      </p>
-                      <p className="text-xs text-blue-800">
-                        {editingPromoter.phone}
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
+                    {formMode === 'create' && (
+                      <div>
+                        <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          value={formData.phone}
+                          maxLength={10}
+                          onChange={(e) => {
+                            const nextPhone = e.target.value;
+                            setFormData({ ...formData, phone: nextPhone });
+                            checkPhoneDuplicate(nextPhone);
+                          }}
+                          className="w-full px-4 py-2 border border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700"
+                          placeholder="e.g., +91 9876543210"
+                        />
+                      </div>
+                    )}
 
-              {(formMode === 'create' || formMode === 'addPromo') && (
-                <div>
-                  <label className="block text-xs font-bold text-maroon-900 mb-1.5">
-                    {formMode === 'addPromo'
-                      ? 'New Promo Discount'
-                      : 'Discount'}{' '}
-                    Percentage
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={formData.discountPercentage}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        discountPercentage: parseInt(e.target.value),
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700"
-                    placeholder="e.g., 15"
-                  />
-                </div>
-              )}
+                    {formMode === 'editPromoter' && editingPromoter && (
+                      <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
+                        <p className="text-xs font-bold text-blue-900">
+                          {editingPromoter.fullName}
+                        </p>
+                        <p className="text-xs text-blue-800">
+                          {editingPromoter.phone}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
 
-              {(formMode === 'create' || formMode === 'editPromoter') && (
-                <>
+                {(formMode === 'create' || formMode === 'addPromo') && (
                   <div>
                     <label className="block text-xs font-bold text-maroon-900 mb-1.5">
-                      Password
+                      {formMode === 'addPromo'
+                        ? 'New Promo Discount'
+                        : 'Discount'}{' '}
+                      Percentage
                     </label>
                     <input
-                      type="password"
-                      value={formData.password}
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={formData.discountPercentage}
                       onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
+                        setFormData({
+                          ...formData,
+                          discountPercentage: parseInt(e.target.value),
+                        })
                       }
-                      disabled={formMode === 'create' && !!existingPhoneMatch}
-                      className={`w-full px-4 py-2 border rounded-xl text-sm focus:outline-none focus:border-maroon-700 ${
-                        formMode === 'create' && existingPhoneMatch
-                          ? 'bg-gold-50 border-gold-200 text-maroon-400 cursor-not-allowed'
-                          : 'border-gold-200 bg-white text-maroon-900'
-                      }`}
-                      placeholder={
-                        formMode === 'editPromoter'
-                          ? 'Leave blank to keep current password'
-                          : 'Enter password'
-                      }
+                      className="w-full px-4 py-2 border border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700"
+                      placeholder="e.g., 15"
                     />
                   </div>
+                )}
 
-                  {formMode === 'create' && existingPhoneMatch && (
-                    <div className="rounded-xl border border-gold-200 bg-gold-50 p-3 text-xs text-maroon-700">
-                      This phone number already exists. Full name and password
-                      are locked until the phone number changes.
+                {(formMode === 'create' || formMode === 'editPromoter') && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
+                        disabled={formMode === 'create' && !!existingPhoneMatch}
+                        className={`w-full px-4 py-2 border rounded-xl text-sm focus:outline-none focus:border-maroon-700 ${
+                          formMode === 'create' && existingPhoneMatch
+                            ? 'bg-gold-50 border-gold-200 text-maroon-400 cursor-not-allowed'
+                            : 'border-gold-200 bg-white text-maroon-900'
+                        }`}
+                        placeholder={
+                          formMode === 'editPromoter'
+                            ? 'Leave blank to keep current password'
+                            : 'Enter password'
+                        }
+                      />
                     </div>
-                  )}
-                </>
-              )}
 
-              <div className="flex gap-2 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="flex-1 px-4 py-2 border border-gold-200 text-maroon-900 rounded-xl font-semibold text-sm hover:bg-maroon-50 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-maroon-900 hover:bg-maroon-800 text-gold-200 rounded-xl font-semibold text-sm transition-colors cursor-pointer"
-                >
-                  {formMode === 'create'
-                    ? 'Create'
-                    : formMode === 'addPromo'
-                      ? 'Add Code'
-                      : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                    {formMode === 'create' && existingPhoneMatch && (
+                      <div className="rounded-xl border border-gold-200 bg-gold-50 p-3 text-xs text-maroon-700">
+                        This phone number already exists. Full name and password
+                        are locked until the phone number changes.
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div className="flex gap-2 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="flex-1 px-4 py-2 border border-gold-200 text-maroon-900 rounded-xl font-semibold text-sm hover:bg-maroon-50 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-maroon-900 hover:bg-maroon-800 text-gold-200 rounded-xl font-semibold text-sm transition-colors cursor-pointer"
+                  >
+                    {formMode === 'create'
+                      ? 'Create'
+                      : formMode === 'addPromo'
+                        ? 'Add Code'
+                        : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {/* Promoters Table */}
       {loading ? (
@@ -550,7 +553,7 @@ export default function PromotersManagement() {
                       </button>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="space-y-2">
+                      <div className="space-y-2 whitespace-nowrap">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold text-maroon-900">
                             {promoter.fullName}
@@ -602,7 +605,7 @@ export default function PromotersManagement() {
                         {promoter.ordersCount}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
                       <button
                         onClick={() => handleViewOrderDetails(promoter)}
                         className="px-3 py-2 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold hover:bg-blue-100 transition-colors"
