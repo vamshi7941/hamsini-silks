@@ -39,6 +39,10 @@ router
   .get(requireAdminAuth, promoterController.getAllPromoters);
 
 router
+  .route('/promoter/:_id/orders')
+  .get(requireAdminAuth, promoterController.getPromoterOrders);
+
+router
   .route('/promoter/:_id')
   .put(requireAdminAuth, promoterController.updatePromoter);
 

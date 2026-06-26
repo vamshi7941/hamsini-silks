@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Icon } from '../Icons';
+import PromoterOrdersModal from './promoterOrdersModal';
 import { PromoterApi } from '@/api/promoters';
 import { useStore } from '@/context/StoreContext';
 
@@ -19,15 +20,37 @@ export type Promoter = {
   isActive: boolean;
 };
 
+export type PromoterOrder = {
+  _id: string;
+  address: string;
+  total: number;
+  discountApplied: number;
+  originalTotal: number;
+  promoCode: string | null;
+  orderedDate: string;
+};
+
 export default function PromotersManagement() {
   const hasFetchedPromoters = useRef(false);
   const { showToast } = useStore();
-  const { getAllPromoters, createPromoter, updatePromoter, deletePromoter } =
-    PromoterApi();
+  const {
+    getAllPromoters,
+    createPromoter,
+    updatePromoter,
+    deletePromoter,
+    getPromoterOrders,
+  } = PromoterApi();
 
   const [promoters, setPromoters] = useState<Promoter[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [selectedPromoterForOrders, setSelectedPromoterForOrders] =
+    useState<Promoter | null>(null);
+  const [selectedPromoterOrders, setSelectedPromoterOrders] = useState<
+    PromoterOrder[]
+  >([]);
+  const [orderLoading, setOrderLoading] = useState(false);
   const [editingPromoter, setEditingPromoter] = useState<Promoter | null>(null);
   const [formMode, setFormMode] = useState<
     'create' | 'addPromo' | 'editPromoter'
@@ -179,6 +202,24 @@ export default function PromotersManagement() {
         loadPromoters();
       });
     }
+  };
+
+  const handleViewOrderDetails = async (promoter: Promoter) => {
+    setSelectedPromoterForOrders(promoter);
+    setOrderLoading(true);
+    const orders = await getPromoterOrders(promoter._id);
+    setOrderLoading(false);
+
+    if (orders) {
+      setSelectedPromoterOrders(orders);
+      setShowOrderModal(true);
+    }
+  };
+
+  const handleCloseOrderModal = () => {
+    setShowOrderModal(false);
+    setSelectedPromoterForOrders(null);
+    setSelectedPromoterOrders([]);
   };
 
   const handleTogglePromoterStatus = async (
@@ -468,6 +509,9 @@ export default function PromotersManagement() {
                   <th className="px-4 py-3 text-center font-bold text-maroon-900">
                     Orders
                   </th>
+                  <th className="px-4 py-3 text-center font-bold text-maroon-900">
+                    View Orders
+                  </th>
                   <th className="px-4 py-3 text-right font-bold text-maroon-900">
                     Revenue
                   </th>
@@ -558,6 +602,22 @@ export default function PromotersManagement() {
                         {promoter.ordersCount}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => handleViewOrderDetails(promoter)}
+                        className="px-3 py-2 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold hover:bg-blue-100 transition-colors"
+                        title="View promoter order details"
+                        disabled={
+                          orderLoading &&
+                          selectedPromoterForOrders?._id === promoter._id
+                        }
+                      >
+                        {orderLoading &&
+                        selectedPromoterForOrders?._id === promoter._id
+                          ? 'Loading...'
+                          : 'View Orders'}
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <span className="font-bold text-purple-600">
                         ₹{promoter.revenue.toLocaleString('en-IN')}
@@ -594,6 +654,13 @@ export default function PromotersManagement() {
             </table>
           </div>
         </div>
+      )}
+      {showOrderModal && selectedPromoterForOrders && (
+        <PromoterOrdersModal
+          promoter={selectedPromoterForOrders}
+          orders={selectedPromoterOrders}
+          onClose={handleCloseOrderModal}
+        />
       )}
     </div>
   );

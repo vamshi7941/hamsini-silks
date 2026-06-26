@@ -48,7 +48,6 @@ export default function PromotersDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f5ede3] flex flex-col">
-      {/* Header */}
       <header className="bg-white border-b border-gold-100 px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div>
           <h1 className="font-display text-lg md:text-xl font-bold text-maroon-900">
@@ -77,7 +76,6 @@ export default function PromotersDashboard() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 p-4 md:p-8 overflow-auto admin-scroll">
         {loading ? (
           <div className="flex items-center justify-center h-full">
@@ -90,9 +88,7 @@ export default function PromotersDashboard() {
           </div>
         ) : stats ? (
           <div className="space-y-6">
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Promo Codes Card */}
               <div className="bg-white rounded-2xl border border-gold-100 p-6 shadow-xs hover:shadow-md transition-shadow md:col-span-2">
                 <div>
                   <p className="text-xs font-semibold text-maroon-700/70 mb-3">
@@ -116,7 +112,6 @@ export default function PromotersDashboard() {
                 </div>
               </div>
 
-              {/* Orders Card */}
               <div className="bg-white rounded-2xl border border-gold-100 p-6 shadow-xs hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
@@ -136,7 +131,6 @@ export default function PromotersDashboard() {
                 </div>
               </div>
 
-              {/* Revenue Card */}
               <div className="bg-white rounded-2xl border border-gold-100 p-6 shadow-xs hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
@@ -157,7 +151,6 @@ export default function PromotersDashboard() {
               </div>
             </div>
 
-            {/* Details Section */}
             <div className="bg-white rounded-2xl border border-gold-100 p-6 shadow-xs">
               <h2 className="font-display text-lg font-bold text-maroon-900 mb-4">
                 Your Details
@@ -205,7 +198,6 @@ export default function PromotersDashboard() {
               </div>
             </div>
 
-            {/* Share Section */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 p-6">
               <h2 className="font-display text-lg font-bold text-blue-900 mb-3">
                 📢 Share Your Promo Codes

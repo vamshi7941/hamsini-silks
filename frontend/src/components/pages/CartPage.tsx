@@ -251,14 +251,40 @@ export default function CartPage() {
                     Voucher Code
                   </label>
                   <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={coupon}
-                      onChange={(e) => setCoupon(e.target.value)}
-                      disabled={!!couponCode}
-                      placeholder="e.g. BRIDE30"
-                      className="flex-1 px-3 py-2.5 border-2 border-gold-200 rounded-xl text-xs text-maroon-900 uppercase focus:outline-none focus:border-maroon-700 disabled:opacity-50 disabled:bg-maroon-50 font-semibold"
-                    />
+                    <div className="relative flex-1  items-stretch">
+                      <input
+                        type="text"
+                        value={couponCode ? couponCode : coupon}
+                        onChange={(e) => setCoupon(e.target.value)}
+                        disabled={!!couponCode}
+                        placeholder="e.g. BRIDE30"
+                        className="flex-1 w-full pr-10 px-3 py-2.5 border-2 border-gold-200 rounded-xl text-xs text-maroon-900 uppercase focus:outline-none focus:border-maroon-700 disabled:opacity-50 disabled:bg-maroon-50 font-semibold"
+                      />
+                      {couponCode && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCouponCode('');
+                            setCouponDiscountPercentage(0);
+                            setCoupon('');
+                            showToast('Coupon removed', 'success');
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-maroon-900 bg-transparent border-none p-0 hover:text-maroon-700 transition-colors cursor-pointer"
+                          aria-label="Remove voucher"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            className="w-4 h-4"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                     <button
                       type="submit"
                       disabled={!!couponCode}
@@ -268,24 +294,10 @@ export default function CartPage() {
                     </button>
                   </div>
                   {couponCode && (
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-[10px] text-emerald-700">
-                        Coupon <strong>{couponCode}</strong> applied for{' '}
-                        <strong>{couponDiscountPercentage}%</strong> off.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCouponCode('');
-                          setCouponDiscountPercentage(0);
-                          setCoupon('');
-                          showToast('Coupon removed', 'success');
-                        }}
-                        className="text-xs font-semibold text-maroon-900 bg-maroon-50 border border-maroon-100 rounded-full px-3 py-2 hover:bg-maroon-100 transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
+                    <p className="text-[10px] text-emerald-700">
+                      Coupon <strong>{couponCode}</strong> applied for{' '}
+                      <strong>{couponDiscountPercentage}%</strong> off.
+                    </p>
                   )}
                 </form>
 

@@ -176,6 +176,38 @@ export async function getAllPromoters(req, res) {
   }
 }
 
+export async function getPromoterOrders(req, res) {
+  const { _id } = req.params;
+  try {
+    const promoter = await PromoterSchema.findById(_id);
+
+    if (!promoter) {
+      return res
+        .status(404)
+        .json({ error: 'Promoter not found', success: false });
+    }
+
+    const promoCodes = promoter.promoCodes.map((pc) => pc.code);
+    const orders = await OrderSchema.find({
+      promoCode: { $in: promoCodes },
+    }).sort({ orderedDate: -1 });
+
+    const orderDetails = orders.map((order) => ({
+      _id: order._id,
+      address: order.address,
+      total: order.total,
+      discountApplied: order.discountApplied || 0,
+      originalTotal: order.total + (order.discountApplied || 0),
+      promoCode: order.promoCode || null,
+      orderedDate: order.orderedDate,
+    }));
+
+    res.status(200).json({ orders: orderDetails, success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.message, success: false });
+  }
+}
+
 export async function updatePromoter(req, res) {
   const { _id } = req.params;
   const { fullName, phone, password, isActive, promoCode, promoCodeIsActive } =
