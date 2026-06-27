@@ -4,7 +4,7 @@ import { useStore } from '../../context/StoreContext';
 import { Auth } from '../../api/auth';
 
 export default function LoginPage() {
-  const { user } = useStore();
+  const { user, showToast } = useStore();
 
   const { loginWithGoogle, sendPhoneOtp, loginWithPhone, promoterLogin } =
     Auth();
@@ -19,6 +19,49 @@ export default function LoginPage() {
 
   const [promoterPhone, setPromoterPhone] = useState('');
   const [promoterPassword, setPromoterPassword] = useState('');
+
+  const normalizePhoneValue = (value: string) =>
+    value.replace(/\D/g, '').slice(0, 10);
+  const normalizeOtpValue = (value: string) =>
+    value.replace(/\D/g, '').slice(0, 6);
+
+  const handleSendOtp = async () => {
+    if (!/^\d{10}$/.test(patronPhone)) {
+      showToast('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      await sendPhoneOtp(patronPhone);
+      setOtpSent(true);
+    } catch (error) {
+      console.error('Send OTP failed', error);
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!/^\d{10}$/.test(patronPhone)) {
+      showToast('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(patronOtp)) {
+      showToast('Please enter a valid 6-digit OTP.', 'error');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      await loginWithPhone(patronName || 'Patron', patronPhone, patronOtp, '');
+    } catch (error) {
+      console.error('OTP verify failed', error);
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   if (user.loggedIn) {
     return (
@@ -147,25 +190,16 @@ export default function LoginPage() {
                         required
                         value={patronPhone}
                         onChange={(e) =>
-                          setPatronPhone(e.target.value)
+                          setPatronPhone(normalizePhoneValue(e.target.value))
                         }
                         className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
-                        placeholder="+91 XXXXXXXXXX"
+                        placeholder="XXX-XXX-XXXX"
                       />
                     </div>
                     {!otpSent ? (
                       <button
                         type="button"
-                        onClick={async () => {
-                          setSendingOtp(true);
-                          try {
-                            await sendPhoneOtp(patronPhone);
-                            setOtpSent(true);
-                          } catch (error) {
-                            console.error('Send OTP failed', error);
-                          }
-                          setSendingOtp(false);
-                        }}
+                        onClick={handleSendOtp}
                         className="w-full py-3.5 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
                       >
                         {sendingOtp ? 'Sending OTP…' : 'Send OTP'}
@@ -180,26 +214,16 @@ export default function LoginPage() {
                             type="text"
                             required
                             value={patronOtp}
-                            onChange={(e) => setPatronOtp(e.target.value)}
+                            onChange={(e) =>
+                              setPatronOtp(normalizeOtpValue(e.target.value))
+                            }
                             className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
                             placeholder="123456"
                           />
                         </div>
                         <button
                           type="button"
-                          onClick={async () => {
-                            setVerifyingOtp(true);
-                            try {
-                              await loginWithPhone(
-                                patronName,
-                                patronPhone,
-                                patronOtp,
-                              );
-                            } catch (error) {
-                              console.error('OTP verify failed', error);
-                            }
-                            setVerifyingOtp(false);
-                          }}
+                          onClick={handleVerifyOtp}
                           className="w-full py-3.5 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
                         >
                           {verifyingOtp
@@ -239,9 +263,7 @@ export default function LoginPage() {
                     <input
                       type="tel"
                       value={promoterPhone}
-                      onChange={(e) =>
-                        setPromoterPhone(e.target.value)
-                      }
+                      onChange={(e) => setPromoterPhone(e.target.value)}
                       placeholder="+91 XXXXXXXXXX"
                       className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-blue-600 transition-colors"
                     />

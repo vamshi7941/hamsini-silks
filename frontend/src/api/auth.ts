@@ -2,8 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { User, useStore } from '@/context/StoreContext';
 import {
   signInWithGooglePopup,
-  sendPhoneOtp as firebaseSendPhoneOtp,
-  verifyPhoneOtp as firebaseVerifyPhoneOtp,
   getFirebaseAuthErrorMessage,
 } from '../firebase';
 
@@ -50,7 +48,7 @@ export const Auth = () => {
     }
     showToast(`Welcome back, ${displayName}!`, 'success');
     navigate(
-      role === 'admin' ? '/admin' : role === 'promoter' ? '/promoter' : '/',
+      role === 'admin' ? '/admin' : role === 'promoter' ? '/promoter' : newUser.phone ? '/' : '/verify-phone',
     );
   };
 
@@ -83,32 +81,79 @@ export const Auth = () => {
     }
   };
 
+  const normalizePhoneNumber = (phone: string) =>
+    phone.replace(/\D/g, '').slice(-10);
+
   const sendPhoneOtp = async (phone: string) => {
+    const normalizedPhone = normalizePhoneNumber(phone);
+
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      const message = 'Please enter a valid 10-digit phone number.';
+      showToast(message, 'error');
+      throw new Error(message);
+    }
+
     try {
-      await firebaseSendPhoneOtp(phone);
+      const response = await fetch(`${apiUrl}/api/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: normalizedPhone }),
+      });
+      const json = await response.json();
+
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || 'Unable to send OTP right now.');
+      }
+
+      showToast(json.message || 'OTP sent successfully.', 'success');
     } catch (err) {
-      const message = getFirebaseAuthErrorMessage(err);
+      const message =
+        err instanceof Error ? err.message : 'Unable to send OTP right now.';
       showToast(message, 'error');
       throw err;
     }
   };
 
-  const loginWithPhone = async (name: string, phone: string, otp: string) => {
+  const loginWithPhone = async (name: string, phone: string, otp: string, email: string) => {
+    const normalizedPhone = normalizePhoneNumber(phone);
+    const normalizedOtp = otp.replace(/\D/g, '').slice(-6);
+
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      const message = 'Please enter a valid 10-digit phone number.';
+      showToast(message, 'error');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(normalizedOtp)) {
+      const message = 'Please enter a valid 6-digit OTP.';
+      showToast(message, 'error');
+      return;
+    }
+
     try {
-      const { user } = await firebaseVerifyPhoneOtp(otp);
-      const response = await fetch(`${apiUrl}/api/auth/phone/`, {
+      const response = await fetch(`${apiUrl}/api/auth/verify-login-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          uid: user.uid,
+          phone: normalizedPhone,
+          otp: normalizedOtp,
           name,
-          phone,
+          email,
         }),
       });
       const json = await response.json();
 
-      if (json.success) {
-        login('', 'customer', name, user.uid ?? '', json.token, phone);
+      if (json.success && json.token && json.user) {
+        login(
+          json.user.email || email,
+          'customer',
+          json.user.fullName || name || 'Patron',
+          json.user._id || '',
+          json.token,
+          normalizedPhone,
+          json.user.promoCode || '',
+          json.user.discountPercentage || 0,
+        );
       } else {
         showToast(
           json.message || 'Phone sign-in failed. Please try again.',
@@ -117,7 +162,8 @@ export const Auth = () => {
       }
     } catch (err) {
       console.error('Phone sign-in failed', err);
-      const message = getFirebaseAuthErrorMessage(err);
+      const message =
+        err instanceof Error ? err.message : 'Phone sign-in failed.';
       showToast(message, 'error');
     }
   };

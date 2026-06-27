@@ -1,14 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
+import { Auth } from '@/api/auth';
 import { CustomerApi } from '@/api/customer';
 import GuestUser from '../guestUser';
 import AccessDenied from '../accessDenied';
 
-const PAYMENT_METHODS = [
-  { id: 'UPI', icon: '📱', label: 'UPI', sub: 'PhonePe · GPay · Paytm · BHIM' },
-  { id: 'Card', icon: '💳', label: 'Card', sub: 'Visa · Mastercard · RuPay' },
-  { id: 'COD', icon: '💵', label: 'Cash on Delivery', sub: 'Pay at doorstep' },
+declare global {
+  interface Window {
+    Razorpay?: any;
+  }
+}
+
+type PaymentMethod = {
+  id: string;
+  label: string;
+  description: string;
+  enabled?: boolean;
+};
+
+const INITIAL_PAYMENT_METHODS: PaymentMethod[] = [
+  { id: 'cod', label: 'Cash on Delivery', description: 'Pay at doorstep' },
+  {
+    id: 'razorpay',
+    label: 'Razorpay',
+    description: 'Cards, UPI, wallets and net banking',
+  },
 ];
 
 export default function CheckoutPage() {
@@ -18,12 +35,21 @@ export default function CheckoutPage() {
     cartTotal,
     user,
     buyNowItem,
+    showToast,
     couponCode,
     couponDiscountPercentage,
     setCouponCode,
     setCouponDiscountPercentage,
   } = useStore();
-  const { placeOrder, clearCart } = CustomerApi();
+  const {
+    placeOrder,
+    clearCart,
+    validatePhone,
+    getPaymentMethods,
+    createRazorpayOrder,
+    verifyRazorpayPayment,
+  } = CustomerApi();
+  const { sendPhoneOtp } = Auth();
 
   if (!user.loggedIn && user.role !== 'customer') return;
 
@@ -31,8 +57,22 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [payment, setPayment] = useState('UPI');
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(
+    INITIAL_PAYMENT_METHODS,
+  );
+
+  const [payment, setPayment] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentFeedback, setPaymentFeedback] = useState<{
+    type: 'idle' | 'loading' | 'success' | 'error';
+    message: string;
+  }>({ type: 'idle', message: '' });
 
   const orderSubtotal = buyNowItem
     ? buyNowItem.product.price * buyNowItem.quantity
@@ -42,22 +82,254 @@ export default function CheckoutPage() {
   );
   const orderTotal = orderSubtotal - discountAmount;
 
+  const normalizePhoneValue = (value: string) =>
+    value.replace(/\D/g, '').slice(0, 10);
+  const normalizeOtpValue = (value: string) =>
+    value.replace(/\D/g, '').slice(0, 6);
+
+  useEffect(() => {
+    const loadMethods = async () => {
+      if (!user.loggedIn || user.role !== 'customer') return;
+      const methods = await getPaymentMethods();
+      if (Array.isArray(methods) && methods.length > 0) {
+        setPaymentMethods(methods);
+      }
+    };
+
+    loadMethods();
+  }, [user.loggedIn, user.role]);
+
+  const ensureRazorpayScript = () =>
+    new Promise<void>((resolve, reject) => {
+      if (window.Razorpay) {
+        resolve();
+        return;
+      }
+
+      const existingScript = document.getElementById(
+        'razorpay-checkout-script',
+      );
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(), {
+          once: true,
+        });
+        existingScript.addEventListener(
+          'error',
+          () => reject(new Error('Unable to load Razorpay.')),
+          { once: true },
+        );
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = 'razorpay-checkout-script';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Unable to load Razorpay.'));
+      document.body.appendChild(script);
+    });
+
+  const handleRazorpayPayment = async () => {
+    setIsProcessingPayment(true);
+    setPaymentFeedback({
+      type: 'loading',
+      message: 'Preparing Razorpay checkout…',
+    });
+
+    try {
+      const razorpayResponse = await createRazorpayOrder({
+        amount: orderTotal,
+        orderData: {
+          name,
+          email,
+          phone,
+          address,
+          paymentMethod: 'Razorpay',
+          total: orderTotal,
+        },
+      });
+
+      if (!razorpayResponse?.success || !razorpayResponse.data?.orderId) {
+        throw new Error(
+          razorpayResponse?.message || 'Unable to start Razorpay.',
+        );
+      }
+
+      await ensureRazorpayScript();
+
+      const options = {
+        key: razorpayResponse.data.keyId,
+        amount: razorpayResponse.data.amount,
+        currency: razorpayResponse.data.currency || 'INR',
+        name: 'Hamsini Silks',
+        description: 'Order payment',
+        order_id: razorpayResponse.data.orderId,
+        prefill: {
+          name,
+          email,
+          contact: phone,
+        },
+        modal: {
+          ondismiss: () => {
+            setPaymentFeedback({
+              type: 'error',
+              message: 'Payment was cancelled. Please try again.',
+            });
+            setPayment('');
+            setIsProcessingPayment(false);
+          },
+        },
+        theme: {
+          color: '#7b1f1f',
+        },
+        handler: async (response: any) => {
+          const verifyResult = await verifyRazorpayPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            amount: orderTotal,
+            orderData: {
+              name,
+              email,
+              phone,
+              address,
+              paymentMethod: 'Razorpay',
+              total: orderTotal,
+              promoCode: couponCode || null,
+              discountApplied: discountAmount,
+              items: (buyNowItem ? [buyNowItem] : cart).map((item) => ({
+                productId: item.product._id,
+                name: item.product.name,
+                price: item.product.price,
+                quantity: item.quantity,
+                size: item.size,
+              })),
+            },
+          });
+
+          if (verifyResult?.success) {
+            setOrderId(verifyResult.data._id);
+            await clearCart();
+            setCouponCode('');
+            setCouponDiscountPercentage(0);
+            setOtpSent(false);
+            setOtp('');
+            setOtpVerified(false);
+            setPaymentFeedback({
+              type: 'success',
+              message: 'Payment successful. Your order is confirmed.',
+            });
+          } else {
+            setPaymentFeedback({
+              type: 'error',
+              message: verifyResult?.message || 'Payment verification failed.',
+            });
+          }
+
+          setIsProcessingPayment(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+      };
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay checkout could not be loaded.');
+      }
+
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open();
+    } catch (error) {
+      console.error('Razorpay payment failed', error);
+      setPaymentFeedback({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Razorpay payment could not be completed.',
+      });
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    const normalizedPhone = normalizePhoneValue(phone);
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      showToast('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      await sendPhoneOtp(normalizedPhone);
+      setOtpSent(true);
+      setOtpVerified(false);
+      setOtp('');
+    } catch (error) {
+      console.error('Send OTP failed', error);
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const normalizedPhone = normalizePhoneValue(phone);
+    const normalizedOtp = normalizeOtpValue(otp);
+
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      showToast('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+    if (!/^\d{6}$/.test(normalizedOtp)) {
+      showToast('Please enter a valid 6-digit OTP.', 'error');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const result = await validatePhone(normalizedPhone, normalizedOtp);
+      if (result?.success) {
+        setOtpVerified(true);
+        showToast('Phone verified for COD order.', 'success');
+      }
+    } catch (error) {
+      console.error('Verify OTP failed', error);
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (payment === 'cod' && !otpVerified && user.phone !== phone) {
+      showToast(
+        'Please verify your phone with OTP before placing a COD order.',
+        'error',
+      );
+      return;
+    }
+
+    if (payment === 'razorpay') {
+      await handleRazorpayPayment();
+      return;
+    }
 
     const orderResult = await placeOrder({
       name,
       email,
       phone,
       address,
-      paymentMethod: payment,
+      paymentMethod: 'COD',
     });
 
     if (orderResult?.success) {
       setOrderId(orderResult.data._id);
-      clearCart();
+      await clearCart();
       setCouponCode('');
       setCouponDiscountPercentage(0);
+      setOtpSent(false);
+      setOtp('');
+      setOtpVerified(false);
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -115,7 +387,10 @@ export default function CheckoutPage() {
                   { label: 'Order ID', val: orderId },
                   { label: 'Patron', val: name },
                   { label: 'Email', val: email },
-                  { label: 'Payment', val: payment },
+                  {
+                    label: 'Payment',
+                    val: payment === 'razorpay' ? 'Razorpay' : 'COD',
+                  },
                   {
                     label: 'Status',
                     val: '⏳ Pending',
@@ -243,10 +518,11 @@ export default function CheckoutPage() {
                     </label>
                     <input
                       required
-                      type="text"
+                      type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
+                      disabled={otpVerified}
+                      className={`w-full px-4 py-3 border-2 rounded-xl text-sm text-maroon-900 focus:outline-none transition-colors ${otpVerified ? 'border-emerald-300 bg-emerald-50 text-emerald-900 cursor-not-allowed' : 'border-gold-200 focus:border-maroon-700'}`}
                     />
                   </div>
                 </div>
@@ -274,10 +550,10 @@ export default function CheckoutPage() {
                 Payment Method
               </h2>
               <div className="space-y-3">
-                {PAYMENT_METHODS.map((pm) => (
+                {paymentMethods.map((pm) => (
                   <label
                     key={pm.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    className={`flex items-center gap-4 rounded-2xl border-2 px-4 py-4 transition-all ${
                       payment === pm.id
                         ? 'border-maroon-900 bg-maroon-50'
                         : 'border-gold-200 hover:border-gold-400'
@@ -288,32 +564,127 @@ export default function CheckoutPage() {
                       name="payment"
                       value={pm.id}
                       checked={payment === pm.id}
-                      onChange={() => setPayment(pm.id)}
+                      onChange={() => {
+                        if (!phone || !address || !name || !email) {
+                          showToast(
+                            'Please fill in all delivery details before selecting a payment method.',
+                            'error',
+                          );
+                          return;
+                        }
+                        setPayment(pm.id);
+                        setPaymentFeedback({ type: 'idle', message: '' });
+                        if (pm.id === 'razorpay') {
+                          void handleRazorpayPayment();
+                        }
+                      }}
+                      onClick={() => {
+                        if (!phone || !address || !name || !email) {
+                          showToast(
+                            'Please fill in all delivery details before selecting a payment method.',
+                            'error',
+                          );
+                          return;
+                        }
+                        if (pm.id === 'razorpay') {
+                          void handleRazorpayPayment();
+                        }
+                      }}
                       className="accent-maroon-900"
                     />
-                    <span className="text-2xl">{pm.icon}</span>
-                    <div>
-                      <span className="text-sm font-bold text-maroon-900 block">
+                    <span className="text-xl">
+                      {pm.id === 'cod' ? '💵' : '💳'}
+                    </span>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-maroon-900">
                         {pm.label}
-                      </span>
-                      <span className="text-xs text-maroon-700/70">
-                        {pm.sub}
-                      </span>
+                      </div>
+                      <div className="text-xs text-maroon-700/70">
+                        {pm.description}
+                      </div>
                     </div>
                     {payment === pm.id && (
-                      <span className="ml-auto text-maroon-900">✓</span>
+                      <span className="text-sm font-semibold text-maroon-900">
+                        Selected
+                      </span>
                     )}
                   </label>
                 ))}
+
+                {paymentFeedback.type !== 'idle' && (
+                  <div
+                    className={`rounded-2xl border p-3 text-sm ${
+                      paymentFeedback.type === 'error'
+                        ? 'border-rose-200 bg-rose-50 text-rose-800'
+                        : paymentFeedback.type === 'success'
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                          : 'border-gold-200 bg-[#fff8ef] text-maroon-800'
+                    }`}
+                  >
+                    {paymentFeedback.message}
+                  </div>
+                )}
               </div>
+
+              {payment === 'cod' && user.phone !== phone && (
+                <div className="mt-4 rounded-2xl border border-gold-100 bg-[#fff8ef] p-4">
+                  <p className="text-sm font-semibold text-maroon-900 mb-3">
+                    Cash on Delivery requires phone OTP verification.
+                  </p>
+
+                  {!otpSent ? (
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      className="w-full py-3 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                    >
+                      {sendingOtp ? 'Sending OTP…' : 'Send OTP'}
+                    </button>
+                  ) : otpVerified ? (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 font-semibold">
+                      OTP verified for {phone || 'your phone number'}. You can
+                      now place the order.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                          Enter OTP
+                        </label>
+                        <input
+                          type="text"
+                          value={otp}
+                          onChange={(e) =>
+                            setOtp(normalizeOtpValue(e.target.value))
+                          }
+                          className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
+                          placeholder="123456"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleVerifyOtp}
+                        className="w-full py-3 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                      >
+                        {verifyingOtp ? 'Verifying OTP…' : 'Verify OTP'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Submit */}
             <button
               type="submit"
-              className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm sm:text-base tracking-wider shadow-lg transition-all cursor-pointer"
+              disabled={isProcessingPayment}
+              className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm sm:text-base tracking-wider shadow-lg transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
             >
-              🪷 Confirm Order · ₹{orderTotal.toLocaleString('en-IN')}
+              {isProcessingPayment
+                ? 'Processing…'
+                : payment === 'razorpay'
+                  ? `Pay ₹${orderTotal.toLocaleString('en-IN')} via Razorpay`
+                  : `🪷 Confirm Order · ₹${orderTotal.toLocaleString('en-IN')}`}
             </button>
             <p className="text-center text-xs text-maroon-700/50">
               By confirming, you agree to our Terms & Silk Mark authenticity

@@ -1,5 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import { useStore } from './context/StoreContext';
 import { ProductsApi } from './api/products';
 import Header from './components/Header';
@@ -28,6 +34,7 @@ import MyOrdersPage from './components/pages/MyOrdersPage';
 import { AdminApi } from './api/admin';
 import { CustomerApi } from './api/customer';
 import ProfilePage from './components/pages/Profile';
+import VerifyPhonePage from './components/pages/VerifyPhonePage';
 
 function HomePage() {
   return (
@@ -50,6 +57,8 @@ export default function App() {
   const { fetchAllProducts } = ProductsApi();
   const { fetchAllOrders, fetchSiteContent } = AdminApi();
   const { getCustomerData } = CustomerApi();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const hasFetchedProducts = useRef(false);
   const hasFetchedOrders = useRef(false);
@@ -79,6 +88,25 @@ export default function App() {
     }
   }, [user, imagesLoaded]);
 
+  useEffect(() => {
+    const customerPages = [
+      '/profile',
+      '/cart',
+      '/checkout',
+      '/wishlist',
+      '/my-orders',
+    ];
+
+    if (
+      user.loggedIn &&
+      user.role === 'customer' &&
+      !user.phone &&
+      customerPages.includes(location.pathname)
+    ) {
+      navigate('/verify-phone', { replace: true });
+    }
+  }, [user.loggedIn, user.role, user.phone, location.pathname, navigate]);
+
   return (
     <div className="min-h-screen bg-[#fdf8f1] text-maroon-900 flex flex-col justify-between font-sans selection:bg-gold-200 selection:text-maroon-900">
       <Header />
@@ -99,6 +127,16 @@ export default function App() {
           <Route path="/promoter" element={<PromotersDashboard />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/my-orders" element={<MyOrdersPage />} />
+          <Route
+            path="/verify-phone"
+            element={
+              user.loggedIn && user.role === 'customer' && !user.phone ? (
+                <VerifyPhonePage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
         </Routes>
       </main>
 

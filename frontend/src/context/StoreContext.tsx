@@ -45,6 +45,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       name: 'Guest Patron',
       email: '',
       role: 'customer',
+      phone: '',
       loggedIn: false,
       token: '',
       _id: '',
