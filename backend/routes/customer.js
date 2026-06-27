@@ -26,6 +26,18 @@ router
   .post(requireCustomerAuth, authController.verifyOtpForOrder);
 
 router
+  .route('/paymentMethods')
+  .get(requireCustomerAuth, customerController.getPaymentMethods);
+
+router
+  .route('/createRazorpayOrder')
+  .post(requireCustomerAuth, customerController.createRazorpayOrder);
+
+router
+  .route('/verifyRazorpayPayment')
+  .post(requireCustomerAuth, customerController.verifyRazorpayPayment);
+
+router
   .route('/placeOrder')
   .post(requireCustomerAuth, customerController.placeOrder);
 

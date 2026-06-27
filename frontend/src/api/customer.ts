@@ -228,6 +228,100 @@ export const CustomerApi = () => {
     }
   };
 
+  const getPaymentMethods = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/customer/paymentMethods`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return [];
+      }
+
+      if (data.success) {
+        return data.data || [];
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      return [];
+    }
+  };
+
+  const createRazorpayOrder = async ({
+    amount,
+    orderData,
+  }: {
+    amount: number;
+    orderData: any;
+  }) => {
+    try {
+      const response = await fetch(
+        `${apiUrl}/api/customer/createRazorpayOrder`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
+          body: JSON.stringify({
+            customerId: user._id,
+            amount,
+            orderData,
+          }),
+        },
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        showToast(data.message || 'Unable to initialize Razorpay.', 'error');
+      }
+
+      return data;
+    } catch (error) {
+      showToast('Failed to initialize Razorpay.', 'error');
+      console.error('Error creating Razorpay order:', error);
+      return null;
+    }
+  };
+
+  const verifyRazorpayPayment = async (payload: any) => {
+    try {
+      const response = await fetch(
+        `${apiUrl}/api/customer/verifyRazorpayPayment`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
+          body: JSON.stringify({
+            customerId: user._id,
+            ...payload,
+          }),
+        },
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        showToast(data.message || 'Payment verification failed.', 'error');
+      }
+
+      return data;
+    } catch (error) {
+      showToast('Failed to verify payment.', 'error');
+      console.error('Error verifying Razorpay payment:', error);
+      return null;
+    }
+  };
+
   const placeOrder = async (
     orderData: Omit<Order, '_id' | 'status' | 'date' | 'items' | 'total'>,
   ) => {
@@ -429,5 +523,8 @@ export const CustomerApi = () => {
     validatePhone,
     placeOrder,
     fetchMyOrders,
+    getPaymentMethods,
+    createRazorpayOrder,
+    verifyRazorpayPayment,
   };
 };
