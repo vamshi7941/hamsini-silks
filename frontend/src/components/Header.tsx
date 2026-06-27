@@ -27,7 +27,7 @@ export default function Header() {
     navigate(`/category/${slug}`);
     setOpen(false);
   };
-  console.log('siteContent: ', siteContent);
+
   return (
     <header className="sticky top-0 z-50 bg-[#fdf8f1]/95 backdrop-blur-md border-b border-gold-200/60 shadow-xs">
       {/* Top announcement bar */}

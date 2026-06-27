@@ -55,7 +55,7 @@ export const AdminApi = () => {
 
     // Here you would typically make an API call to your backend to add the product
     try {
-      const response = await fetch(`${apiUrl}/api/products/addProduct`, {
+      const response = await fetch(`${apiUrl}/api/admin/addProduct`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ export const AdminApi = () => {
   ) => {
     try {
       const response = await fetch(
-        `${apiUrl}/api/products/updateProduct/${id}`,
+        `${apiUrl}/api/admin/updateProduct/${id}`,
         {
           method: 'PUT',
           headers: {
@@ -128,7 +128,7 @@ export const AdminApi = () => {
   const deleteProduct = async (id: string, onClose: () => void) => {
     try {
       const response = await fetch(
-        `${apiUrl}/api/products/deleteProduct/${id}`,
+        `${apiUrl}/api/admin/deleteProduct/${id}`,
         {
           method: 'DELETE',
           headers: {
@@ -245,7 +245,7 @@ export const AdminApi = () => {
         throw new Error(json.error || 'Failed to save category');
       }
       showToast('Category saved successfully', 'success');
-      return json.category;
+      return json;
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : 'Failed to save category',
@@ -270,7 +270,7 @@ export const AdminApi = () => {
         throw new Error(json.error || 'Failed to update category');
       }
       showToast('Category updated successfully', 'success');
-      return json.category;
+      return json;
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : 'Failed to update category',
@@ -306,7 +306,7 @@ export const AdminApi = () => {
 
   const fetchSiteContent = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/products/site-content`, {
+      const response = await fetch(`${apiUrl}/api/site-content`, {
         headers: {
           'Content-Type': 'application/json',
         },

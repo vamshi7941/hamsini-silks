@@ -1,8 +1,8 @@
-import { Product } from '@/data';
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Icon } from '../Icons';
 import { fileToBase64, fileListToBase64 } from '../../utils/image';
+import { Product } from '@/context/contextTypes';
 
 // ── Image upload zone (used in edit/add modals) ───────────────────────────────
 function ImageUploadZone({
@@ -153,8 +153,8 @@ export function EditProductModal({
   onClose: () => void;
   onSave: (id: string, updates: Partial<Product>) => void;
 }) {
-  const { categories } = useStore();
-  const categoryOptions = categories.filter(
+  const { siteContent } = useStore();
+  const categoryOptions = siteContent.categories.filter(
     (cat) => cat.type !== 'subcategory',
   );
   const [name, setName] = useState(product.name);
@@ -170,7 +170,7 @@ export function EditProductModal({
     categoryOptions[0]?._id ??
     '';
   const initialSubcategoryId =
-    categories.find(
+    siteContent.categories.find(
       (cat) => cat.type === 'subcategory' && cat.name === product.subcategory,
     )?._id ?? '';
   const [selectedCategoryId, setSelectedCategoryId] =
@@ -192,7 +192,7 @@ export function EditProductModal({
     }
   }, [categoryOptions, selectedCategoryId]);
 
-  const subcategoryOptions = categories.filter(
+  const subcategoryOptions = siteContent.categories.filter(
     (cat) => cat.type === 'subcategory' && cat.parentId === selectedCategoryId,
   );
   const selectedCategoryName =
@@ -474,8 +474,8 @@ export function AddProductModal({
   onClose: () => void;
   onAdd: (p: Product) => void;
 }) {
-  const { categories } = useStore();
-  const categoryOptions = categories.filter(
+  const { siteContent } = useStore();
+  const categoryOptions = siteContent.categories.filter(
     (cat) => cat.type !== 'subcategory',
   );
   const [name, setName] = useState('');
@@ -504,7 +504,7 @@ export function AddProductModal({
     }
   }, [categoryOptions, selectedCategoryId]);
 
-  const subcategoryOptions = categories.filter(
+  const subcategoryOptions = siteContent.categories.filter(
     (cat) => cat.type === 'subcategory' && cat.parentId === selectedCategoryId,
   );
   const selectedCategoryName =

@@ -7,6 +7,20 @@ import { requireAdminAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
 
+// === Admin Product Routes ====
+
+router.route('/addProduct').post(requireAdminAuth, adminController.addProduct);
+
+router
+  .route('/updateProduct/:id')
+  .put(requireAdminAuth, adminController.updateProduct);
+
+router
+  .route('/deleteProduct/:id')
+  .delete(requireAdminAuth, adminController.deleteProduct);
+
+// ==== Admin Orders Routes ====
+
 router.route('/allOrders').get(requireAdminAuth, async (req, res) => {
   try {
     const orders = await OrderSchema.find().sort({ orderedDate: -1 });
@@ -29,22 +43,8 @@ router
   .route('/updateOrderStatus')
   .post(requireAdminAuth, adminController.updateOrderStatus);
 
-router
-  .route('/categories')
-  .get(requireAdminAuth, adminController.getCategories)
-  .post(requireAdminAuth, adminController.createCategory);
+// ==== Admin Promotor Routes ====
 
-router
-  .route('/categories/:id')
-  .put(requireAdminAuth, adminController.updateCategory)
-  .delete(requireAdminAuth, adminController.deleteCategory);
-
-router
-  .route('/hero-content')
-  .get(requireAdminAuth, adminController.getHeroContent)
-  .post(requireAdminAuth, adminController.saveHeroContent);
-
-// ==== Promotor Routes ====
 router
   .route('/promoter/create')
   .post(requireAdminAuth, promoterController.createPromoter);
@@ -64,5 +64,19 @@ router
 router
   .route('/promoter/:_id')
   .delete(requireAdminAuth, promoterController.deletePromoter);
+
+// === Admin Site Content Routes ====
+router
+  .route('/categories')
+  .post(requireAdminAuth, adminController.createCategory);
+
+router
+  .route('/categories/:id')
+  .put(requireAdminAuth, adminController.updateCategory)
+  .delete(requireAdminAuth, adminController.deleteCategory);
+
+router
+  .route('/hero-content')
+  .post(requireAdminAuth, adminController.saveHeroContent);
 
 export default router;

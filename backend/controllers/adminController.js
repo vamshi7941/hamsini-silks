@@ -212,19 +212,6 @@ const getOrCreateSiteConfig = async () => {
   return siteConfig;
 };
 
-export async function getCategories(req, res) {
-  try {
-    const siteConfig = await getOrCreateSiteConfig();
-    const categories = (siteConfig.categories || [])
-      .filter((item) => item.isActive !== false)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-    return res.status(200).json({ success: true, categories });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-}
-
 export async function createCategory(req, res) {
   const { name, description, image, parentId, type, order } = req.body;
 

@@ -10,6 +10,8 @@ import adminRouter from './routes/admin.js';
 import * as promoterController from './controllers/promoterController.js';
 import { requirePromoterAuth } from './middleware/requireAuth.js';
 
+import SiteConfig from './models/SiteConfigSchema.js';
+
 dotenv.config();
 
 const app = express();
@@ -47,6 +49,27 @@ app.get(
   requirePromoterAuth,
   promoterController.getOwnPromoterOrders,
 );
+
+app.get('/api/site-content', async (req, res) => {
+  try {
+    const siteConfig = await SiteConfig.findOne();
+    if (!siteConfig) {
+      return res
+        .status(200)
+        .json({ success: true, categories: [], heroContent: null });
+    }
+
+    return res.status(200).json({
+      success: true,
+      categories: (siteConfig.categories || []).filter(
+        (item) => item.isActive !== false,
+      ),
+      heroContent: siteConfig.hero || null,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

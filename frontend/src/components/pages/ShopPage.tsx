@@ -24,7 +24,7 @@ const slugify = (value: string) =>
 export default function ShopPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { products, setSelectedCategory, categories } = useStore();
+  const { products, setSelectedCategory, siteContent } = useStore();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('default');
 
@@ -32,13 +32,13 @@ export default function ShopPage() {
     if (!slug || slug === 'all') return null;
 
     return (
-      categories.find((cat) => {
+      siteContent.categories.find((cat) => {
         const slugMatch = cat.slug === slug;
         const nameMatch = slugify(cat.name) === slug;
         return slugMatch || nameMatch;
       }) ?? null
     );
-  }, [categories, slug]);
+  }, [siteContent.categories, slug]);
 
   const categoryName = selectedCategoryConfig?.name ?? 'All';
   const isSubcategory = selectedCategoryConfig?.type === 'subcategory';

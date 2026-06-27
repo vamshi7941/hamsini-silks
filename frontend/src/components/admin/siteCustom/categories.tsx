@@ -24,7 +24,7 @@ export default function Categories() {
 
   const refresh = async () => {
     const data = await fetchSiteContent();
-    setSiteContent((prev) => ({ ...prev, categories: data }));
+    setSiteContent((prev) => ({ ...prev, categories: data.categories }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

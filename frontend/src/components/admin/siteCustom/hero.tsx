@@ -9,7 +9,7 @@ export default function Hero() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [heroForm, setHeroForm] = useState<HeroContent>({});
-  console.log('siteContent.heroContent', siteContent.heroContent, heroForm);
+
   const handleHeroSave = async (e: React.FormEvent) => {
     e.preventDefault();
     await saveHeroContent(heroForm);
@@ -206,7 +206,7 @@ export default function Hero() {
               />
             </div>
           </div>
-          <div>
+          <div className="flex w-1/2 flex-col gap-2">
             <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
               Image URL
             </label>
@@ -222,7 +222,7 @@ export default function Hero() {
                 <img
                   src={heroForm.image}
                   alt="Category preview"
-                  className="h-[360px] w-full rounded-lg object-cover"
+                  className="h-[42vh] w-full rounded-lg object-contain"
                 />
               </div>
             )}
