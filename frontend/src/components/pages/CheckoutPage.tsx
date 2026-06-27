@@ -105,7 +105,7 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (payment === 'COD' && !otpVerified) {
+    if (payment === 'COD' && !otpVerified && user.phone !== phone) {
       showToast(
         'Please verify your phone with OTP before placing a COD order.',
         'error',
@@ -314,7 +314,7 @@ export default function CheckoutPage() {
                     </label>
                     <input
                       required
-                      type="text"
+                      type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       disabled={otpVerified}
@@ -379,7 +379,7 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {payment === 'COD' && (
+              {payment === 'COD' && user.phone !== phone && (
                 <div className="mt-4 rounded-2xl border border-gold-100 bg-[#fff8ef] p-4">
                   <p className="text-sm font-semibold text-maroon-900 mb-3">
                     Cash on Delivery requires phone OTP verification.
