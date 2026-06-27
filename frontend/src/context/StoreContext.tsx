@@ -23,7 +23,7 @@ export type Order = {
 export type User = {
   name: string;
   email: string;
-  phone?: string;
+  phone: string;
   role: 'customer' | 'admin' | 'promoter';
   loggedIn: boolean;
   token: string;
@@ -125,6 +125,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       name: 'Guest Patron',
       email: '',
       role: 'customer',
+      phone: '',
       loggedIn: false,
       token: '',
       _id: '',

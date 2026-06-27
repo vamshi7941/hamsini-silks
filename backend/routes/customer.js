@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as customerController from '../controllers/customerController.js';
+import * as authController from '../controllers/authController.js';
 import { requireCustomerAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
@@ -19,6 +20,10 @@ router
 router
   .route('/validateCoupon')
   .post(requireCustomerAuth, customerController.validateCoupon);
+
+router
+  .route('/validatePhone')
+  .post(requireCustomerAuth, authController.verifyOtpForOrder);
 
 router
   .route('/placeOrder')

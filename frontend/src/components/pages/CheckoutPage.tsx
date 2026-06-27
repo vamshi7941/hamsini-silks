@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
+import { Auth } from '@/api/auth';
 import { CustomerApi } from '@/api/customer';
 import GuestUser from '../guestUser';
 import AccessDenied from '../accessDenied';
@@ -18,12 +19,14 @@ export default function CheckoutPage() {
     cartTotal,
     user,
     buyNowItem,
+    showToast,
     couponCode,
     couponDiscountPercentage,
     setCouponCode,
     setCouponDiscountPercentage,
   } = useStore();
-  const { placeOrder, clearCart } = CustomerApi();
+  const { placeOrder, clearCart, validatePhone } = CustomerApi();
+  const { sendPhoneOtp } = Auth();
 
   if (!user.loggedIn && user.role !== 'customer') return;
 
@@ -32,6 +35,11 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [payment, setPayment] = useState('UPI');
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
 
   const orderSubtotal = buyNowItem
@@ -42,8 +50,68 @@ export default function CheckoutPage() {
   );
   const orderTotal = orderSubtotal - discountAmount;
 
+  const normalizePhoneValue = (value: string) =>
+    value.replace(/\D/g, '').slice(0, 10);
+  const normalizeOtpValue = (value: string) =>
+    value.replace(/\D/g, '').slice(0, 6);
+
+  const handleSendOtp = async () => {
+    const normalizedPhone = normalizePhoneValue(phone);
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      showToast('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      await sendPhoneOtp(normalizedPhone);
+      setOtpSent(true);
+      setOtpVerified(false);
+      setOtp('');
+    } catch (error) {
+      console.error('Send OTP failed', error);
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const normalizedPhone = normalizePhoneValue(phone);
+    const normalizedOtp = normalizeOtpValue(otp);
+
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      showToast('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+    if (!/^\d{6}$/.test(normalizedOtp)) {
+      showToast('Please enter a valid 6-digit OTP.', 'error');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const result = await validatePhone(normalizedPhone, normalizedOtp);
+      if (result?.success) {
+        setOtpVerified(true);
+        showToast('Phone verified for COD order.', 'success');
+      }
+    } catch (error) {
+      console.error('Verify OTP failed', error);
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (payment === 'COD' && !otpVerified) {
+      showToast(
+        'Please verify your phone with OTP before placing a COD order.',
+        'error',
+      );
+      return;
+    }
 
     const orderResult = await placeOrder({
       name,
@@ -58,6 +126,9 @@ export default function CheckoutPage() {
       clearCart();
       setCouponCode('');
       setCouponDiscountPercentage(0);
+      setOtpSent(false);
+      setOtp('');
+      setOtpVerified(false);
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -246,7 +317,8 @@ export default function CheckoutPage() {
                       type="text"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
+                      disabled={otpVerified}
+                      className={`w-full px-4 py-3 border-2 rounded-xl text-sm text-maroon-900 focus:outline-none transition-colors ${otpVerified ? 'border-emerald-300 bg-emerald-50 text-emerald-900 cursor-not-allowed' : 'border-gold-200 focus:border-maroon-700'}`}
                     />
                   </div>
                 </div>
@@ -306,6 +378,53 @@ export default function CheckoutPage() {
                   </label>
                 ))}
               </div>
+
+              {payment === 'COD' && (
+                <div className="mt-4 rounded-2xl border border-gold-100 bg-[#fff8ef] p-4">
+                  <p className="text-sm font-semibold text-maroon-900 mb-3">
+                    Cash on Delivery requires phone OTP verification.
+                  </p>
+
+                  {!otpSent ? (
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      className="w-full py-3 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                    >
+                      {sendingOtp ? 'Sending OTP…' : 'Send OTP'}
+                    </button>
+                  ) : otpVerified ? (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 font-semibold">
+                      OTP verified for {phone || 'your phone number'}. You can
+                      now place the order.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                          Enter OTP
+                        </label>
+                        <input
+                          type="text"
+                          value={otp}
+                          onChange={(e) =>
+                            setOtp(normalizeOtpValue(e.target.value))
+                          }
+                          className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
+                          placeholder="123456"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleVerifyOtp}
+                        className="w-full py-3 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                      >
+                        {verifyingOtp ? 'Verifying OTP…' : 'Verify OTP'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Submit */}

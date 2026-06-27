@@ -142,6 +142,62 @@ export const CustomerApi = () => {
     }
   };
 
+  const normalizePhoneNumber = (phone: string) =>
+    phone.replace(/\D/g, '').slice(-10);
+
+  const validatePhone = async (phone: string, otp: string) => {
+    if (!user.loggedIn) {
+      showToast('Please log in to verify your phone.', 'warning');
+      return;
+    }
+    if (user.role !== 'customer') {
+      showToast('Only customers can verify a phone for COD orders.', 'warning');
+      return;
+    }
+
+    const normalizedPhone = normalizePhoneNumber(phone);
+    const normalizedOtp = otp.replace(/\D/g, '').slice(-6);
+
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      showToast('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(normalizedOtp)) {
+      showToast('Please enter a valid 6-digit OTP.', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/customer/validatePhone`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ phone: normalizedPhone, otp: normalizedOtp }),
+      });
+
+      if (response.status === 401) {
+        showToast('Unauthorized access. Please log in again.', 'error');
+        return;
+      }
+
+      const json = await response.json();
+      if (!json.success) {
+        showToast(
+          json.message || 'OTP verification failed. Please try again.',
+          'error',
+        );
+      }
+
+      return json;
+    } catch (error) {
+      showToast('Failed to verify OTP.', 'error');
+      console.error('Error verifying OTP:', error);
+    }
+  };
+
   const validateCoupon = async (couponCode: string) => {
     if (!user.loggedIn || user.role !== 'customer') {
       showToast('Please log in as a customer to apply coupons.', 'warning');
@@ -370,6 +426,7 @@ export const CustomerApi = () => {
     clearCart,
     toggleWishlist,
     validateCoupon,
+    validatePhone,
     placeOrder,
     fetchMyOrders,
   };
