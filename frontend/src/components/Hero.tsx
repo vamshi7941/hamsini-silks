@@ -2,28 +2,29 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRightIcon } from './Icons';
 import { useStore } from '../context/StoreContext';
-import { AdminApi, type HeroContent } from '../api/admin';
+import { generateSlug } from '@/utils/slug';
 
 export default function Hero() {
   const navigate = useNavigate();
-  const { setSelectedCategory, themeOption } = useStore();
-  const { fetchSiteContent } = AdminApi();
-  const [heroContent, setHeroContent] = useState<HeroContent>({});
+  const { setSelectedCategory, siteContent } = useStore();
+  const { products } = useStore();
+
+  const [featuredProduct, setFeaturedProduct] = useState<any | null>(null);
+  const heroContent = siteContent?.heroContent || {};
 
   useEffect(() => {
-    fetchSiteContent().then((content) => {
-      if (content?.hero) setHeroContent(content.heroContent);
-    });
-  }, []);
+    const id = (heroContent as any).featuredProductId;
+    if (id) {
+      const p = products.find((x) => x._id === id) || null;
+      setFeaturedProduct(p);
+    } else {
+      setFeaturedProduct(null);
+    }
+  }, [heroContent, products]);
 
-  const isB = themeOption === 'B';
-  const eyebrow =
-    heroContent.eyebrow ||
-    (isB ? 'FESTIVE ATELIER PREVIEW' : 'WEDDING COLLECTION 2026');
-  const titleLine1 =
-    heroContent.titleLine1 || (isB ? 'Radiance in' : 'Woven in');
-  const titleLine2 =
-    heroContent.titleLine2 || (isB ? 'Saffron & Silk' : 'Tradition');
+  const eyebrow = heroContent.eyebrow || 'WEDDING COLLECTION 2026';
+  const titleLine1 = heroContent.titleLine1 || 'Woven in';
+  const titleLine2 = heroContent.titleLine2 || 'Tradition';
   const subtitle = heroContent.subtitle || 'परम्परा • अनुग्रह • वैभव';
   const description =
     heroContent.description ||
@@ -34,23 +35,19 @@ export default function Hero() {
   const secondaryButtonLabel =
     heroContent.secondaryButtonLabel || 'EXPLORE COLLECTIONS';
   const secondaryButtonTarget = heroContent.secondaryButtonTarget || 'All';
-  const image =
-    heroContent.image ||
-    (isB ? '/images/saree-banarasi.jpg' : '/images/hero-bride.jpg');
+  const featuredImage = heroContent.image || '/images/hero-bride.jpg';
   const featuredTitle =
+    featuredProduct?.name ||
     heroContent.featuredTitle ||
-    (isB ? 'Smarthika Emerald Banarasi' : 'Mayura Bridal Kanjivaram');
-  const featuredPrice =
-    heroContent.featuredPrice || (isB ? '₹32,900' : '₹54,200');
+    'Mayura Bridal Kanjivaram';
+  const featuredPrice = featuredProduct
+    ? `₹${featuredProduct.price.toLocaleString('en-IN')}/-`
+    : heroContent.featuredPrice || '₹54,200';
   const badgeText = heroContent.badgeText || '30% OFF';
 
   return (
     <section
-      className={`relative overflow-hidden transition-all duration-500 ${
-        isB
-          ? 'bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 text-gold-100'
-          : 'bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-900 text-gold-100'
-      }`}
+      className={`relative overflow-hidden transition-all duration-500 ${'bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-900 text-gold-100'}`}
     >
       {/* Decorative mandala backdrop */}
       <div className="absolute inset-0 bg-mandala opacity-30 sm:opacity-40 pointer-events-none" />
@@ -62,11 +59,7 @@ export default function Hero() {
           {/* Left content */}
           <div className="text-center lg:text-left order-2 lg:order-1">
             <div
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] sm:text-xs tracking-[0.25em] sm:tracking-[0.3em] mb-4 sm:mb-6 ${
-                isB
-                  ? 'bg-gold-500/20 border-gold-300 text-gold-200'
-                  : 'bg-gold-500/15 border-gold-400/40 text-gold-200'
-              }`}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] sm:text-xs tracking-[0.25em] sm:tracking-[0.3em] mb-4 sm:mb-6 ${'bg-gold-500/15 border-gold-400/40 text-gold-200'}`}
             >
               <span>✦</span> {eyebrow} <span>✦</span>
             </div>
@@ -98,11 +91,7 @@ export default function Hero() {
                         .replace(/(^-|-$)/g, ''),
                   );
                 }}
-                className={`group inline-flex items-center gap-2 px-5 sm:px-7 py-3 sm:py-3.5 rounded-full font-semibold text-xs sm:text-sm tracking-wider shadow-lg hover:scale-[1.02] transition-all cursor-pointer ${
-                  isB
-                    ? 'bg-white text-amber-950 shadow-gold-500/20 hover:bg-gold-100'
-                    : 'bg-gradient-to-r from-gold-500 to-gold-400 text-maroon-900 shadow-gold-900/40'
-                }`}
+                className={`group inline-flex items-center gap-2 px-5 sm:px-7 py-3 sm:py-3.5 rounded-full font-semibold text-xs sm:text-sm tracking-wider shadow-lg hover:scale-[1.02] transition-all cursor-pointer ${'bg-gradient-to-r from-gold-500 to-gold-400 text-maroon-900 shadow-gold-900/40'}`}
               >
                 {primaryButtonLabel}
                 <ChevronRightIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
@@ -177,9 +166,20 @@ export default function Hero() {
                 </div>
               ))}
 
-              <div className="relative rounded-[24px] sm:rounded-[36px] overflow-hidden shadow-2xl shadow-black/50 aspect-[4/5]">
+              <div
+                className="relative rounded-[24px] sm:rounded-[36px] overflow-hidden shadow-2xl shadow-black/50 aspect-[4/5] hover:cursor-pointer"
+                onClick={() => {
+                  navigate(
+                    '/product/' +
+                      (generateSlug(
+                        featuredProduct?._id,
+                        featuredProduct?.name,
+                      ) || ''),
+                  );
+                }}
+              >
                 <img
-                  src={image}
+                  src={featuredImage}
                   alt="Hero showcase"
                   className="w-full h-full object-cover"
                 />
@@ -207,11 +207,7 @@ export default function Hero() {
               {/* Floating badge */}
               <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 lg:-right-6 animate-float">
                 <div
-                  className={`h-16 w-16 sm:h-24 sm:w-24 rounded-full flex items-center justify-center shadow-2xl ${
-                    isB
-                      ? 'bg-white text-amber-950 border-2 border-gold-400'
-                      : 'bg-gradient-to-br from-gold-400 to-gold-600 text-maroon-900'
-                  }`}
+                  className={`h-16 w-16 sm:h-24 sm:w-24 rounded-full flex items-center justify-center shadow-2xl ${'bg-gradient-to-br from-gold-400 to-gold-600 text-maroon-900'}`}
                 >
                   <div className="text-center">
                     <div className="font-display text-lg sm:text-2xl leading-none font-bold">

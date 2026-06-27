@@ -1,3 +1,5 @@
+import { HeroContent } from "@/api/admin";
+
 export type Product = {
   _id: string;
   name: string;
@@ -102,14 +104,11 @@ export interface StoreContextType {
 
   siteContent: {
     categories: CategoryConfig[];
-    heroContent: any;
+    heroContent: HeroContent;
   };
   setSiteContent: React.Dispatch<
-    React.SetStateAction<{ categories: CategoryConfig[]; heroContent: any }>
+    React.SetStateAction<{ categories: CategoryConfig[]; heroContent: HeroContent }>
   >;
-
-  themeOption: 'A' | 'B';
-  setThemeOption: (option: 'A' | 'B') => void;
 
   toast: Toast | null;
   showToast: (msg: string, type?: ToastType) => void;

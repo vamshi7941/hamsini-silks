@@ -321,14 +321,52 @@ export async function getHeroContent(req, res) {
 
 export async function saveHeroContent(req, res) {
   try {
-    const payload = req.body || {};
+    const {
+      eyebrow,
+      titleLine1,
+      titleLine2,
+      subtitle,
+      description,
+      primaryButtonLabel,
+      primaryButtonTarget,
+      secondaryButtonLabel,
+      secondaryButtonTarget,
+      image,
+      featuredProductId,
+      badgeText,
+    } = req.body || {};
+
     const siteConfig = await getOrCreateSiteConfig();
-    siteConfig.hero = {
-      ...(siteConfig.hero.toObject?.()
-        ? siteConfig.hero.toObject()
-        : siteConfig.hero),
-      ...payload,
-    };
+    if (featuredProductId !== undefined) {
+      if (featuredProductId === null || featuredProductId === '') {
+        siteConfig.hero.featuredProductId = null;
+      } else {
+        const product = await ProductSchema.findById(featuredProductId);
+        if (!product) {
+          return res
+            .status(400)
+            .json({ success: false, error: 'Featured product not found' });
+        }
+        siteConfig.hero.featuredProductId = product._id;
+        siteConfig.hero.badgeText = badgeText || '';
+        siteConfig.hero.image = image || '';
+        siteConfig.hero.eyebrow = eyebrow || siteConfig.hero.eyebrow;
+        siteConfig.hero.titleLine1 = titleLine1 || siteConfig.hero.titleLine1;
+        siteConfig.hero.titleLine2 = titleLine2 || siteConfig.hero.titleLine2;
+        siteConfig.hero.subtitle = subtitle || siteConfig.hero.subtitle;
+        siteConfig.hero.description =
+          description || siteConfig.hero.description;
+        siteConfig.hero.primaryButtonLabel =
+          primaryButtonLabel || siteConfig.hero.primaryButtonLabel;
+        siteConfig.hero.primaryButtonTarget =
+          primaryButtonTarget || siteConfig.hero.primaryButtonTarget;
+        siteConfig.hero.secondaryButtonLabel =
+          secondaryButtonLabel || siteConfig.hero.secondaryButtonLabel;
+        siteConfig.hero.secondaryButtonTarget =
+          secondaryButtonTarget || siteConfig.hero.secondaryButtonTarget;
+      }
+    }
+
     await siteConfig.save();
 
     return res

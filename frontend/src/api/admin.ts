@@ -25,9 +25,10 @@ export type HeroContent = {
   primaryButtonTarget?: string;
   secondaryButtonLabel?: string;
   secondaryButtonTarget?: string;
-  image?: string;
   featuredTitle?: string;
   featuredPrice?: string;
+  image?: string;
+  featuredProductId?: string;
   badgeText?: string;
 };
 
@@ -92,17 +93,14 @@ export const AdminApi = () => {
     onClose: () => void,
   ) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/api/admin/updateProduct/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${user?.token}`,
-          },
-          body: JSON.stringify(updates),
+      const response = await fetch(`${apiUrl}/api/admin/updateProduct/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
         },
-      );
+        body: JSON.stringify(updates),
+      });
       const json = await response.json();
 
       if (response.status === 401) {
@@ -127,16 +125,13 @@ export const AdminApi = () => {
 
   const deleteProduct = async (id: string, onClose: () => void) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/api/admin/deleteProduct/${id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${user?.token}`,
-          },
+      const response = await fetch(`${apiUrl}/api/admin/deleteProduct/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
         },
-      );
+      });
       const json = await response.json();
 
       if (response.status === 401) {
@@ -327,6 +322,10 @@ export const AdminApi = () => {
 
   const saveHeroContent = async (content: HeroContent) => {
     try {
+      const payload: Partial<HeroContent> = {};
+      if (content.featuredProductId !== undefined)
+        payload.featuredProductId = content.featuredProductId;
+
       const response = await fetch(`${apiUrl}/api/admin/hero-content`, {
         method: 'POST',
         headers: {

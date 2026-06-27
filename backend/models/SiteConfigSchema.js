@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { StringDecoder } from 'string_decoder';
 
 const { Schema } = mongoose;
 
@@ -37,9 +38,11 @@ const SiteConfigSchema = new Schema(
       secondaryButtonLabel: { type: String, default: 'EXPLORE COLLECTIONS' },
       secondaryButtonTarget: { type: String, default: 'All' },
       image: { type: String, default: '/images/hero-bride.jpg' },
-      featuredTitle: { type: String, default: 'Mayura Bridal Kanjivaram' },
-      featuredPrice: { type: String, default: '₹54,200' },
-      badgeText: { type: String, default: '30% OFF' },
+      featuredProductId: {
+        type: String,
+        default: 'HSPID-001',
+      },
+      badgeText: { type: String, default: '' },
     },
   },
   { timestamps: true },

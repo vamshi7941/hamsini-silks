@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import type { Product } from '../data';
 import { BagIcon, StarIcon } from './Icons';
 import { useStore } from '../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
 import { generateSlug } from '@/utils/slug';
+import { Product } from '@/context/contextTypes';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { isInWishlist, user } = useStore();

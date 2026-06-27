@@ -118,9 +118,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
         siteContent,
         setSiteContent,
 
-        themeOption,
-        setThemeOption,
-
         toast,
         showToast,
       }}

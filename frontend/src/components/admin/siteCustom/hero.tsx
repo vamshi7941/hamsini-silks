@@ -9,12 +9,17 @@ export default function Hero() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [heroForm, setHeroForm] = useState<HeroContent>({});
+  const { products } = useStore();
 
   const handleHeroSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveHeroContent(heroForm);
-    const updated = await fetchSiteContent();
-    if (updated) setHeroForm(updated);
+    const saved = await saveHeroContent(heroForm).then((res) => res);
+
+    if (saved.success) {
+      const updated = await fetchSiteContent().then((res) => res);
+
+      if (updated.success) setHeroForm(updated.heroContent || {});
+    }
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,19 +92,19 @@ export default function Hero() {
               className="w-full rounded-xl border border-gold-200 px-3 py-2"
             />
           </div>
-        </div>
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-            Description
-          </label>
-          <textarea
-            value={heroForm.description || ''}
-            onChange={(e) =>
-              setHeroForm({ ...heroForm, description: e.target.value })
-            }
-            className="w-full rounded-xl border border-gold-200 px-3 py-2"
-            rows={3}
-          />
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+              Description
+            </label>
+            <textarea
+              value={heroForm.description || ''}
+              onChange={(e) =>
+                setHeroForm({ ...heroForm, description: e.target.value })
+              }
+              className="w-full rounded-xl border border-gold-200 px-3 py-2"
+              rows={3}
+            />
+          </div>
         </div>
         <div className="flex gap-4">
           <div className="flex w-1/2 flex-col gap-4">
@@ -165,37 +170,29 @@ export default function Hero() {
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                Featured Title
+                Featured Product
               </label>
-              <input
-                value={heroForm.featuredTitle || ''}
+              <select
+                value={heroForm.featuredProductId || ''}
                 onChange={(e) =>
                   setHeroForm({
                     ...heroForm,
-                    featuredTitle: e.target.value,
+                    featuredProductId: e.target.value,
                   })
                 }
                 className="w-full rounded-xl border border-gold-200 px-3 py-2"
-              />
+              >
+                <option value="">-- select product --</option>
+                {products.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.name} ({p._id})
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                Featured Price
-              </label>
-              <input
-                value={heroForm.featuredPrice || ''}
-                onChange={(e) =>
-                  setHeroForm({
-                    ...heroForm,
-                    featuredPrice: e.target.value,
-                  })
-                }
-                className="w-full rounded-xl border border-gold-200 px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                Badge Text
+                Badge Text (optional)
               </label>
               <input
                 value={heroForm.badgeText || ''}
@@ -222,7 +219,7 @@ export default function Hero() {
                 <img
                   src={heroForm.image}
                   alt="Category preview"
-                  className="h-[42vh] w-full rounded-lg object-contain"
+                  className="h-[40vh] w-full rounded-lg object-contain"
                 />
               </div>
             )}
