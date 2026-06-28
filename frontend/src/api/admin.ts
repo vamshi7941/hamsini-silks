@@ -1,6 +1,7 @@
-import { Order, useStore } from '@/context/StoreContext';
+import { useStore } from '@/context/StoreContext';
 import { Product } from '@/data';
 import { ProductsApi } from './products';
+import { OrderData } from '@/types';
 
 export const AdminApi = () => {
   const apiUrl =
@@ -149,15 +150,26 @@ export const AdminApi = () => {
         const ordersWithProducts = (json.orders || []).map((order: any) => ({
           ...order,
           items: order.items.map((item: any) => {
-            const product = products.find((p) => p._id === item.productId);
+            const product = products.find((p) => p._id === item.sku);
             return {
-              product: product || { _id: item.productId },
-              quantity: item.quantity,
+              _id: item.sku,
+              name: item.name,
+              category: product?.category,
+              selling_price: item.selling_price,
+              image: product?.image || '',
+              units: item.units,
               size: item.size,
             };
           }),
         }));
-        setOrders(ordersWithProducts);
+        const sortedOrders = ordersWithProducts?.sort(
+          (
+            a: { order_date: string | number | Date },
+            b: { order_date: string | number | Date },
+          ) =>
+            new Date(b.order_date).getTime() - new Date(a.order_date).getTime(),
+        );
+        setOrders(sortedOrders);
       } else {
         showToast('No orders found', 'warning');
       }
@@ -171,7 +183,7 @@ export const AdminApi = () => {
 
   const updateOrderStatus = async (
     orderId: string,
-    status: Order['status'],
+    status: OrderData['status'],
   ) => {
     try {
       const response = await fetch(`${apiUrl}/api/admin/updateOrderStatus`, {

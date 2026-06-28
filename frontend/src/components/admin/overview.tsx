@@ -1,8 +1,9 @@
-import { Order, useStore } from '@/context/StoreContext';
+import { useStore } from '@/context/StoreContext';
 import { statusMap } from '@/utils/orderUtils';
 import { Icon } from '../Icons';
 import { useNavigate } from 'react-router-dom';
 import { AdminTab } from '../pages/AdminDashboard';
+import { OrderData } from '@/types';
 
 function StatCard({
   label,
@@ -94,20 +95,20 @@ export default function Overview({
             </button>
           </div>
           <div className="space-y-3">
-            {orders.slice(0, 3).map((o: Order, i: number) => (
+            {orders.slice(0, 3).map((o: OrderData, i: number) => (
               <div
                 key={i}
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-maroon-50/40 transition-colors"
               >
                 <div className="h-9 w-9 rounded-full bg-maroon-100 text-maroon-800 font-bold text-sm flex items-center justify-center shrink-0">
-                  {o.name[0]}
+                  {o.shipping_name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-semibold text-maroon-900 block truncate">
-                    {o.name}
+                    {o.shipping_name}
                   </span>
                   <span className="text-[11px] text-maroon-700/60">
-                    #{o._id}
+                    #{o.order_id}
                   </span>
                 </div>
                 <div className="text-right shrink-0">

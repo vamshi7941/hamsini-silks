@@ -18,8 +18,6 @@ export const Auth = () => {
     _id: string = '',
     token: string = '',
     phone: string = '',
-    promoCode: string = '',
-    discountPercentage: number = 0,
   ) => {
     const displayName =
       name ||
@@ -36,8 +34,6 @@ export const Auth = () => {
       _id,
       token,
       phone,
-      promoCode,
-      discountPercentage,
     } as User;
 
     setUser(newUser);
@@ -70,7 +66,7 @@ export const Auth = () => {
       const json = await response.json();
 
       if (json.success) {
-        login(email, 'customer', name, user.uid ?? '', json.token);
+        login(email, 'customer', name, user.uid ?? '', json.token, json.customer.phone ?? '');
       } else {
         showToast('Google sign-in failed. Please try again.', 'error');
       }
@@ -151,8 +147,6 @@ export const Auth = () => {
           json.user._id || '',
           json.token,
           normalizedPhone,
-          json.user.promoCode || '',
-          json.user.discountPercentage || 0,
         );
       } else {
         showToast(
@@ -218,8 +212,6 @@ export const Auth = () => {
           _id,
           token,
           userPhone,
-          '', // promoCode - not needed anymore
-          0, // discountPercentage - now per promo code
         );
       } else {
         showToast(

@@ -1,10 +1,10 @@
-import { Order } from '@/context/StoreContext';
 import { printInvoice, statusIcon, statusMap } from '@/utils/orderUtils';
 import { useState } from 'react';
 import { Icon } from './Icons';
+import { OrderData } from '@/types';
 
 // ── PrintInvoice Button Component ────────────────────────────────────────────────
-function PrintInvoice({ order }: { order: Order }) {
+function PrintInvoice({ order }: { order: OrderData }) {
   return (
     <button
       onClick={() => printInvoice(order)}
@@ -19,11 +19,11 @@ export default function OrderRow({
   order,
   onStatusChange,
 }: {
-  order: Order;
-  onStatusChange: (id: string, s: Order['status']) => void;
+  order: OrderData;
+  onStatusChange: (id: string, s: OrderData['status']) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const statuses: Order['status'][] = [
+  const statuses: OrderData['status'][] = [
     'Pending',
     'Processing',
     'Dispatched',
@@ -43,22 +43,24 @@ export default function OrderRow({
             #{order._id}
           </span>
           <span className="text-[11px] text-maroon-700/60">
-            {order.orderedDate}
+            {new Date(order.order_date).toLocaleString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+            })}
           </span>
         </div>
         <div className="flex-1 min-w-0">
           <span className="font-semibold text-sm text-maroon-900 block truncate">
-            {order.name}
+            {order.shipping_name}
           </span>
           <span className="text-[11px] text-maroon-700/70 truncate block">
-            {order.email}
+            {order.shipping_email} | {order.shipping_phone}
           </span>
         </div>
         <div className="hidden sm:flex items-center gap-1.5">
           {order.items.slice(0, 2).map((item, i) => (
             <img
               key={i}
-              src={item.product.image}
+              src={item.image}
               alt=""
               className="w-8 h-10 object-cover rounded-lg border border-gold-100"
             />
@@ -110,27 +112,32 @@ export default function OrderRow({
                     Name:
                   </span>
                   <span className="font-semibold text-maroon-900">
-                    {order.name}
+                    {order.shipping_name}
                   </span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-maroon-700/70 w-16 shrink-0">
                     Email:
                   </span>
-                  <span className="text-maroon-900">{order.email}</span>
+                  <span className="text-maroon-900">
+                    {order.shipping_email}
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-maroon-700/70 w-16 shrink-0">
                     Phone:
                   </span>
-                  <span className="text-maroon-900">{order.phone}</span>
+                  <span className="text-maroon-900">
+                    {order.shipping_phone}
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-maroon-700/70 w-16 shrink-0">
                     Address:
                   </span>
                   <span className="text-maroon-900 leading-relaxed">
-                    {order.address}
+                    {order.shipping_address} {order.shipping_city},{' '}
+                    {order.shipping_state} - {order.shipping_pincode}
                   </span>
                 </div>
               </div>
@@ -144,22 +151,21 @@ export default function OrderRow({
                     className="flex items-center gap-3 bg-white rounded-xl p-2.5 border border-gold-100"
                   >
                     <img
-                      src={item.product.image}
+                      src={item.image}
                       alt=""
                       className="w-10 h-12 object-cover rounded-lg border border-gold-100 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-semibold text-maroon-900 block truncate">
-                        {item.product.name}
+                        {item.name}
                       </span>
                       <span className="text-[10px] text-maroon-700/70">
-                        {item.product.category} · Qty: {item.quantity} · Size:{' '}
-                        {item.size}
+                        {item.category} · Qty: {item.units} · Size: {item.size}
                       </span>
                     </div>
                     <span className="text-xs font-bold text-maroon-900 shrink-0">
                       ₹
-                      {(item.product.price * item.quantity).toLocaleString(
+                      {(item.selling_price * item.units).toLocaleString(
                         'en-IN',
                       )}
                     </span>
@@ -175,7 +181,7 @@ export default function OrderRow({
                 {statuses.map((s, i) => (
                   <button
                     key={i}
-                    onClick={() => onStatusChange(order._id, s)}
+                    onClick={() => onStatusChange(order.order_id ?? '', s)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer border-2 ${
                       order.status === s
                         ? 'border-maroon-900 bg-maroon-900 text-white shadow-md'
@@ -195,7 +201,7 @@ export default function OrderRow({
                 <div className="flex justify-between text-xs text-maroon-800">
                   <span>Items:</span>
                   <span className="font-bold">
-                    {order.items.reduce((a, b) => a + b.quantity, 0)}
+                    {order.items.reduce((a, b) => a + b.units, 0)}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs text-maroon-800">
@@ -205,9 +211,6 @@ export default function OrderRow({
                 <div className="flex justify-between text-sm font-bold text-maroon-900 mt-2 pt-2 border-t border-gold-200">
                   <span>Total:</span>
                   <span>₹{order.total.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="mt-2 pt-2 border-t border-gold-100 flex justify-center">
-                  <PrintInvoice order={order} />
                 </div>
               </div>
             </div>

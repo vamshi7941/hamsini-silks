@@ -1,13 +1,13 @@
 import { useStore } from '../../context/StoreContext';
-import { Order } from '../../context/StoreContext';
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icons';
 import { statusIcon, statusMap, printInvoice } from '../../utils/orderUtils';
 import { CustomerApi } from '@/api/customer';
 import GuestUser from '../guestUser';
 import AccessDenied from '../accessDenied';
+import { OrderData } from '@/types';
 
-function PrintInvoice({ order }: { order: Order }) {
+function PrintInvoice({ order }: { order: OrderData }) {
   return (
     <button
       onClick={() => printInvoice(order)}
@@ -18,7 +18,7 @@ function PrintInvoice({ order }: { order: Order }) {
   );
 }
 
-function OrderRow({ order: order }: { order: Order }) {
+function OrderRow({ order: order }: { order: OrderData }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -34,7 +34,9 @@ function OrderRow({ order: order }: { order: Order }) {
             #{order._id}
           </span>
           <span className="text-[11px] text-maroon-700/60">
-            {order.orderedDate}
+            {new Date(order.order_date).toLocaleString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+            })}
           </span>
         </div>
         <div className="flex-1 min-w-0" />
@@ -42,7 +44,7 @@ function OrderRow({ order: order }: { order: Order }) {
           {order.items.slice(0, 2).map((item, i) => (
             <img
               key={i}
-              src={item.product.image}
+              src={item.image}
               alt=""
               className="w-8 h-10 object-cover rounded-lg border border-gold-100"
             />
@@ -93,27 +95,32 @@ function OrderRow({ order: order }: { order: Order }) {
                     Name:
                   </span>
                   <span className="font-semibold text-maroon-900">
-                    {order.name}
+                    {order.shipping_name}
                   </span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-maroon-700/70 w-16 shrink-0">
                     Email:
                   </span>
-                  <span className="text-maroon-900">{order.email}</span>
+                  <span className="text-maroon-900">
+                    {order.shipping_email}
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-maroon-700/70 w-16 shrink-0">
                     Phone:
                   </span>
-                  <span className="text-maroon-900">{order.phone}</span>
+                  <span className="text-maroon-900">
+                    {order.shipping_phone}
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-maroon-700/70 w-16 shrink-0">
                     Address:
                   </span>
                   <span className="text-maroon-900 leading-relaxed">
-                    {order.address}
+                    {order.shipping_address} {order.shipping_city}, {order.shipping_state},{' '}
+                    {order.shipping_country} - {order.shipping_pincode}
                   </span>
                 </div>
               </div>
@@ -127,23 +134,22 @@ function OrderRow({ order: order }: { order: Order }) {
                     className="flex items-center gap-3 bg-white rounded-xl p-2.5 border border-gold-100"
                   >
                     <img
-                      src={item.product.image}
+                      src={item.image}
                       alt=""
                       className="w-10 h-12 object-cover rounded-lg border border-gold-100 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-semibold text-maroon-900 block truncate">
-                        {item.product.name}
+                        {item.name}
                       </span>
 
                       <span className="text-[10px] text-maroon-700/70">
-                        {item.product.category} · Qty: {item.quantity} · Size:{' '}
-                        {item.size}
+                        {item.category} · Qty: {item.units} · Size: {item.size}
                       </span>
                     </div>
                     <span className="text-xs font-bold text-maroon-900 shrink-0">
                       ₹
-                      {(item.product.price * item.quantity).toLocaleString(
+                      {(item.selling_price * item.units).toLocaleString(
                         'en-IN',
                       )}
                     </span>
@@ -162,7 +168,7 @@ function OrderRow({ order: order }: { order: Order }) {
                 <div className="flex justify-between text-xs text-maroon-800">
                   <span>Items:</span>
                   <span className="font-bold">
-                    {order.items.reduce((a, b) => a + b.quantity, 0)}
+                    {order.items.reduce((a, b) => a + b.units, 0)}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs text-maroon-800">
@@ -187,7 +193,7 @@ export default function MyOrdersPage() {
   const { fetchMyOrders } = CustomerApi();
   const hasFetchedOrders = useRef(false);
 
-  const [orders, setMyOrders] = useState<Order[]>([]);
+  const [orders, setMyOrders] = useState<OrderData[]>([]);
   const [orderSearch, setOrderSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState('All');
 
@@ -198,7 +204,8 @@ export default function MyOrdersPage() {
       if (hasFetchedOrders.current) return;
       hasFetchedOrders.current = true;
       const orders = await fetchMyOrders();
-      setMyOrders(orders);
+      const sortedOrders = orders?.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+      setMyOrders(sortedOrders ?? []);
     };
 
     if (user.loggedIn && user.role === 'customer') getMyOrders();
@@ -206,8 +213,8 @@ export default function MyOrdersPage() {
 
   const filteredOrders = orders.filter((o) => {
     const ms =
-      o.name.toLowerCase().includes(orderSearch.toLowerCase()) ||
-      o._id.includes(orderSearch);
+      o.shipping_name.toLowerCase().includes(orderSearch.toLowerCase()) ||
+      o._id?.includes(orderSearch);
     const mf = orderFilter === 'All' || o.status === orderFilter;
     return ms && mf;
   });

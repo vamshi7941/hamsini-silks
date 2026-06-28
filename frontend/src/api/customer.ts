@@ -1,23 +1,13 @@
-import { CartItem, Order, useStore } from '@/context/StoreContext';
+import { CartItem, useStore } from '@/context/StoreContext';
 import { Product } from '@/data';
+import { OrderData, OrderItem } from '@/types';
 
 export const CustomerApi = () => {
   const apiUrl =
     (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
 
-  const {
-    products,
-    cart,
-    setCart,
-    user,
-    showToast,
-    wishlist,
-    setWishlist,
-    buyNowItem,
-    cartTotal,
-    couponCode,
-    couponDiscountPercentage,
-  } = useStore();
+  const { products, cart, setCart, user, showToast, wishlist, setWishlist } =
+    useStore();
 
   const getCustomerData = async () => {
     try {
@@ -142,9 +132,6 @@ export const CustomerApi = () => {
     }
   };
 
-  const normalizePhoneNumber = (phone: string) =>
-    phone.replace(/\D/g, '').slice(-10);
-
   const validatePhone = async (phone: string, otp: string) => {
     if (!user.loggedIn) {
       showToast('Please log in to verify your phone.', 'warning');
@@ -155,7 +142,7 @@ export const CustomerApi = () => {
       return;
     }
 
-    const normalizedPhone = normalizePhoneNumber(phone);
+    const normalizedPhone = phone.replace(/\D/g, '').slice(-10);
     const normalizedOtp = otp.replace(/\D/g, '').slice(-6);
 
     if (!/^\d{10}$/.test(normalizedPhone)) {
@@ -195,6 +182,148 @@ export const CustomerApi = () => {
     } catch (error) {
       showToast('Failed to verify OTP.', 'error');
       console.error('Error verifying OTP:', error);
+    }
+  };
+
+  const SHIPROCKET_TOKEN_KEY = 'hamsini_shiprocket_token';
+
+  const getStoredShiprocketToken = (): {
+    token: string;
+    expiresAt: number;
+  } | null => {
+    try {
+      const raw = localStorage.getItem(SHIPROCKET_TOKEN_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { token: string; expiresAt: number };
+      if (!parsed.token || !parsed.expiresAt) return null;
+      return parsed;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const storeShiprocketToken = (token: string) => {
+    try {
+      const expiresAt = Date.now() + 23 * 60 * 60 * 1000;
+      localStorage.setItem(
+        SHIPROCKET_TOKEN_KEY,
+        JSON.stringify({ token, expiresAt }),
+      );
+    } catch (error) {
+      // ignore storage errors
+    }
+  };
+
+  const getShiprocketToken = async () => {
+    const stored = getStoredShiprocketToken();
+    if (stored && stored.expiresAt > Date.now()) {
+      return stored.token;
+    }
+
+    const response = await fetch(`${apiUrl}/api/shiprocket/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const json = await response.json();
+
+    if (!response.ok || !json.success || !json.data?.token) {
+      throw new Error(json.message || 'Failed to authenticate with Shiprocket');
+    }
+
+    storeShiprocketToken(json.data.token);
+    return json.data.token;
+  };
+
+  const checkShiprocketRates = async ({
+    pickup_code = '502032',
+    delivery_code,
+    cod = 0,
+    order_price,
+    order_weight = 1,
+  }: {
+    pickup_code?: string;
+    delivery_code: string;
+    cod?: number;
+    order_price: number;
+    order_weight?: number;
+  }) => {
+    try {
+      const params = new URLSearchParams({
+        pickup_code,
+        delivery_code,
+        cod: String(cod),
+        order_price: String(order_price),
+        order_weight: String(order_weight),
+      });
+
+      const response = await fetch(
+        `${apiUrl}/api/shiprocket/checkRates?${params.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
+        },
+      );
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || 'Failed to check Shiprocket rates');
+      }
+      return json.data;
+    } catch (error) {
+      console.error('Error checking Shiprocket rates:', error);
+      throw error;
+    }
+  };
+
+  const createShiprocketOrder = async (orderData: any) => {
+    try {
+      const token = await getShiprocketToken();
+      const response = await fetch(`${apiUrl}/api/shiprocket/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ token, orderData }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || 'Failed to create Shiprocket order');
+      }
+      return json.data;
+    } catch (error) {
+      console.error('Error creating Shiprocket order:', error);
+      throw error;
+    }
+  };
+
+  const assignShiprocketAwb = async ({
+    order_id,
+    courier_id,
+  }: {
+    order_id: string;
+    courier_id: number;
+  }) => {
+    try {
+      const token = await getShiprocketToken();
+      const response = await fetch(`${apiUrl}/api/shiprocket/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ token, order_id, courier_id }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || 'Failed to assign Shiprocket AWB');
+      }
+      return json.data;
+    } catch (error) {
+      console.error('Error assigning Shiprocket AWB:', error);
+      throw error;
     }
   };
 
@@ -322,34 +451,10 @@ export const CustomerApi = () => {
     }
   };
 
-  const placeOrder = async (
-    orderData: Omit<Order, '_id' | 'status' | 'date' | 'items' | 'total'>,
-  ) => {
-    const orderItems = buyNowItem ? [buyNowItem] : cart;
-    const orderTotal = buyNowItem
-      ? buyNowItem.product.price * buyNowItem.quantity
-      : cartTotal;
-
-    const discountAmount = Math.round(
-      orderTotal * (couponDiscountPercentage / 100),
-    );
-    const totalAfterDiscount = orderTotal - discountAmount;
-
+  const placeOrder = async (orderData: OrderData) => {
     const payload = {
       customerId: user._id,
-      orderData: {
-        ...orderData,
-        items: orderItems.map((item) => ({
-          productId: item.product._id,
-          name: item.product.name,
-          price: item.product.price,
-          quantity: item.quantity,
-          size: item.size,
-        })),
-        total: totalAfterDiscount,
-        promoCode: couponCode || null,
-        discountApplied: discountAmount,
-      },
+      orderData,
     };
 
     try {
@@ -488,19 +593,25 @@ export const CustomerApi = () => {
         return [];
       }
       if (data.success) {
-        const ordersWithProducts = (data.orders || []).map((order: any) => ({
-          ...order,
-          items: order.items.map((item: any) => {
-            const product = products.find((p) => p._id === item.productId);
-            return {
-              product: product || { _id: item.productId },
-              quantity: item.quantity,
-              size: item.size,
-            };
+        const ordersWithProducts: OrderData[] = (data.orders || []).map(
+          (order: any) => ({
+            ...order,
+            items: order.items.map((item: OrderItem) => {
+              const product = products.find((p) => p._id === item.sku);
+              return {
+                _id: item.sku,
+                name: item.name,
+                category: product?.category,
+                selling_price: item.selling_price,
+                image: product?.image || '',
+                units: item.units,
+                size: item.size,
+              };
+            }),
           }),
-        }));
+        );
 
-        return ordersWithProducts;
+        return ordersWithProducts ?? [];
       } else {
         showToast(data.message || 'Failed to fetch my orders.', 'error');
         return [];
@@ -526,5 +637,6 @@ export const CustomerApi = () => {
     getPaymentMethods,
     createRazorpayOrder,
     verifyRazorpayPayment,
+    checkShiprocketRates,
   };
 };

@@ -4,7 +4,7 @@ import { Auth } from '../../api/auth';
 
 export default function VerifyPhonePage() {
   const { user, showToast } = useStore();
-  const { sendPhoneOtp, loginWithPhone } = Auth();
+  const { sendPhoneOtp, loginWithPhone, logout } = Auth();
 
   const [phone, setPhone] = useState(user.phone || '');
   const [otp, setOtp] = useState('');
@@ -119,6 +119,13 @@ export default function VerifyPhonePage() {
               </button>
             </>
           )}
+          <button
+            type="button"
+            onClick={logout}
+            className="w-full rounded-xl bg-[#4b1d1d] px-4 py-3 text-sm font-semibold text-[#fff9ec] transition-colors hover:bg-[#6a2424]"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </div>

@@ -11,7 +11,9 @@ const buildOrderId = () => {
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const seconds = String(now.getSeconds()).padStart(2, '0');
-  return `OD-${year}${month}${day}${hours}${minutes}${seconds}`;
+  const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+  const randomSuffix = crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `OD-${year}${month}${day}${hours}${minutes}${seconds}${milliseconds}-${randomSuffix}`;
 };
 
 const createOrderRecord = async ({
@@ -25,19 +27,13 @@ const createOrderRecord = async ({
     throw new Error('Customer not found');
   }
 
-  const orderDataWithCoupon = {
-    ...orderData,
-    paymentMethod,
-    status,
-    promoCode: orderData.promoCode || null,
-    discountApplied: orderData.discountApplied || 0,
-  };
-
+  const orderId = buildOrderId().toString();
   const newOrder = new OrderSchema({
-    _id: buildOrderId(),
+    _id: orderId,
+    order_id: orderId,
     customerId,
-    ...orderDataWithCoupon,
-    orderedDate: new Date(),
+    order_date: new Date(),
+    ...orderData,
   });
 
   await newOrder.save();
@@ -183,7 +179,7 @@ export async function validateCoupon(req, res) {
 export async function getPaymentMethods(req, res) {
   const paymentMethods = [
     {
-      id: 'cod',
+      id: 'COD',
       label: 'Cash on Delivery',
       description: 'Pay at doorstep',
       enabled: true,

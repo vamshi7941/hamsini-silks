@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Product } from '../data';
+import { OrderData } from '@/types';
 
 export type CartItem = {
   product: Product;
@@ -18,6 +19,8 @@ export type Order = {
   paymentMethod: string;
   status: 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
   orderedDate?: string;
+  promoCode?: string;
+  discountApplied?: number;
 };
 
 export type User = {
@@ -63,8 +66,11 @@ interface StoreContextType {
   isInWishlist: (productId: string) => boolean;
   wishlistCount: number;
 
-  orders: Order[];
-  setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
+  orders: OrderData[];
+  setOrders: React.Dispatch<React.SetStateAction<OrderData[]>>;
+
+  orderData: OrderData | null;
+  setOrderData: React.Dispatch<React.SetStateAction<OrderData | null>>;
 
   imagesLoaded: Boolean;
   setImagesLoaded: React.Dispatch<React.SetStateAction<Boolean>>;
@@ -94,7 +100,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [couponCode, setCouponCode] = useState<string>('');
   const [couponDiscountPercentage, setCouponDiscountPercentage] =
     useState<number>(0);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [themeOption, setThemeOptionState] = useState<'A' | 'B'>('A');
 
@@ -165,6 +172,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
         orders,
         setOrders,
+
+        orderData,
+        setOrderData,
 
         imagesLoaded,
         setImagesLoaded,

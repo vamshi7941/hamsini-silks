@@ -13,8 +13,8 @@ export default function Orders() {
 
   const filteredOrders = orders.filter((o) => {
     const ms =
-      o.name.toLowerCase().includes(orderSearch.toLowerCase()) ||
-      o._id.includes(orderSearch);
+      o.shipping_name.toLowerCase().includes(orderSearch.toLowerCase()) ||
+      o._id?.includes(orderSearch);
     const mf = orderFilter === 'All' || o.status === orderFilter;
     return ms && mf;
   });
