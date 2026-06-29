@@ -66,6 +66,11 @@ export const RazorpayApi = () => {
     setOtpVerified,
     orderData,
   }: RazorpayPaymentProps) => {
+    const restorePageScroll = () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+
     setIsProcessingPayment(true);
     setPaymentFeedback({
       type: 'loading',
@@ -107,6 +112,7 @@ export const RazorpayApi = () => {
         },
         modal: {
           ondismiss: () => {
+            restorePageScroll();
             setPaymentFeedback({
               type: 'error',
               message: 'Payment was cancelled. Please try again.',
@@ -119,37 +125,50 @@ export const RazorpayApi = () => {
           color: '#7b1f1f',
         },
         handler: async (response: any) => {
-          const verifyResult = await verifyRazorpayPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            amount: orderTotal,
-            orderData,
-          });
-
-          if (verifyResult?.success) {
-            const savedOrder = verifyResult.data;
-            setOrderId(savedOrder._id);
-            await clearCart();
-            setCouponCode('');
-            setCouponDiscountPercentage(0);
-            setOtpSent(false);
-            setOtp('');
-            setOtpVerified(false);
-
-            setPaymentFeedback({
-              type: 'success',
-              message: 'Payment successful. Your order is confirmed.',
+          try {
+            const verifyResult = await verifyRazorpayPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: orderTotal,
+              orderData,
             });
-          } else {
+
+            if (verifyResult?.success) {
+              const savedOrder = verifyResult.data;
+              setOrderId(savedOrder._id);
+              await clearCart();
+              setCouponCode('');
+              setCouponDiscountPercentage(0);
+              setOtpSent(false);
+              setOtp('');
+              setOtpVerified(false);
+
+              setPaymentFeedback({
+                type: 'success',
+                message: 'Payment successful. Your order is confirmed.',
+              });
+            } else {
+              setPaymentFeedback({
+                type: 'error',
+                message:
+                  verifyResult?.message || 'Payment verification failed.',
+              });
+            }
+          } catch (handlerError) {
+            console.error('Razorpay handler failed', handlerError);
             setPaymentFeedback({
               type: 'error',
-              message: verifyResult?.message || 'Payment verification failed.',
+              message:
+                handlerError instanceof Error
+                  ? handlerError.message
+                  : 'Payment verification failed.',
             });
+          } finally {
+            restorePageScroll();
+            setIsProcessingPayment(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
-
-          setIsProcessingPayment(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         },
       };
 
@@ -160,6 +179,7 @@ export const RazorpayApi = () => {
       const razorpayInstance = new window.Razorpay(options);
       razorpayInstance.open();
     } catch (error) {
+      restorePageScroll();
       console.error('Razorpay payment failed', error);
       setPaymentFeedback({
         type: 'error',

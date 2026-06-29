@@ -52,6 +52,18 @@ const orderSchema = new mongoose.Schema(
       enum: ['COD', 'prepaid', 'Razorpay'],
       default: 'COD',
     },
+    shiprocketOrderId: {
+      type: String,
+      default: null,
+    },
+    shiprocketAwb: {
+      type: String,
+      default: null,
+    },
+    shiprocketCourierId: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true, _id: false },
 );

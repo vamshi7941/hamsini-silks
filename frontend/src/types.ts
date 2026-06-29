@@ -5,7 +5,7 @@ export type OrderItem = {
   units: number;
   size: string;
   category?: string;
-  image?: string
+  image?: string;
 };
 
 export type OrderData = {
@@ -27,6 +27,7 @@ export type OrderData = {
   items: OrderItem[];
   paymentMethod: string;
   promoCode?: string;
+  shiprocketCourierId?: string;
   status: 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
 };
 

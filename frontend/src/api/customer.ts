@@ -257,7 +257,7 @@ export const CustomerApi = () => {
       });
 
       const response = await fetch(
-        `${apiUrl}/api/shiprocket/checkRates?${params.toString()}`,
+        `${apiUrl}/api/customer/shiprocket/checkRates?${params.toString()}`,
         {
           method: 'GET',
           headers: {
@@ -273,56 +273,6 @@ export const CustomerApi = () => {
       return json.data;
     } catch (error) {
       console.error('Error checking Shiprocket rates:', error);
-      throw error;
-    }
-  };
-
-  const createShiprocketOrder = async (orderData: any) => {
-    try {
-      const token = await getShiprocketToken();
-      const response = await fetch(`${apiUrl}/api/shiprocket/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify({ token, orderData }),
-      });
-      const json = await response.json();
-      if (!response.ok || !json.success) {
-        throw new Error(json.message || 'Failed to create Shiprocket order');
-      }
-      return json.data;
-    } catch (error) {
-      console.error('Error creating Shiprocket order:', error);
-      throw error;
-    }
-  };
-
-  const assignShiprocketAwb = async ({
-    order_id,
-    courier_id,
-  }: {
-    order_id: string;
-    courier_id: number;
-  }) => {
-    try {
-      const token = await getShiprocketToken();
-      const response = await fetch(`${apiUrl}/api/shiprocket/assign`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify({ token, order_id, courier_id }),
-      });
-      const json = await response.json();
-      if (!response.ok || !json.success) {
-        throw new Error(json.message || 'Failed to assign Shiprocket AWB');
-      }
-      return json.data;
-    } catch (error) {
-      console.error('Error assigning Shiprocket AWB:', error);
       throw error;
     }
   };

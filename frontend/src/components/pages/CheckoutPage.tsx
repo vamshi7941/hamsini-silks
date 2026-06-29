@@ -69,6 +69,7 @@ export default function CheckoutPage() {
   const [shippingCity, setShippingCity] = useState('');
   const [shippingState, setShippingState] = useState('');
   const [shippingPincode, setShippingPincode] = useState('');
+  const [shiprocketCourierId, setShiprocketCourierId] = useState('');
   const [etd, setEtd] = useState('');
   const [noCourier, setNoCourier] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(
@@ -214,6 +215,7 @@ export default function CheckoutPage() {
         setNoCourier(true);
         setShippingCity('');
         setShippingState('');
+        setShiprocketCourierId('');
         setEtd('');
         return;
       }
@@ -221,6 +223,7 @@ export default function CheckoutPage() {
       setNoCourier(false);
       setShippingCity(shippingInfo?.city || '');
       setShippingState(shippingInfo?.state || '');
+      setShiprocketCourierId(String(shippingInfo?.courier_company_id || ''));
       setEtd(shippingInfo?.etd || '');
     };
 
@@ -258,6 +261,7 @@ export default function CheckoutPage() {
         size: item.size,
       })),
       promoCode: couponCode || '',
+      shiprocketCourierId,
       paymentMethod: 'COD',
       status: 'Pending',
     };
@@ -571,21 +575,6 @@ export default function CheckoutPage() {
                         }
                         setPayment(pm.id);
                         setPaymentFeedback({ type: 'idle', message: '' });
-                        if (pm.id === 'razorpay') {
-                          void handleRazorPay();
-                        }
-                      }}
-                      onClick={() => {
-                        if (!phone || !address || !name || !email) {
-                          showToast(
-                            'Please fill in all delivery details before selecting a payment method.',
-                            'error',
-                          );
-                          return;
-                        }
-                        if (pm.id === 'razorpay') {
-                          void handleRazorPay();
-                        }
                       }}
                       className="accent-maroon-900"
                     />
@@ -690,7 +679,7 @@ export default function CheckoutPage() {
           </form>
 
           {/* ── Summary panel ── */}
-          <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
+          <div className="lg:col-span-5 space-y-4 lg:top-24">
             <div className="bg-white rounded-2xl border border-gold-100 shadow-xs p-5">
               <h3 className="font-display text-sm font-bold text-maroon-900 uppercase tracking-wider border-b border-gold-100 pb-3 mb-4">
                 Your Order ({buyNowItem ? 1 : cart.length}{' '}

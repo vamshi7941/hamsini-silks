@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import * as customerController from '../controllers/customerController.js';
 import * as authController from '../controllers/authController.js';
+import * as shiprocketController from '../controllers/shiprocketController.js';
+import * as orderController from '../controllers/orderController.js';
 import { requireCustomerAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
@@ -27,19 +29,25 @@ router
 
 router
   .route('/paymentMethods')
-  .get(requireCustomerAuth, customerController.getPaymentMethods);
+  .get(requireCustomerAuth, orderController.getPaymentMethods);
+
+router.get(
+  '/shiprocket/checkRates',
+  requireCustomerAuth,
+  shiprocketController.checkShiprocketRates,
+);
 
 router
   .route('/createRazorpayOrder')
-  .post(requireCustomerAuth, customerController.createRazorpayOrder);
+  .post(requireCustomerAuth, orderController.createRazorpayOrder);
 
 router
   .route('/verifyRazorpayPayment')
-  .post(requireCustomerAuth, customerController.verifyRazorpayPayment);
+  .post(requireCustomerAuth, orderController.verifyRazorpayPayment);
 
 router
   .route('/placeOrder')
-  .post(requireCustomerAuth, customerController.placeOrder);
+  .post(requireCustomerAuth, orderController.placeOrder);
 
 router
   .route('/getOrders')
