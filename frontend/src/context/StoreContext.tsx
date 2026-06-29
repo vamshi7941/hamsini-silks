@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Product } from '../data';
 import { OrderData, OrderStatus } from '@/types';
 
@@ -140,7 +140,60 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);
+
+  const incrementLoading = () => setGlobalLoadingCount((count) => count + 1);
+  const decrementLoading = () =>
+    setGlobalLoadingCount((count) => Math.max(count - 1, 0));
+  const isGlobalLoading = globalLoadingCount > 0;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const originalFetch = window.fetch.bind(window);
+    const originalXhrOpen = XMLHttpRequest.prototype.open;
+    const originalXhrSend = XMLHttpRequest.prototype.send;
+
+    window.fetch = async (...args: Parameters<typeof window.fetch>) => {
+      incrementLoading();
+      try {
+        return await originalFetch(...args);
+      } finally {
+        decrementLoading();
+      }
+    };
+
+    XMLHttpRequest.prototype.open = function (
+      method: string,
+      url: string | URL,
+      async?: boolean,
+      username?: string | null,
+      password?: string | null,
+    ) {
+      this.addEventListener('loadend', decrementLoading);
+      return originalXhrOpen.apply(this, [
+        method,
+        url,
+        async,
+        username,
+        password,
+      ] as any);
+    };
+
+    XMLHttpRequest.prototype.send = function (
+      body?: Document | BodyInit | null,
+    ) {
+      incrementLoading();
+      return originalXhrSend.apply(this, [body] as any);
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+      XMLHttpRequest.prototype.open = originalXhrOpen;
+      XMLHttpRequest.prototype.send = originalXhrSend;
+    };
+  }, []);
 
   const showToast = (msg: string, type: ToastType = 'success') => {
     setToast({ message: msg, type });
@@ -226,6 +279,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
           <span className="text-sm font-medium tracking-wide">
             {toast.message}
           </span>
+        </div>
+      )}
+
+      {isGlobalLoading && (
+        <div className="loader-overlay">
+          <div className="loader-card">
+            <div className="loader-spinner" />
+            <p className="loader-message">
+              Please wait while we load your content...
+            </p>
+          </div>
         </div>
       )}
     </StoreContext.Provider>
