@@ -43,9 +43,12 @@ export default function Overview({
   const navigate = useNavigate();
 
   const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
-  const pendingOrders = orders.filter((o) => o.status === 'Pending').length;
+  const pendingOrders = orders.filter((o) => o.status === 'NEW').length;
   const dispatchedOrders = orders.filter(
-    (o) => o.status === 'Dispatched',
+    (o) =>
+      o.status === 'SHIPPED' ||
+      o.status === 'PACKED' ||
+      o.status === 'PICKLISTED',
   ).length;
 
   return (

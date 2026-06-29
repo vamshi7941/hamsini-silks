@@ -172,28 +172,3 @@ export async function deleteProduct(req, res) {
     res.status(400).json({ error: error.message });
   }
 }
-
-export async function updateOrderStatus(req, res) {
-  const { orderId, status } = req.body;
-
-  try {
-    const order = await OrderSchema.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found', success: false });
-    }
-
-    order.status = status;
-    await order.save();
-
-    return res.status(200).json({
-      message: 'Order status updated successfully',
-      success: true,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: 'Error updating order status',
-      success: false,
-      error: error.message,
-    });
-  }
-}

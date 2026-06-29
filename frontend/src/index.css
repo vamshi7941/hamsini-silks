@@ -121,10 +121,15 @@ body {
 }
 
 /* ── Status pill colours ── */
-.status-pending    { background:#fef3c7; color:#92400e; }
-.status-processing { background:#dbeafe; color:#1e40af; }
-.status-dispatched { background:#d1fae5; color:#065f46; }
-.status-delivered  { background:#f3e8ff; color:#6b21a8; }
+.status-new           { background:#fef3c7; color:#92400e; }
+.status-ready-to-pack { background:#e2e8f0; color:#1e293b; }
+.status-packed        { background:#dbeafe; color:#1e40af; }
+.status-picklisted    { background:#e0e7ff; color:#3730a3; }
+.status-shipped       { background:#dbeafe; color:#1e40af; }
+.status-delivered     { background:#d1fae5; color:#065f46; }
+.status-cancelled     { background:#fee2e2; color:#b91c1c; }
+.status-return-pending{ background:#ffedd5; color:#c2410c; }
+.status-returned      { background:#ede9fe; color:#6d28d9; }
 
 /* ── Selection colour ── */
 ::selection { background:#fde68a; color:#3d0e0a; }

@@ -2,11 +2,9 @@ import { useStore } from '@/context/StoreContext';
 import { Icon } from '../Icons';
 import { useState } from 'react';
 import OrderRow from '../orderRow';
-import { AdminApi } from '@/api/admin';
 
 export default function Orders() {
   const { orders } = useStore();
-  const { updateOrderStatus } = AdminApi();
 
   const [orderSearch, setOrderSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState('All');
@@ -34,19 +32,28 @@ export default function Orders() {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {['All', 'Pending', 'Processing', 'Dispatched', 'Delivered'].map(
-            (f, i) => (
-              <button
-                key={i}
-                onClick={() => setOrderFilter(f)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${orderFilter === f ? 'bg-maroon-900 text-gold-200' : 'bg-maroon-50 text-maroon-900 hover:bg-maroon-100'}`}
-              >
-                {f}{' '}
-                {f !== 'All' &&
-                  `(${orders.filter((o) => o.status === f).length})`}
-              </button>
-            ),
-          )}
+          {[
+            'All',
+            'NEW',
+            'READY TO PACK',
+            'PACKED',
+            'PICKLISTED',
+            'SHIPPED',
+            'DELIVERED',
+            'CANCELLED',
+            'RETURN PENDING',
+            'RETURNED',
+          ].map((f, i) => (
+            <button
+              key={i}
+              onClick={() => setOrderFilter(f)}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${orderFilter === f ? 'bg-maroon-900 text-gold-200' : 'bg-maroon-50 text-maroon-900 hover:bg-maroon-100'}`}
+            >
+              {f}{' '}
+              {f !== 'All' &&
+                `(${orders.filter((o) => o.status === f).length})`}
+            </button>
+          ))}
         </div>
       </div>
       <div className="space-y-3">
@@ -59,13 +66,7 @@ export default function Orders() {
             </p>
           </div>
         ) : (
-          filteredOrders.map((order, i) => (
-            <OrderRow
-              key={i}
-              order={order}
-              onStatusChange={updateOrderStatus}
-            />
-          ))
+          filteredOrders.map((order, i) => <OrderRow key={i} order={order} />)
         )}
       </div>
     </div>

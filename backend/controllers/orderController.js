@@ -24,7 +24,7 @@ export const buildOrderDocument = ({
   customerId,
   orderData,
   paymentMethod = 'COD',
-  status = 'Pending',
+  status = 'NEW',
 }) => {
   const orderId = buildOrderId().toString();
   return new OrderSchema({
@@ -50,7 +50,7 @@ export const placeOrderWithShiprocket = async ({
   customerId,
   orderData,
   paymentMethod = 'COD',
-  status = 'Pending',
+  status = 'NEW',
 }) => {
   const customer = await CustomerSchema.findById(customerId);
   if (!customer) {
@@ -261,7 +261,7 @@ export async function verifyRazorpayPayment(req, res) {
       customerId: userId,
       orderData,
       paymentMethod: 'Prepaid',
-      status: 'Pending',
+      status: 'NEW',
     });
 
     return res.status(200).json({
@@ -287,7 +287,7 @@ export async function placeOrder(req, res) {
       customerId,
       orderData,
       paymentMethod: orderData?.paymentMethod || 'COD',
-      status: 'Pending',
+      status: 'NEW',
     });
 
     return res.status(200).json({

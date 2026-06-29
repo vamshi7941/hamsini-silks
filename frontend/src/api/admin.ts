@@ -181,43 +181,10 @@ export const AdminApi = () => {
     }
   };
 
-  const updateOrderStatus = async (
-    orderId: string,
-    status: OrderData['status'],
-  ) => {
-    try {
-      const response = await fetch(`${apiUrl}/api/admin/updateOrderStatus`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify({ orderId, status }),
-      });
-
-      if (response.status === 401) {
-        showToast('Unauthorized access. Please log in again.', 'error');
-        return;
-      }
-
-      setOrders((prev) =>
-        prev.map((o) => (o._id === orderId ? { ...o, status } : o)),
-      );
-      showToast(`Order #${orderId} → ${status}`, 'success');
-
-      return response.json();
-    } catch (err) {
-      showToast('Failed to update order status', 'error');
-      console.log(err instanceof Error ? err.message : 'Unknown error');
-      return null;
-    }
-  };
-
   return {
     addProduct,
     updateProduct,
     deleteProduct,
     fetchAllOrders,
-    updateOrderStatus,
   };
 };

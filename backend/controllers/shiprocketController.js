@@ -245,3 +245,24 @@ export async function checkShiprocketRates(req, res) {
     return res.status(500).json({ success: false, message: error.message });
   }
 }
+
+// fetch shiprocket all orders status
+export async function fetchShiprocketOrdersStatus() {
+  try {
+    const authToken = await fetchShiprocketToken();
+    const response = await fetch(`${SHIPROCKET_BASE}/orders`, {
+      method: 'GET',
+      headers: getAuthHeaders(authToken),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json({ success: false, error: data });
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Shiprocket fetch orders error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}

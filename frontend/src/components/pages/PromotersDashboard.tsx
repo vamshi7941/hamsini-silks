@@ -107,12 +107,24 @@ export default function PromotersDashboard() {
 
   const getStatusClasses = (status: string) => {
     switch (status) {
-      case 'Delivered':
-        return 'bg-green-100 text-green-700';
-      case 'Dispatched':
+      case 'NEW':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'READY TO PACK':
+        return 'bg-slate-100 text-slate-700';
+      case 'PACKED':
+        return 'bg-sky-100 text-sky-700';
+      case 'PICKLISTED':
+        return 'bg-indigo-100 text-indigo-700';
+      case 'SHIPPED':
         return 'bg-blue-100 text-blue-700';
-      case 'Processing':
-        return 'bg-amber-100 text-amber-700';
+      case 'DELIVERED':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'CANCELLED':
+        return 'bg-red-100 text-red-700';
+      case 'RETURN PENDING':
+        return 'bg-orange-100 text-orange-700';
+      case 'RETURNED':
+        return 'bg-purple-100 text-purple-700';
       default:
         return 'bg-rose-100 text-rose-700';
     }
@@ -297,10 +309,15 @@ export default function PromotersDashboard() {
                 <div className="flex flex-wrap gap-2">
                   {[
                     'All',
-                    'Pending',
-                    'Processing',
-                    'Dispatched',
-                    'Delivered',
+                    'NEW',
+                    'READY TO PACK',
+                    'PACKED',
+                    'PICKLISTED',
+                    'SHIPPED',
+                    'DELIVERED',
+                    'CANCELLED',
+                    'RETURN PENDING',
+                    'RETURNED',
                   ].map((filter) => (
                     <button
                       key={filter}

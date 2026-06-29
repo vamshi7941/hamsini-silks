@@ -32,8 +32,18 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ['Pending', 'Processing', 'Dispatched', 'Delivered'],
-      default: 'Pending',
+      enum: [
+        'NEW',
+        'READY TO PACK',
+        'PACKED',
+        'PICKLISTED',
+        'SHIPPED',
+        'DELIVERED',
+        'CANCELLED',
+        'RETURN PENDING',
+        'RETURNED',
+      ],
+      default: 'NEW',
     },
     promoCode: {
       type: String,

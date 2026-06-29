@@ -269,7 +269,7 @@ export default function CheckoutPage() {
       promoCode: couponCode || '',
       shiprocketCourierId,
       paymentMethod: 'COD',
-      status: 'Pending',
+      status: 'NEW',
     };
 
     setOrderData(formattedOrderData);
@@ -346,7 +346,7 @@ export default function CheckoutPage() {
                   },
                   {
                     label: 'Status',
-                    val: '⏳ Pending',
+                    val: '⏳ NEW',
                     highlight: true,
                   },
                 ].map((r) => (

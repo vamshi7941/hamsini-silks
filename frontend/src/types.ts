@@ -1,3 +1,14 @@
+export type OrderStatus =
+  | 'NEW'
+  | 'READY TO PACK'
+  | 'PACKED'
+  | 'PICKLISTED'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+  | 'RETURN PENDING'
+  | 'RETURNED';
+
 export type OrderItem = {
   sku: string;
   name: string;
@@ -28,7 +39,7 @@ export type OrderData = {
   paymentMethod: string;
   promoCode?: string;
   shiprocketCourierId?: string;
-  status: 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
+  status: OrderStatus;
 };
 
 export type RazorpayPaymentProps = {

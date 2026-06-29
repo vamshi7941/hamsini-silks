@@ -3,18 +3,26 @@ import OrderSchema from '../models/OrdersSchema.js';
 import * as customerController from '../controllers/customerController.js';
 import * as adminController from '../controllers/adminController.js';
 import * as promoterController from '../controllers/promoterController.js';
+import { mapOrdersWithShiprocketStatus } from '../utils/utils.js';
 import { requireAdminAuth } from '../middleware/requireAuth.js';
+import { fetchShiprocketOrdersStatus } from '../controllers/shiprocketController.js';
 
 const router = Router();
 
-router.route('/allOrders').get(requireAdminAuth, async (req, res) => {
+router.route('/allOrders').get(async (req, res) => {
   try {
     const orders = await OrderSchema.find().sort({ orderedDate: -1 });
+
+    const shiprocketOrders = await fetchShiprocketOrdersStatus();
+    const updatedOrders = mapOrdersWithShiprocketStatus(
+      orders,
+      shiprocketOrders,
+    );
 
     return res.status(200).json({
       message: 'Orders retrieved successfully',
       success: true,
-      orders,
+      orders: updatedOrders,
     });
   } catch (error) {
     return res.status(500).json({
@@ -24,10 +32,6 @@ router.route('/allOrders').get(requireAdminAuth, async (req, res) => {
     });
   }
 });
-
-router
-  .route('/updateOrderStatus')
-  .post(requireAdminAuth, adminController.updateOrderStatus);
 
 // ==== Promotor Routes ====
 router

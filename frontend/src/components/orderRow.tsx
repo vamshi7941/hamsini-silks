@@ -1,4 +1,9 @@
-import { printInvoice, statusIcon, statusMap } from '@/utils/orderUtils';
+import {
+  getOrderRoadmap,
+  printInvoice,
+  statusIcon,
+  statusMap,
+} from '@/utils/orderUtils';
 import { useState } from 'react';
 import { Icon } from './Icons';
 import { OrderData } from '@/types';
@@ -15,20 +20,9 @@ function PrintInvoice({ order }: { order: OrderData }) {
   );
 }
 
-export default function OrderRow({
-  order,
-  onStatusChange,
-}: {
-  order: OrderData;
-  onStatusChange: (id: string, s: OrderData['status']) => void;
-}) {
+export default function OrderRow({ order }: { order: OrderData }) {
   const [expanded, setExpanded] = useState(false);
-  const statuses: OrderData['status'][] = [
-    'Pending',
-    'Processing',
-    'Dispatched',
-    'Delivered',
-  ];
+  const roadmap = getOrderRoadmap(order.status);
 
   return (
     <div
@@ -101,7 +95,7 @@ export default function OrderRow({
 
       {expanded && (
         <div className="border-t border-gold-100 p-4 animate-fadeIn">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="flex gap-6">
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-maroon-900 uppercase tracking-wider">
                 Delivery Details
@@ -173,44 +167,51 @@ export default function OrderRow({
                 ))}
               </div>
             </div>
-            <div>
-              <h4 className="text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
-                Update Status
-              </h4>
-              <div className="space-y-2">
-                {statuses.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => onStatusChange(order.order_id ?? '', s)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer border-2 ${
-                      order.status === s
-                        ? 'border-maroon-900 bg-maroon-900 text-white shadow-md'
-                        : 'border-gold-100 hover:border-gold-300 text-maroon-900 bg-white'
-                    }`}
-                  >
-                    <span className="text-base">{statusIcon[s]}</span>
-                    <span>{s}</span>
-                    {order.status === s && <Icon.check />}
-                  </button>
-                ))}
+            <div className="px-4 pb-4">
+              <div className="mb-2 flex items-center justify-between text-[12px] uppercase tracking-[0.24em] text-maroon-700">
+                <span>Order roadmap</span>
+                <span className="font-semibold text-maroon-900">
+                  {roadmap.current}
+                </span>
               </div>
-              <div className="mt-4 bg-gold-50 rounded-xl p-3 border border-gold-200">
-                <div className="text-xs font-bold text-maroon-900 mb-1">
-                  Summary
-                </div>
-                <div className="flex justify-between text-xs text-maroon-800">
-                  <span>Items:</span>
-                  <span className="font-bold">
-                    {order.items.reduce((a, b) => a + b.units, 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs text-maroon-800">
-                  <span>Payment:</span>
-                  <span className="font-bold">{order.paymentMethod}</span>
-                </div>
-                <div className="flex justify-between text-sm font-bold text-maroon-900 mt-2 pt-2 border-t border-gold-200">
-                  <span>Total:</span>
-                  <span>₹{order.total.toLocaleString('en-IN')}</span>
+              <div className="mt-3 overflow-x-auto">
+                <div className="flex items-center gap-3 ">
+                  {roadmap.stages.map((stage, index) => (
+                    <div key={stage.status} className="flex items-center gap-3">
+                      <div className="flex flex-col items-center gap-2">
+                        <div
+                          className={`flex h-16 w-16 items-center justify-center rounded-full border-2 text-xl font-bold ${
+                            stage.state === 'complete'
+                              ? 'border-maroon-900 bg-maroon-900 text-white'
+                              : stage.state === 'current'
+                                ? 'border-maroon-900 bg-white text-maroon-900'
+                                : 'border-gold-200 bg-gold-100 text-maroon-700'
+                          }`}
+                        >
+                          {stage.icon}
+                        </div>
+                        <span
+                          className={`max-w-[88px] text-center text-[12px] whitespace-nowrap leading-tight ${
+                            stage.state === 'current'
+                              ? 'font-semibold text-maroon-900'
+                              : 'text-maroon-600'
+                          }`}
+                        >
+                          {stage.status}
+                        </span>
+                      </div>
+
+                      {index < roadmap.stages.length - 1 && (
+                        <div
+                          className={`h-0.5 flex-1 rounded-full ${
+                            stage.state === 'complete'
+                              ? 'bg-maroon-900'
+                              : 'bg-gold-200'
+                          }`}
+                        />
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

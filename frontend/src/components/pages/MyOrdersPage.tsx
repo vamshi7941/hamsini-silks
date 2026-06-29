@@ -1,7 +1,12 @@
 import { useStore } from '../../context/StoreContext';
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icons';
-import { statusIcon, statusMap, printInvoice } from '../../utils/orderUtils';
+import {
+  statusIcon,
+  statusMap,
+  printInvoice,
+  getOrderRoadmap,
+} from '../../utils/orderUtils';
 import { CustomerApi } from '@/api/customer';
 import GuestUser from '../guestUser';
 import AccessDenied from '../accessDenied';
@@ -21,6 +26,7 @@ function PrintInvoice({ order }: { order: OrderData }) {
 function OrderRow({ order: order }: { order: OrderData }) {
   const [expanded, setExpanded] = useState(false);
 
+  const roadmap = getOrderRoadmap(order.status);
   return (
     <div
       className={`bg-white rounded-2xl border border-gold-100 shadow-xs overflow-hidden transition-all ${expanded ? 'shadow-md' : ''}`}
@@ -119,8 +125,9 @@ function OrderRow({ order: order }: { order: OrderData }) {
                     Address:
                   </span>
                   <span className="text-maroon-900 leading-relaxed">
-                    {order.shipping_address} {order.shipping_city}, {order.shipping_state},{' '}
-                    {order.shipping_country} - {order.shipping_pincode}
+                    {order.shipping_address} {order.shipping_city},{' '}
+                    {order.shipping_state}, {order.shipping_country} -{' '}
+                    {order.shipping_pincode}
                   </span>
                 </div>
               </div>
@@ -158,6 +165,57 @@ function OrderRow({ order: order }: { order: OrderData }) {
               </div>
             </div>
             <div>
+              <div className="px-4 pb-4">
+                <div className="mb-2 flex items-center justify-between text-[12px] uppercase tracking-[0.24em] text-maroon-700">
+                  <span>Order roadmap</span>
+                  <span className="font-semibold text-maroon-900">
+                    {roadmap.current}
+                  </span>
+                </div>
+                <div className="mt-3 overflow-x-auto">
+                  <div className="flex items-center gap-3 ">
+                    {roadmap.stages.map((stage, index) => (
+                      <div
+                        key={stage.status}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div
+                            className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-xl font-bold ${
+                              stage.state === 'complete'
+                                ? 'border-maroon-900 bg-maroon-900 text-white'
+                                : stage.state === 'current'
+                                  ? 'border-maroon-900 bg-white text-maroon-900'
+                                  : 'border-gold-200 bg-gold-100 text-maroon-700'
+                            }`}
+                          >
+                            {stage.icon}
+                          </div>
+                          <span
+                            className={`max-w-[88px] text-center text-[10px] whitespace-nowrap leading-tight ${
+                              stage.state === 'current'
+                                ? 'font-semibold text-maroon-900'
+                                : 'text-maroon-600'
+                            }`}
+                          >
+                            {stage.status}
+                          </span>
+                        </div>
+
+                        {index < roadmap.stages.length - 1 && (
+                          <div
+                            className={`h-0.5 flex-1 rounded-full ${
+                              stage.state === 'complete'
+                                ? 'bg-maroon-900'
+                                : 'bg-gold-200'
+                            }`}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
               <h4 className="text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
                 Order Summary
               </h4>
@@ -204,7 +262,10 @@ export default function MyOrdersPage() {
       if (hasFetchedOrders.current) return;
       hasFetchedOrders.current = true;
       const orders = await fetchMyOrders();
-      const sortedOrders = orders?.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+      const sortedOrders = orders?.sort(
+        (a, b) =>
+          new Date(b.order_date).getTime() - new Date(a.order_date).getTime(),
+      );
       setMyOrders(sortedOrders ?? []);
     };
 
@@ -224,7 +285,7 @@ export default function MyOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#fdf8f1] py-8 sm:py-12 lg:py-16 lg:pt-4">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-2">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-2">
         <div className="mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-maroon-900 mb-2">
             My Orders
@@ -254,10 +315,15 @@ export default function MyOrdersPage() {
               <div className="flex flex-wrap gap-2">
                 {[
                   'All',
-                  'Pending',
-                  'Processing',
-                  'Dispatched',
-                  'Delivered',
+                  'NEW',
+                  'READY TO PACK',
+                  'PACKED',
+                  'PICKLISTED',
+                  'SHIPPED',
+                  'DELIVERED',
+                  'CANCELLED',
+                  'RETURN PENDING',
+                  'RETURNED',
                 ].map((f, i) => (
                   <button
                     key={i}

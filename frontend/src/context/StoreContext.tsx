@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Product } from '../data';
-import { OrderData } from '@/types';
+import { OrderData, OrderStatus } from '@/types';
 
 export type CartItem = {
   product: Product;
@@ -17,7 +17,7 @@ export type Order = {
   items: CartItem[];
   total: number;
   paymentMethod: string;
-  status: 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
+  status: OrderStatus;
   orderedDate?: string;
   promoCode?: string;
   discountApplied?: number;
