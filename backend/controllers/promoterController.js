@@ -235,10 +235,12 @@ export async function getOwnPromoterOrders(req, res) {
 
     const orderDetails = orders.map((order) => ({
       _id: order._id,
-      customerName: order.name,
-      email: order.email,
-      phone: order.phone,
-      address: order.address,
+      shipping_name: order.shipping_name,
+      shipping_email: order.shipping_email,
+      shipping_phone: order.shipping_phone,
+      shipping_address: order.shipping_address,
+      shipping_city: order.shipping_city,
+      shipping_state: order.shipping_state,
       paymentMethod: order.paymentMethod,
       status: order.status,
       items: order.items,
@@ -246,7 +248,7 @@ export async function getOwnPromoterOrders(req, res) {
       discountApplied: order.discountApplied || 0,
       originalTotal: order.total + (order.discountApplied || 0),
       promoCode: order.promoCode || null,
-      orderedDate: order.orderedDate,
+      order_date: order.order_date,
     }));
 
     res.status(200).json({ orders: orderDetails, success: true });

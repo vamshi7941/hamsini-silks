@@ -4,6 +4,9 @@ import { PromoterApi } from '@/api/promoters';
 import GuestUser from '../guestUser';
 import AccessDenied from '../accessDenied';
 import { Icon } from '../Icons';
+import { OrderItem } from '@/types';
+import { Link } from 'react-router-dom';
+import { generateSlug } from '@/utils/slug';
 
 export type PromoterStats = {
   fullName: string;
@@ -20,24 +23,26 @@ export type PromoterStats = {
 
 export type PromoterOrderDetails = {
   _id: string;
-  customerName: string;
-  email: string;
-  phone: string;
+  shipping_name: string;
+  customerId?: string;
+  shipping_email: string;
+  shipping_phone: string;
   address: string;
   paymentMethod: string;
   status: string;
-  items: Array<{
-    productId: string;
-    name: string;
-    price: number;
-    size: string;
-    quantity: number;
-  }>;
+  items: OrderItem[];
+  shipping_address: string;
+  shipping_city: string;
+  shipping_state: string;
+  shipping_country: string;
+  shipping_pincode: string;
+  shipping_charges: number;
+  sub_total: number;
   total: number;
   discountApplied: number;
   originalTotal: number;
   promoCode: string | null;
-  orderedDate: string;
+  order_date: string;
 };
 
 export default function PromotersDashboard() {
@@ -71,6 +76,7 @@ export default function PromotersDashboard() {
     try {
       const data = await getOwnPromoterOrders(user._id);
       if (data) {
+        console.log('Fetched orders:', data);
         setOrders(data);
       }
     } catch (error) {
@@ -92,7 +98,7 @@ export default function PromotersDashboard() {
     const searchValue = orderSearch.toLowerCase();
     const matchesSearch =
       order._id.toLowerCase().includes(searchValue) ||
-      order.customerName.toLowerCase().includes(searchValue) ||
+      order.shipping_name.toLowerCase().includes(searchValue) ||
       (order.promoCode || '').toLowerCase().includes(searchValue);
     const matchesFilter = orderFilter === 'All' || order.status === orderFilter;
 
@@ -101,12 +107,24 @@ export default function PromotersDashboard() {
 
   const getStatusClasses = (status: string) => {
     switch (status) {
-      case 'Delivered':
-        return 'bg-green-100 text-green-700';
-      case 'Dispatched':
+      case 'NEW':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'READY TO PACK':
+        return 'bg-slate-100 text-slate-700';
+      case 'PACKED':
+        return 'bg-sky-100 text-sky-700';
+      case 'PICKLISTED':
+        return 'bg-indigo-100 text-indigo-700';
+      case 'SHIPPED':
         return 'bg-blue-100 text-blue-700';
-      case 'Processing':
-        return 'bg-amber-100 text-amber-700';
+      case 'DELIVERED':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'CANCELLED':
+        return 'bg-red-100 text-red-700';
+      case 'RETURN PENDING':
+        return 'bg-orange-100 text-orange-700';
+      case 'RETURNED':
+        return 'bg-purple-100 text-purple-700';
       default:
         return 'bg-rose-100 text-rose-700';
     }
@@ -291,10 +309,15 @@ export default function PromotersDashboard() {
                 <div className="flex flex-wrap gap-2">
                   {[
                     'All',
-                    'Pending',
-                    'Processing',
-                    'Dispatched',
-                    'Delivered',
+                    'NEW',
+                    'READY TO PACK',
+                    'PACKED',
+                    'PICKLISTED',
+                    'SHIPPED',
+                    'DELIVERED',
+                    'CANCELLED',
+                    'RETURN PENDING',
+                    'RETURNED',
                   ].map((filter) => (
                     <button
                       key={filter}
@@ -336,19 +359,15 @@ export default function PromotersDashboard() {
                               #{order._id}
                             </span>
                             <span className="text-[11px] text-maroon-700/60">
-                              {new Date(order.orderedDate).toLocaleDateString(
+                              {new Date(order.order_date).toLocaleString(
                                 'en-IN',
+                                {
+                                  timeZone: 'Asia/Kolkata',
+                                },
                               )}
                             </span>
                           </div>
-                          <div className="hidden sm:flex items-center flex-1 min-w-0">
-                            <span className="font-semibold text-sm text-maroon-900 block truncate">
-                              {order.customerName}
-                            </span>
-                            <span className="text-[11px] text-maroon-700/70 truncate block">
-                              {order.phone} · {order.email}
-                            </span>
-                          </div>
+                          <div className="hidden sm:flex min-w-[110px]"></div>
                           <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
                             <div className="rounded-full bg-maroon-100 px-2.5 py-1 text-[10px] font-semibold text-maroon-800">
                               {order.items.length} item
@@ -397,7 +416,7 @@ export default function PromotersDashboard() {
                                       Name:
                                     </span>
                                     <span className="font-semibold text-maroon-900">
-                                      {order.customerName}
+                                      {order.shipping_name}
                                     </span>
                                   </div>
                                   <div className="flex gap-2">
@@ -405,7 +424,7 @@ export default function PromotersDashboard() {
                                       Email:
                                     </span>
                                     <span className="text-maroon-900">
-                                      {order.email}
+                                      {order.shipping_email}
                                     </span>
                                   </div>
                                   <div className="flex gap-2">
@@ -413,7 +432,7 @@ export default function PromotersDashboard() {
                                       Phone:
                                     </span>
                                     <span className="text-maroon-900">
-                                      {order.phone}
+                                      {order.shipping_phone}
                                     </span>
                                   </div>
                                   <div className="flex gap-2">
@@ -421,7 +440,9 @@ export default function PromotersDashboard() {
                                       Address:
                                     </span>
                                     <span className="text-maroon-900 leading-relaxed">
-                                      {order.address}
+                                      {order.shipping_address}{' '}
+                                      {order.shipping_city},{' '}
+                                      {order.shipping_state},{' '}
                                     </span>
                                   </div>
                                 </div>
@@ -435,18 +456,20 @@ export default function PromotersDashboard() {
                                       className="flex items-center gap-3 bg-white rounded-xl p-2.5 border border-gold-100"
                                     >
                                       <div className="flex-1 min-w-0">
-                                        <span className="text-xs font-semibold text-maroon-900 block truncate">
+                                        <Link
+                                          to={`/product/${generateSlug(item.sku, item.name)}`}
+                                          className="text-xs font-semibold text-maroon-900 block truncate"
+                                        >
                                           {item.name}
-                                        </span>
+                                        </Link>
                                         <span className="text-[10px] text-maroon-700/70">
-                                          Size: {item.size} · Qty:{' '}
-                                          {item.quantity}
+                                          Size: {item.size} · Qty: {item.units}
                                         </span>
                                       </div>
                                       <span className="text-xs font-bold text-maroon-900 shrink-0">
                                         ₹
                                         {(
-                                          item.price * item.quantity
+                                          item.selling_price * item.units
                                         ).toLocaleString('en-IN')}
                                       </span>
                                     </div>

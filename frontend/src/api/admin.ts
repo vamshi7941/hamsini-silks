@@ -1,6 +1,6 @@
 import { useStore } from '@/context/StoreContext';
 import { ProductsApi } from './products';
-import { Order, Product } from '@/context/contextTypes';
+import { Product } from '@/context/contextTypes';
 
 export type CategoryItem = {
   _id: string;
@@ -173,15 +173,26 @@ export const AdminApi = () => {
         const ordersWithProducts = (json.orders || []).map((order: any) => ({
           ...order,
           items: order.items.map((item: any) => {
-            const product = products.find((p) => p._id === item.productId);
+            const product = products.find((p) => p._id === item.sku);
             return {
-              product: product || { _id: item.productId },
-              quantity: item.quantity,
+              _id: item.sku,
+              name: item.name,
+              category: product?.category,
+              selling_price: item.selling_price,
+              image: product?.image || '',
+              units: item.units,
               size: item.size,
             };
           }),
         }));
-        setOrders(ordersWithProducts);
+        const sortedOrders = ordersWithProducts?.sort(
+          (
+            a: { order_date: string | number | Date },
+            b: { order_date: string | number | Date },
+          ) =>
+            new Date(b.order_date).getTime() - new Date(a.order_date).getTime(),
+        );
+        setOrders(sortedOrders);
       } else {
         showToast('No orders found', 'warning');
       }
@@ -190,38 +201,6 @@ export const AdminApi = () => {
         err instanceof Error ? err.message : 'Failed to fetch orders',
         'error',
       );
-    }
-  };
-
-  const updateOrderStatus = async (
-    orderId: string,
-    status: Order['status'],
-  ) => {
-    try {
-      const response = await fetch(`${apiUrl}/api/admin/updateOrderStatus`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify({ orderId, status }),
-      });
-
-      if (response.status === 401) {
-        showToast('Unauthorized access. Please log in again.', 'error');
-        return;
-      }
-
-      setOrders((prev) =>
-        prev.map((o) => (o._id === orderId ? { ...o, status } : o)),
-      );
-      showToast(`Order #${orderId} → ${status}`, 'success');
-
-      return response.json();
-    } catch (err) {
-      showToast('Failed to update order status', 'error');
-      console.log(err instanceof Error ? err.message : 'Unknown error');
-      return null;
     }
   };
 
@@ -354,7 +333,6 @@ export const AdminApi = () => {
     updateProduct,
     deleteProduct,
     fetchAllOrders,
-    updateOrderStatus,
     fetchSiteContent,
     saveCategory,
     updateCategory,

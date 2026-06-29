@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useStore } from '../../context/StoreContext';
+import { CartItem, useStore } from '../../context/StoreContext';
 import { Auth } from '@/api/auth';
 import { CustomerApi } from '@/api/customer';
 import GuestUser from '../guestUser';
 import AccessDenied from '../accessDenied';
+import { RazorpayApi } from '@/utils/razorpayUtils';
+import {
+  normalizeOtpValue,
+  normalizePhoneValue,
+  normalizePincodeValue,
+} from '@/utils/cn';
+import { OrderData } from '@/types';
 
 declare global {
   interface Window {
@@ -40,16 +47,18 @@ export default function CheckoutPage() {
     couponDiscountPercentage,
     setCouponCode,
     setCouponDiscountPercentage,
+    orderData,
+    setOrderData,
   } = useStore();
   const {
     placeOrder,
     clearCart,
     validatePhone,
     getPaymentMethods,
-    createRazorpayOrder,
-    verifyRazorpayPayment,
+    checkShiprocketRates,
   } = CustomerApi();
   const { sendPhoneOtp } = Auth();
+  const { handleRazorpayPayment } = RazorpayApi();
 
   if (!user.loggedIn && user.role !== 'customer') return;
 
@@ -57,6 +66,12 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [shippingCity, setShippingCity] = useState('');
+  const [shippingState, setShippingState] = useState('');
+  const [shippingPincode, setShippingPincode] = useState('');
+  const [shiprocketCourierId, setShiprocketCourierId] = useState('');
+  const [etd, setEtd] = useState('');
+  const [noCourier, setNoCourier] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(
     INITIAL_PAYMENT_METHODS,
   );
@@ -82,11 +97,6 @@ export default function CheckoutPage() {
   );
   const orderTotal = orderSubtotal - discountAmount;
 
-  const normalizePhoneValue = (value: string) =>
-    value.replace(/\D/g, '').slice(0, 10);
-  const normalizeOtpValue = (value: string) =>
-    value.replace(/\D/g, '').slice(0, 6);
-
   useEffect(() => {
     const loadMethods = async () => {
       if (!user.loggedIn || user.role !== 'customer') return;
@@ -98,158 +108,6 @@ export default function CheckoutPage() {
 
     loadMethods();
   }, [user.loggedIn, user.role]);
-
-  const ensureRazorpayScript = () =>
-    new Promise<void>((resolve, reject) => {
-      if (window.Razorpay) {
-        resolve();
-        return;
-      }
-
-      const existingScript = document.getElementById(
-        'razorpay-checkout-script',
-      );
-      if (existingScript) {
-        existingScript.addEventListener('load', () => resolve(), {
-          once: true,
-        });
-        existingScript.addEventListener(
-          'error',
-          () => reject(new Error('Unable to load Razorpay.')),
-          { once: true },
-        );
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.id = 'razorpay-checkout-script';
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Unable to load Razorpay.'));
-      document.body.appendChild(script);
-    });
-
-  const handleRazorpayPayment = async () => {
-    setIsProcessingPayment(true);
-    setPaymentFeedback({
-      type: 'loading',
-      message: 'Preparing Razorpay checkout…',
-    });
-
-    try {
-      const razorpayResponse = await createRazorpayOrder({
-        amount: orderTotal,
-        orderData: {
-          name,
-          email,
-          phone,
-          address,
-          paymentMethod: 'Razorpay',
-          total: orderTotal,
-        },
-      });
-
-      if (!razorpayResponse?.success || !razorpayResponse.data?.orderId) {
-        throw new Error(
-          razorpayResponse?.message || 'Unable to start Razorpay.',
-        );
-      }
-
-      await ensureRazorpayScript();
-
-      const options = {
-        key: razorpayResponse.data.keyId,
-        amount: razorpayResponse.data.amount,
-        currency: razorpayResponse.data.currency || 'INR',
-        name: 'Hamsini Silks',
-        description: 'Order payment',
-        order_id: razorpayResponse.data.orderId,
-        prefill: {
-          name,
-          email,
-          contact: phone,
-        },
-        modal: {
-          ondismiss: () => {
-            setPaymentFeedback({
-              type: 'error',
-              message: 'Payment was cancelled. Please try again.',
-            });
-            setPayment('');
-            setIsProcessingPayment(false);
-          },
-        },
-        theme: {
-          color: '#7b1f1f',
-        },
-        handler: async (response: any) => {
-          const verifyResult = await verifyRazorpayPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            amount: orderTotal,
-            orderData: {
-              name,
-              email,
-              phone,
-              address,
-              paymentMethod: 'Razorpay',
-              total: orderTotal,
-              promoCode: couponCode || null,
-              discountApplied: discountAmount,
-              items: (buyNowItem ? [buyNowItem] : cart).map((item) => ({
-                productId: item.product._id,
-                name: item.product.name,
-                price: item.product.price,
-                quantity: item.quantity,
-                size: item.size,
-              })),
-            },
-          });
-
-          if (verifyResult?.success) {
-            setOrderId(verifyResult.data._id);
-            await clearCart();
-            setCouponCode('');
-            setCouponDiscountPercentage(0);
-            setOtpSent(false);
-            setOtp('');
-            setOtpVerified(false);
-            setPaymentFeedback({
-              type: 'success',
-              message: 'Payment successful. Your order is confirmed.',
-            });
-          } else {
-            setPaymentFeedback({
-              type: 'error',
-              message: verifyResult?.message || 'Payment verification failed.',
-            });
-          }
-
-          setIsProcessingPayment(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        },
-      };
-
-      if (!window.Razorpay) {
-        throw new Error('Razorpay checkout could not be loaded.');
-      }
-
-      const razorpayInstance = new window.Razorpay(options);
-      razorpayInstance.open();
-    } catch (error) {
-      console.error('Razorpay payment failed', error);
-      setPaymentFeedback({
-        type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Razorpay payment could not be completed.',
-      });
-      setIsProcessingPayment(false);
-    }
-  };
 
   const handleSendOtp = async () => {
     const normalizedPhone = normalizePhoneValue(phone);
@@ -290,6 +148,9 @@ export default function CheckoutPage() {
       if (result?.success) {
         setOtpVerified(true);
         showToast('Phone verified for COD order.', 'success');
+        // Automatically place order after OTP verification
+        await new Promise((resolve) => setTimeout(resolve, 500)); // Small delay for user feedback
+        await handlePlaceOrder();
       }
     } catch (error) {
       console.error('Verify OTP failed', error);
@@ -298,9 +159,23 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRazorPay = () =>
+    handleRazorpayPayment({
+      setIsProcessingPayment,
+      setPaymentFeedback,
+      name,
+      email,
+      phone,
+      address,
+      setPayment,
+      setOrderId,
+      setOtpSent,
+      setOtp,
+      setOtpVerified,
+      orderData,
+    });
 
+  const handlePlaceOrder = async () => {
     if (payment === 'cod' && !otpVerified && user.phone !== phone) {
       showToast(
         'Please verify your phone with OTP before placing a COD order.',
@@ -310,20 +185,15 @@ export default function CheckoutPage() {
     }
 
     if (payment === 'razorpay') {
-      await handleRazorpayPayment();
+      await handleRazorPay();
       return;
     }
 
-    const orderResult = await placeOrder({
-      name,
-      email,
-      phone,
-      address,
-      paymentMethod: 'COD',
-    });
+    const orderResult = await placeOrder(orderData as OrderData);
 
     if (orderResult?.success) {
-      setOrderId(orderResult.data._id);
+      const savedOrder = orderResult.data;
+      setOrderId(savedOrder._id);
       await clearCart();
       setCouponCode('');
       setCouponDiscountPercentage(0);
@@ -334,6 +204,89 @@ export default function CheckoutPage() {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handlePlaceOrder();
+  };
+
+  useEffect(() => {
+    const fetchShippingInfo = async () => {
+      const shippingInfo = await checkShiprocketRates({
+        delivery_code: shippingPincode,
+        order_price: orderTotal,
+      });
+
+      if (!shippingInfo || Object.keys(shippingInfo).length === 0) {
+        setNoCourier(true);
+        setShippingCity('');
+        setShippingState('');
+        setShiprocketCourierId('');
+        setEtd('');
+        return;
+      }
+
+      setNoCourier(false);
+      setShippingCity(shippingInfo?.city || '');
+      setShippingState(shippingInfo?.state || '');
+      setShiprocketCourierId(String(shippingInfo?.courier_company_id || ''));
+      setEtd(shippingInfo?.etd || '');
+    };
+
+    if (shippingPincode.length === 6) {
+      fetchShippingInfo();
+    } else {
+      setNoCourier(false);
+      setShippingCity('');
+      setShippingState('');
+      setEtd('');
+    }
+  }, [shippingPincode]);
+
+  useEffect(() => {
+    // Build orderData object
+    const items = buyNowItem ? [buyNowItem] : cart;
+    const formattedOrderData: OrderData = {
+      order_date: new Date().toISOString(),
+      shipping_email: email,
+      shipping_phone: phone,
+      shipping_name: name,
+      shipping_address: address,
+      shipping_city: shippingCity,
+      shipping_state: shippingState,
+      shipping_country: 'India',
+      shipping_pincode: shippingPincode,
+      shipping_charges: 0,
+      sub_total: orderSubtotal,
+      total: orderTotal,
+      items: items.map((item: CartItem) => ({
+        sku: item.product._id,
+        name: item.product.name,
+        selling_price: item.product.price,
+        units: item.quantity,
+        size: item.size,
+      })),
+      promoCode: couponCode || '',
+      shiprocketCourierId,
+      paymentMethod: 'COD',
+      status: 'NEW',
+    };
+
+    setOrderData(formattedOrderData);
+  }, [
+    name,
+    email,
+    phone,
+    address,
+    shippingCity,
+    shippingState,
+    shippingPincode,
+    orderSubtotal,
+    orderTotal,
+    cart,
+    buyNowItem,
+    couponCode,
+  ]);
 
   if (!user.loggedIn) return <GuestUser page="checkout" />;
   if (user.role !== 'customer') return <AccessDenied page="checkout" />;
@@ -393,7 +346,7 @@ export default function CheckoutPage() {
                   },
                   {
                     label: 'Status',
-                    val: '⏳ Pending',
+                    val: '⏳ NEW',
                     highlight: true,
                   },
                 ].map((r) => (
@@ -538,6 +491,60 @@ export default function CheckoutPage() {
                     className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors resize-none leading-relaxed"
                   />
                 </div>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                      Pincode *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={shippingPincode}
+                      onChange={(e) =>
+                        setShippingPincode(
+                          normalizePincodeValue(e.target.value),
+                        )
+                      }
+                      className={`w-full px-4 py-3 border-2 rounded-xl text-sm text-maroon-900 focus:outline-none transition-colors ${noCourier ? 'border-red-500 focus:border-red-600' : 'border-gold-200 focus:border-maroon-700'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                      City *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={shippingCity}
+                      disabled
+                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-maroon-900 mb-1.5">
+                      State *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={shippingState}
+                      disabled
+                      className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div>
+                {noCourier ? (
+                  <p className="text-xs text-red-600 mt-3">
+                    No courier service is available for this pincode.
+                  </p>
+                ) : etd ? (
+                  <p className="text-xs text-maroon-700/70 mt-3">
+                    Estimated Delivery:{' '}
+                    <span className="font-semibold">{etd}</span>
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -574,21 +581,6 @@ export default function CheckoutPage() {
                         }
                         setPayment(pm.id);
                         setPaymentFeedback({ type: 'idle', message: '' });
-                        if (pm.id === 'razorpay') {
-                          void handleRazorpayPayment();
-                        }
-                      }}
-                      onClick={() => {
-                        if (!phone || !address || !name || !email) {
-                          showToast(
-                            'Please fill in all delivery details before selecting a payment method.',
-                            'error',
-                          );
-                          return;
-                        }
-                        if (pm.id === 'razorpay') {
-                          void handleRazorpayPayment();
-                        }
                       }}
                       className="accent-maroon-900"
                     />
@@ -626,7 +618,7 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {payment === 'cod' && user.phone !== phone && (
+              {payment === 'COD' && (
                 <div className="mt-4 rounded-2xl border border-gold-100 bg-[#fff8ef] p-4">
                   <p className="text-sm font-semibold text-maroon-900 mb-3">
                     Cash on Delivery requires phone OTP verification.
@@ -642,8 +634,8 @@ export default function CheckoutPage() {
                     </button>
                   ) : otpVerified ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 font-semibold">
-                      OTP verified for {phone || 'your phone number'}. You can
-                      now place the order.
+                      ✓ OTP verified for {phone || 'your phone number'}. Ready
+                      to place order.
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -664,9 +656,12 @@ export default function CheckoutPage() {
                       <button
                         type="button"
                         onClick={handleVerifyOtp}
-                        className="w-full py-3 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                        disabled={verifyingOtp || otp.length < 6}
+                        className="w-full py-3 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
                       >
-                        {verifyingOtp ? 'Verifying OTP…' : 'Verify OTP'}
+                        {verifyingOtp
+                          ? 'Verifying and placing order…'
+                          : `Verify & Place Order · ₹${orderTotal.toLocaleString('en-IN')}`}
                       </button>
                     </div>
                   )}
@@ -675,25 +670,23 @@ export default function CheckoutPage() {
             </div>
 
             {/* Submit */}
-            <button
-              type="submit"
-              disabled={isProcessingPayment}
-              className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm sm:text-base tracking-wider shadow-lg transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isProcessingPayment
-                ? 'Processing…'
-                : payment === 'razorpay'
-                  ? `Pay ₹${orderTotal.toLocaleString('en-IN')} via Razorpay`
-                  : `🪷 Confirm Order · ₹${orderTotal.toLocaleString('en-IN')}`}
-            </button>
-            <p className="text-center text-xs text-maroon-700/50">
-              By confirming, you agree to our Terms & Silk Mark authenticity
-              policy.
-            </p>
+            {payment !== 'COD' || otpVerified ? (
+              <button
+                type="submit"
+                disabled={isProcessingPayment}
+                className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm sm:text-base tracking-wider shadow-lg transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isProcessingPayment
+                  ? 'Processing…'
+                  : payment === 'razorpay'
+                    ? `Pay ₹${orderTotal.toLocaleString('en-IN')} via Razorpay`
+                    : `🪷 Confirm Order · ₹${orderTotal.toLocaleString('en-IN')}`}
+              </button>
+            ) : null}
           </form>
 
           {/* ── Summary panel ── */}
-          <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
+          <div className="lg:col-span-5 space-y-4 lg:top-24">
             <div className="bg-white rounded-2xl border border-gold-100 shadow-xs p-5">
               <h3 className="font-display text-sm font-bold text-maroon-900 uppercase tracking-wider border-b border-gold-100 pb-3 mb-4">
                 Your Order ({buyNowItem ? 1 : cart.length}{' '}

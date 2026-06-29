@@ -1,29 +1,159 @@
-import { Order } from '../context/StoreContext';
+import { OrderData, OrderStatus } from '@/types';
+
+export const orderStatuses: OrderStatus[] = [
+  'NEW',
+  'READY TO PACK',
+  'PACKED',
+  'PICKLISTED',
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+  'RETURN PENDING',
+  'RETURNED',
+];
 
 // ── Status Icons & Maps ────────────────────────────────────────────────────────
-export const statusIcon: Record<string, string> = {
-  Pending: '⏳',
-  Processing: '⚙️',
-  Dispatched: '🚚',
-  Delivered: '✅',
+export const statusIcon: Record<OrderStatus, string> = {
+  NEW: '⏳',
+  'READY TO PACK': '📦',
+  PACKED: '📦',
+  PICKLISTED: '🗂️',
+  SHIPPED: '🚚',
+  DELIVERED: '✅',
+  CANCELLED: '❌',
+  'RETURN PENDING': '↩️',
+  RETURNED: '📥',
 };
 
-export const statusMap: Record<string, string> = {
-  Pending: 'status-pending',
-  Processing: 'status-processing',
-  Dispatched: 'status-dispatched',
-  Delivered: 'status-delivered',
+export const statusMap: Record<OrderStatus, string> = {
+  NEW: 'status-new',
+  'READY TO PACK': 'status-ready-to-pack',
+  PACKED: 'status-packed',
+  PICKLISTED: 'status-picklisted',
+  SHIPPED: 'status-shipped',
+  DELIVERED: 'status-delivered',
+  CANCELLED: 'status-cancelled',
+  'RETURN PENDING': 'status-return-pending',
+  RETURNED: 'status-returned',
+};
+
+export type OrderRoadmapPoint = {
+  status: OrderStatus;
+  icon: string;
+  state: 'complete' | 'current' | 'upcoming';
+};
+
+const roadmapBase: OrderStatus[] = [
+  'NEW',
+  'READY TO PACK',
+  'PACKED',
+  'PICKLISTED',
+  'SHIPPED',
+  'DELIVERED',
+];
+
+export const getOrderRoadmap = (
+  currentStatus: OrderStatus,
+): {
+  current: OrderStatus;
+  percentage: number;
+  stages: OrderRoadmapPoint[];
+} => {
+  const terminalStatuses: OrderStatus[] = [
+    'CANCELLED',
+    'RETURN PENDING',
+    'RETURNED',
+  ];
+  const finalStatus = terminalStatuses.includes(currentStatus)
+    ? currentStatus
+    : 'DELIVERED';
+
+  const roadmapStatuses = [...roadmapBase.slice(0, -1), finalStatus];
+  const activeIndex = roadmapStatuses.findIndex(
+    (status) => status === currentStatus,
+  );
+
+  return {
+    current: currentStatus,
+    percentage:
+      activeIndex <= 0 ? 0 : (activeIndex / (roadmapStatuses.length - 1)) * 100,
+    stages: roadmapStatuses.map((status, index) => ({
+      status,
+      icon: statusIcon[status],
+      state:
+        index < activeIndex
+          ? 'complete'
+          : index === activeIndex
+            ? 'current'
+            : 'upcoming',
+    })),
+  };
+};
+
+export const normalizeShiprocketStatus = (
+  rawStatus: string | undefined,
+): OrderStatus | undefined => {
+  const status = String(rawStatus || '')
+    .trim()
+    .toUpperCase();
+  if (!status) return undefined;
+
+  if (status.includes('RETURN')) {
+    return status.includes('PENDING') ? 'RETURN PENDING' : 'RETURNED';
+  }
+  if (status.includes('CANCEL')) return 'CANCELLED';
+  if (status.includes('PICKLIST')) return 'PICKLISTED';
+  if (status.includes('PACKED')) return 'PACKED';
+  if (
+    status.includes('SHIPPED') ||
+    status.includes('IN TRANSIT') ||
+    status.includes('OUT FOR DELIVERY') ||
+    status.includes('OUT FOR SHIPMENT')
+  ) {
+    return 'SHIPPED';
+  }
+  if (status.includes('READY')) return 'READY TO PACK';
+  if (status === 'NEW' || status === 'NEW ORDER') return 'NEW';
+  if (status.includes('PROCESSING') || status.includes('PENDING')) return 'NEW';
+  if (status.includes('DELIVERED')) return 'DELIVERED';
+
+  return undefined;
 };
 
 // ── Print Invoice Function ────────────────────────────────────────────────────
-export const printInvoice = (order: Order) => {
+const getStatusBadgeStyles = (status: OrderStatus) => {
+  switch (status) {
+    case 'NEW':
+      return { background: '#fef3c7', color: '#92400e' };
+    case 'READY TO PACK':
+      return { background: '#e2e8f0', color: '#1e293b' };
+    case 'PACKED':
+      return { background: '#dbeafe', color: '#1e40af' };
+    case 'PICKLISTED':
+      return { background: '#e0e7ff', color: '#3730a3' };
+    case 'SHIPPED':
+      return { background: '#dbeafe', color: '#1e40af' };
+    case 'DELIVERED':
+      return { background: '#d1fae5', color: '#065f46' };
+    case 'CANCELLED':
+      return { background: '#fee2e2', color: '#b91c1c' };
+    case 'RETURN PENDING':
+      return { background: '#ffedd5', color: '#c2410c' };
+    case 'RETURNED':
+      return { background: '#ede9fe', color: '#6d28d9' };
+    default:
+      return { background: '#f8fafc', color: '#0f172a' };
+  }
+};
+
+export const printInvoice = (order: OrderData) => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
   const itemsHtml = order.items
     .map(
       (i) =>
-        `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.product.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.size}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${i.product.price.toLocaleString('en-IN')}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${(i.product.price * i.quantity).toLocaleString('en-IN')}</td></tr>`,
+        `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.units}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.size}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${i.selling_price.toLocaleString('en-IN')}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${(i.selling_price * i.units).toLocaleString('en-IN')}</td></tr>`,
     )
     .join('');
 
@@ -55,11 +185,11 @@ export const printInvoice = (order: Order) => {
       <div class="details">
         <div class="col">
           <strong>Order #${order._id}</strong>
-          ${order.orderedDate} · <span class="status" style="background:${order.status === 'Delivered' ? '#d1fae5' : order.status === 'Dispatched' ? '#dbeafe' : order.status === 'Processing' ? '#fef3c7' : '#fce6e3'};color:${order.status === 'Delivered' ? '#065f46' : order.status === 'Dispatched' ? '#1e40af' : order.status === 'Processing' ? '#92400e' : '#7e1c12'}">${statusIcon[order.status]} ${order.status}</span>
+          ${order.order_date} · <span class="status" style="background:${getStatusBadgeStyles(order.status).background};color:${getStatusBadgeStyles(order.status).color}">${statusIcon[order.status]} ${order.status}</span>
         </div>
         <div class="col">
           <strong>Shipping To</strong>
-          ${order.name}<br>${order.email}<br>${order.phone}<br>${order.address}
+          ${order.shipping_name}<br>${order.shipping_email}<br>${order.shipping_phone}<br>${order.shipping_address}
         </div>
       </div>
       <table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:center">Size</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table>

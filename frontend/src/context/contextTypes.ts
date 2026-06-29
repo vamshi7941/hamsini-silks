@@ -1,4 +1,5 @@
-import { HeroContent } from "@/api/admin";
+import { HeroContent } from '@/api/admin';
+import { OrderData, OrderStatus } from '@/types';
 
 export type Product = {
   _id: string;
@@ -43,7 +44,7 @@ export type Order = {
   items: CartItem[];
   total: number;
   paymentMethod: string;
-  status: 'Pending' | 'Processing' | 'Dispatched' | 'Delivered';
+  status: OrderStatus;
   orderedDate?: string;
 };
 
@@ -93,6 +94,9 @@ export interface StoreContextType {
   orders: Order[];
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
 
+  orderData: OrderData | null;
+  setOrderData: React.Dispatch<React.SetStateAction<OrderData | null>>;
+
   imagesLoaded: Boolean;
   setImagesLoaded: React.Dispatch<React.SetStateAction<Boolean>>;
 
@@ -107,7 +111,10 @@ export interface StoreContextType {
     heroContent: HeroContent;
   };
   setSiteContent: React.Dispatch<
-    React.SetStateAction<{ categories: CategoryConfig[]; heroContent: HeroContent }>
+    React.SetStateAction<{
+      categories: CategoryConfig[];
+      heroContent: HeroContent;
+    }>
   >;
 
   toast: Toast | null;

@@ -28,4 +28,14 @@ router.get('/:id/image', async (req, res) => {
   }
 });
 
+router.route('/addProduct').post(requireAdminAuth, adminController.addProduct);
+
+router
+  .route('/updateProduct/:id')
+  .put(requireAdminAuth, adminController.updateProduct);
+
+router
+  .route('/deleteProduct/:id')
+  .delete(requireAdminAuth, adminController.deleteProduct);
+
 export default router;
