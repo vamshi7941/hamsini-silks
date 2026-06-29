@@ -31,10 +31,19 @@ export default function ProfilePage() {
             </div>
             <div className="relative z-10">
               <h1 className="font-display text-2xl font-bold text-gold-200">
-                {user.role === 'admin' ? 'Admin' : 'Customer'} Portal
+                {user.role === 'admin'
+                  ? 'Admin'
+                  : user.role === 'promoter'
+                    ? 'Promoter'
+                    : 'Customer'}{' '}
+                Portal
               </h1>
               <p className="text-xs text-gold-100/70 mt-1">
-                Access your orders, wishlist & exclusive privileges
+                {user.role === 'admin'
+                  ? 'Manage the store and view all orders'
+                  : user.role === 'promoter'
+                    ? 'View your promoter dashboard and manage your referrals'
+                    : 'View your orders and manage your account'}
               </p>
             </div>
           </div>
@@ -52,17 +61,27 @@ export default function ProfilePage() {
                 <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-maroon-100 text-maroon-800">
                   {user.role === 'admin'
                     ? '⚙️ Admin Access'
-                    : '👑 Privileged Patron'}
+                    : user.role === 'promoter'
+                      ? '🤝 Promoter Access'
+                      : '👑 Privileged Patron'}
                 </span>
               </div>
-              <div
-                className={`grid gap-3 pt-2 grid-cols-2`}
-              >
+              <div className={`grid gap-3 pt-2 grid-cols-2`}>
                 <Link
-                  to={user.role === 'admin' ? '/admin' : user.role === 'customer' ? '/my-orders' : '/promoter'}
+                  to={
+                    user.role === 'admin'
+                      ? '/admin'
+                      : user.role === 'customer'
+                        ? '/my-orders'
+                        : '/promoter'
+                  }
                   className="py-3 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 transition-colors cursor-pointer text-center"
                 >
-                  {user.role === 'admin' ? 'Go to Admin' : user.role === 'customer' ? 'My Orders' : 'My Profile'}
+                  {user.role === 'admin'
+                    ? 'Go to Admin'
+                    : user.role === 'customer'
+                      ? 'My Orders'
+                      : 'My Dashboard'}
                 </Link>
                 <button
                   onClick={logout}

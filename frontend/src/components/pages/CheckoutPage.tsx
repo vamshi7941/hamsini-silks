@@ -148,6 +148,9 @@ export default function CheckoutPage() {
       if (result?.success) {
         setOtpVerified(true);
         showToast('Phone verified for COD order.', 'success');
+        // Automatically place order after OTP verification
+        await new Promise((resolve) => setTimeout(resolve, 500)); // Small delay for user feedback
+        await handlePlaceOrder();
       }
     } catch (error) {
       console.error('Verify OTP failed', error);
@@ -172,9 +175,7 @@ export default function CheckoutPage() {
       orderData,
     });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handlePlaceOrder = async () => {
     if (payment === 'cod' && !otpVerified && user.phone !== phone) {
       showToast(
         'Please verify your phone with OTP before placing a COD order.',
@@ -202,6 +203,11 @@ export default function CheckoutPage() {
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handlePlaceOrder();
   };
 
   useEffect(() => {
@@ -612,7 +618,7 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {payment === 'COD' && user.phone !== phone && (
+              {payment === 'COD' && (
                 <div className="mt-4 rounded-2xl border border-gold-100 bg-[#fff8ef] p-4">
                   <p className="text-sm font-semibold text-maroon-900 mb-3">
                     Cash on Delivery requires phone OTP verification.
@@ -628,8 +634,8 @@ export default function CheckoutPage() {
                     </button>
                   ) : otpVerified ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 font-semibold">
-                      OTP verified for {phone || 'your phone number'}. You can
-                      now place the order.
+                      ✓ OTP verified for {phone || 'your phone number'}. Ready
+                      to place order.
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -650,9 +656,12 @@ export default function CheckoutPage() {
                       <button
                         type="button"
                         onClick={handleVerifyOtp}
-                        className="w-full py-3 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                        disabled={verifyingOtp || otp.length < 6}
+                        className="w-full py-3 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
                       >
-                        {verifyingOtp ? 'Verifying OTP…' : 'Verify OTP'}
+                        {verifyingOtp
+                          ? 'Verifying and placing order…'
+                          : `Verify & Place Order · ₹${orderTotal.toLocaleString('en-IN')}`}
                       </button>
                     </div>
                   )}
@@ -661,21 +670,19 @@ export default function CheckoutPage() {
             </div>
 
             {/* Submit */}
-            <button
-              type="submit"
-              disabled={isProcessingPayment}
-              className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm sm:text-base tracking-wider shadow-lg transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isProcessingPayment
-                ? 'Processing…'
-                : payment === 'razorpay'
-                  ? `Pay ₹${orderTotal.toLocaleString('en-IN')} via Razorpay`
-                  : `🪷 Confirm Order · ₹${orderTotal.toLocaleString('en-IN')}`}
-            </button>
-            <p className="text-center text-xs text-maroon-700/50">
-              By confirming, you agree to our Terms & Silk Mark authenticity
-              policy.
-            </p>
+            {payment !== 'COD' || otpVerified ? (
+              <button
+                type="submit"
+                disabled={isProcessingPayment}
+                className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm sm:text-base tracking-wider shadow-lg transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isProcessingPayment
+                  ? 'Processing…'
+                  : payment === 'razorpay'
+                    ? `Pay ₹${orderTotal.toLocaleString('en-IN')} via Razorpay`
+                    : `🪷 Confirm Order · ₹${orderTotal.toLocaleString('en-IN')}`}
+              </button>
+            ) : null}
           </form>
 
           {/* ── Summary panel ── */}
