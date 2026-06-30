@@ -12,6 +12,40 @@ export const orderStatuses: OrderStatus[] = [
   'RETURNED',
 ];
 
+export const inTransitStatuses: OrderStatus[] = [
+  'READY TO PACK',
+  'PACKED',
+  'PICKLISTED',
+];
+
+export const customerDisplayStatusMap: Record<OrderStatus, string> = {
+  NEW: 'Ordered',
+  'READY TO PACK': 'In transit',
+  PACKED: 'In transit',
+  PICKLISTED: 'In transit',
+  SHIPPED: 'Shipped',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
+  'RETURN PENDING': 'Return pending',
+  RETURNED: 'Returned',
+};
+
+export const getCustomerDisplayStatus = (status: OrderStatus): string =>
+  customerDisplayStatusMap[status] ?? status;
+
+export const isCustomerInTransitStatus = (status: OrderStatus): boolean =>
+  inTransitStatuses.includes(status);
+
+export const canDownloadInvoice = (order: OrderData): boolean => {
+  const paymentMethod = (order.paymentMethod || '').trim().toLowerCase();
+
+  if (paymentMethod === 'cod') {
+    return order.status === 'DELIVERED';
+  }
+
+  return true;
+};
+
 // ── Status Icons & Maps ────────────────────────────────────────────────────────
 export const statusIcon: Record<OrderStatus, string> = {
   NEW: '⏳',
@@ -147,6 +181,8 @@ const getStatusBadgeStyles = (status: OrderStatus) => {
 };
 
 export const printInvoice = (order: OrderData) => {
+  if (!canDownloadInvoice(order)) return;
+
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
@@ -185,7 +221,9 @@ export const printInvoice = (order: OrderData) => {
       <div class="details">
         <div class="col">
           <strong>Order #${order._id}</strong>
-          ${order.order_date} · <span class="status" style="background:${getStatusBadgeStyles(order.status).background};color:${getStatusBadgeStyles(order.status).color}">${statusIcon[order.status]} ${order.status}</span>
+          ${new Date(order.order_date).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+          })} · <span class="status" style="background:${getStatusBadgeStyles(order.status).background};color:${getStatusBadgeStyles(order.status).color}">${statusIcon[order.status]} ${getCustomerDisplayStatus(order.status)}</span>
         </div>
         <div class="col">
           <strong>Shipping To</strong>

@@ -31,29 +31,38 @@ export default function Orders() {
             className="w-full pl-9 pr-4 py-2 border border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {[
-            'All',
-            'NEW',
-            'READY TO PACK',
-            'PACKED',
-            'PICKLISTED',
-            'SHIPPED',
-            'DELIVERED',
-            'CANCELLED',
-            'RETURN PENDING',
-            'RETURNED',
-          ].map((f, i) => (
-            <button
-              key={i}
-              onClick={() => setOrderFilter(f)}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${orderFilter === f ? 'bg-maroon-900 text-gold-200' : 'bg-maroon-50 text-maroon-900 hover:bg-maroon-100'}`}
+        <div className="min-w-[220px]">
+          <div className="relative">
+            <select
+              value={orderFilter}
+              onChange={(e) => setOrderFilter(e.target.value)}
+              className="w-full appearance-none bg-[#fffaf3] border border-gold-200 rounded-xl p-2 pr-10 text-sm font-semibold text-maroon-900 shadow-sm transition-all focus:outline-none focus:border-maroon-700 focus:ring-2 focus:ring-maroon-100"
             >
-              {f}{' '}
-              {f !== 'All' &&
-                `(${orders.filter((o) => o.status === f).length})`}
-            </button>
-          ))}
+              <option value="All">All</option>
+              <option value="NEW">Ordered</option>
+              <option value="IN_TRANSIT">In transit</option>
+              <option value="SHIPPED">Shipped</option>
+              <option value="DELIVERED">Delivered</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="RETURN PENDING">Return pending</option>
+              <option value="RETURNED">Returned</option>
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-maroon-700">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="w-4 h-4"
+              >
+                <path
+                  d="M6 9l6 6 6-6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          </div>
         </div>
       </div>
       <div className="space-y-3">
