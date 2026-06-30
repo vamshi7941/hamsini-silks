@@ -65,23 +65,20 @@ export default function OrderRow({ order }: { order: OrderData }) {
         className="flex flex-nowrap whitespace-nowrap items-center gap-4 p-4 cursor-pointer hover:bg-maroon-50/30 transition-colors justify-between"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="min-w-[110px]">
+        <div className="min-w-[110px] flex flex-col gap-1.5">
           <span className="font-display text-sm font-bold text-maroon-900 block">
             #{order._id}
           </span>
-          <div className="min-w-[110px] py-3 flex gap-4 items-center">
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${statusMap[order.status]}`}
-            >
-              {statusIcon[order.status]}{' '}
-              {getCustomerDisplayStatus(order.status)}
-            </span>
-            <span className="text-[11px] text-maroon-700/60">
-              {new Date(order.order_date).toLocaleString('en-IN', {
-                timeZone: 'Asia/Kolkata',
-              })}
-            </span>
-          </div>
+          <span className="text-[11px] text-maroon-700/60">
+            {new Date(order.order_date).toLocaleString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+            })}
+          </span>
+          <span
+            className={`inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${statusMap[order.status]}`}
+          >
+            {statusIcon[order.status]} {getCustomerDisplayStatus(order.status)}
+          </span>
         </div>
 
         <div className="hidden sm:flex flex-col items-end lg:mr-8 h-full flex-1 min-w-0">
