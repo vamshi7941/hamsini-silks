@@ -148,7 +148,7 @@ export default function LoginPage() {
                       : 'text-maroon-600 hover:text-maroon-800'
                   }`}
                 >
-                  👑 Patron Login
+                  Patron Login
                 </button>
                 <button
                   onClick={() => setTab('promoter')}
@@ -158,7 +158,7 @@ export default function LoginPage() {
                       : 'text-maroon-600 hover:text-maroon-800'
                   }`}
                 >
-                  🎯 Promoter Login
+                  Promoter Login
                 </button>
               </div>
 

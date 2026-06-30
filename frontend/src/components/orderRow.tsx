@@ -77,7 +77,7 @@ export default function OrderRow({ order }: { order: OrderData }) {
           <span
             className={`inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${statusMap[order.status]}`}
           >
-            {statusIcon[order.status]} {getCustomerDisplayStatus(order.status)}
+            {getCustomerDisplayStatus(order.status)}
           </span>
         </div>
 

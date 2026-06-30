@@ -145,14 +145,14 @@ export default function AdminLoginPage() {
                   to="/login"
                   className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-semibold"
                 >
-                  👑 Patron Login
+                  Patron Login
                 </Link>
                 <span className="text-xs text-maroon-400">•</span>
                 <Link
                   to="/login"
                   className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-semibold"
                 >
-                  🎯 Promoter Login
+                  Promoter Login
                 </Link>
               </div>
             </div>
