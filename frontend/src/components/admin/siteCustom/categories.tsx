@@ -18,6 +18,9 @@ export default function Categories() {
   const parentCategories = siteContent.categories.filter(
     (item) => item.type !== 'subcategory',
   );
+  const activeParentCategoryCount = parentCategories.filter(
+    (item) => item.isActive !== false,
+  ).length;
 
   const refresh = async () => {
     const data = await fetchSiteContent();
@@ -41,6 +44,10 @@ export default function Categories() {
         description: form.description,
         type: form.type,
         parentId: form.parentId || null,
+        isActive:
+          form.type === 'subcategory' || activeParentCategoryCount < 4
+            ? true
+            : false,
       });
     }
 

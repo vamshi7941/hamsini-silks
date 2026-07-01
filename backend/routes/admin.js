@@ -76,4 +76,8 @@ router
   .route('/ribbon-content')
   .post(requireAdminAuth, siteController.saveRibbonContent);
 
+router
+  .route('/heritage-content')
+  .post(requireAdminAuth, siteController.saveHeritageContent);
+
 export default router;

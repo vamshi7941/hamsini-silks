@@ -73,6 +73,7 @@ export default function App() {
         heroContent: content.heroContent || null,
         features: content.features || [],
         ribbon: content.ribbon || [],
+        heritage: content.heritage || null,
       }),
     );
   }, []);

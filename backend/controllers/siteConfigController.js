@@ -26,14 +26,19 @@ export async function createCategory(req, res) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
+    const activeParentCount = (siteConfig.categories || []).filter(
+      (item) => item.type !== 'subcategory' && item.isActive !== false,
+    ).length;
+
     const category = {
       name: name.trim(),
       slug,
       description: description || '',
+      image: '',
       parentId: parentId || null,
       type: type || 'category',
       order: order ?? 0,
-      isActive: true,
+      isActive: type === 'subcategory' || activeParentCount < 4 ? true : false,
     };
 
     siteConfig.categories.push(category);
@@ -47,7 +52,8 @@ export async function createCategory(req, res) {
 
 export async function updateCategory(req, res) {
   const { id } = req.params;
-  const { name, description, parentId, type, order, isActive } = req.body;
+  const { name, description, parentId, type, order, isActive, image } =
+    req.body;
 
   try {
     const siteConfig = await getOrCreateSiteConfig();
@@ -67,6 +73,7 @@ export async function updateCategory(req, res) {
         .replace(/(^-|-$)/g, '');
     }
     if (description !== undefined) category.description = description;
+    if (image !== undefined) category.image = image;
     if (parentId !== undefined) category.parentId = parentId || null;
     if (type) category.type = type;
     if (order !== undefined) category.order = order;
@@ -217,6 +224,26 @@ export async function saveRibbonContent(req, res) {
     await siteConfig.save();
 
     return res.status(200).json({ success: true, ribbon: siteConfig.ribbon });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+}
+
+export async function saveHeritageContent(req, res) {
+  try {
+    const { title, subtitle } = req.body || {};
+
+    const siteConfig = await getOrCreateSiteConfig();
+    siteConfig.heritage = {
+      title: title?.trim() || siteConfig.heritage?.title || '',
+      subtitle: subtitle?.trim() || siteConfig.heritage?.subtitle || '',
+    };
+
+    await siteConfig.save();
+
+    return res
+      .status(200)
+      .json({ success: true, heritage: siteConfig.heritage });
   } catch (error) {
     return res.status(400).json({ success: false, error: error.message });
   }

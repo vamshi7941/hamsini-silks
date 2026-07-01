@@ -2,6 +2,7 @@ import Features from './siteCustom/features';
 import Categories from './siteCustom/categories';
 import Hero from './siteCustom/hero';
 import Ribbon from './siteCustom/ribbon';
+import Collections from './siteCustom/collections';
 
 export default function SiteCustomize() {
   return (
@@ -14,6 +15,8 @@ export default function SiteCustomize() {
       <Hero />
 
       <Features />
+
+      <Collections />
     </div>
   );
 }

@@ -12,6 +12,7 @@ const SiteConfigSchema = new Schema(
         name: { type: String, required: true, trim: true },
         slug: { type: String, required: true, trim: true },
         description: { type: String, default: '' },
+        image: { type: String, default: '' },
         parentId: { type: String, default: null },
         type: {
           type: String,
@@ -19,6 +20,7 @@ const SiteConfigSchema = new Schema(
           default: 'category',
         },
         order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
       },
     ],
     hero: {
@@ -57,6 +59,14 @@ const SiteConfigSchema = new Schema(
     ribbon: {
       type: [String],
       default: [],
+    },
+    heritage: {
+      title: { type: String, default: 'Heritage Weaves of India' },
+      subtitle: {
+        type: String,
+        default:
+          'From the temple looms of Kanchipuram to the royal ateliers of Varanasi, each saree tells the story of a craft passed down through generations.',
+      },
     },
   },
   { timestamps: true },

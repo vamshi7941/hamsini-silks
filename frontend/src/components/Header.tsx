@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
 import {
   HeartIcon,
   BagIcon,
@@ -15,6 +9,7 @@ import {
   ChevronRightIcon,
 } from './Icons';
 import { useStore } from '../context/StoreContext';
+import { slugify } from '@/utils/cn';
 
 export default function Header() {
   const [open, setOpen] = useState(false);

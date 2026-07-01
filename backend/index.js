@@ -61,12 +61,11 @@ app.get('/api/site-content', async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      categories: (siteConfig.categories || []).filter(
-        (item) => item.isActive !== false,
-      ),
+      categories: siteConfig.categories || [],
       heroContent: siteConfig.hero || null,
       features: siteConfig.features || [],
       ribbon: siteConfig.ribbon || [],
+      heritage: siteConfig.heritage || { title: '', subtitle: '' },
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });

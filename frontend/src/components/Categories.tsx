@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import SectionHeader from './SectionHeader';
 import { ChevronRightIcon } from './Icons';
 import { useStore } from '../context/StoreContext';
+import { slugify } from '@/utils/cn';
 
 export default function Categories() {
   const navigate = useNavigate();
@@ -9,24 +10,27 @@ export default function Categories() {
 
   return (
     <section id="collections" className="py-12 sm:py-16 lg:py-20 bg-[#fdf8f1]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="OUR COLLECTIONS"
-          title="Heritage Weaves of India"
-          subtitle="From the temple looms of Kanchipuram to the royal ateliers of Varanasi, each saree tells the story of a craft passed down through generations."
+          title={siteContent?.heritage?.title || 'Heritage Weaves of India'}
+          subtitle={siteContent?.heritage?.subtitle || ''}
         />
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-6">
           {siteContent.categories
-            .filter((cat) => cat.type !== 'subcategory')
+            .filter(
+              (cat) => cat.type !== 'subcategory' && cat.isActive !== false,
+            )
+            .slice(0, 4)
             .map((cat, i) => (
               <button
                 key={cat._id}
                 onClick={() => {
                   setSelectedCategory(cat.name);
-                  navigate('/shop');
+                  navigate(`/category/${slugify(cat.name)}`);
                 }}
-                className="group relative overflow-hidden rounded-2xl sm:rounded-3xl aspect-[3/4] bg-maroon-900 text-left block w-full cursor-pointer transition-transform duration-300 hover:-translate-y-1"
+                className="group relative overflow-hidden rounded-2xl sm:rounded-3xl aspect-[3/4] bg-maroon-900 text-left block cursor-pointer transition-transform duration-300 hover:-translate-y-1 w-3/5 sm:w-[20vw] lg:w-[16vw] xl:w-[14vw]"
               >
                 <img
                   src={cat.image}
@@ -38,14 +42,7 @@ export default function Categories() {
                 {/* decorative border */}
                 <div className="absolute inset-2 sm:inset-3 border border-gold-300/30 rounded-xl sm:rounded-2xl pointer-events-none" />
 
-                <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-gold-500/90 backdrop-blur text-maroon-900 text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
-                  {cat.description || 'Collection'}
-                </div>
-
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-                  <div className="text-[9px] sm:text-[10px] tracking-[0.25em] sm:tracking-[0.3em] text-gold-300 mb-1 sm:mb-2">
-                    COLLECTION 0{i + 1}
-                  </div>
                   <h3 className="font-display text-base sm:text-xl lg:text-2xl text-gold-100 mb-0.5 sm:mb-1 leading-tight">
                     {cat.name}
                   </h3>

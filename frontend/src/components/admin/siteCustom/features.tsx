@@ -220,13 +220,15 @@ export default function Features() {
               <h5 className="text-sm font-semibold text-maroon-900">
                 Feature Editor
               </h5>
-              <button
-                type="button"
-                onClick={handleAddFeature}
-                className="rounded-xl bg-maroon-900 px-3.5 py-2 text-sm font-semibold text-gold-100"
-              >
-                Add Feature
-              </button>
+              {!isAdding && (
+                <button
+                  type="button"
+                  onClick={handleAddFeature}
+                  className="rounded-xl bg-maroon-900 px-3.5 py-2 text-sm font-semibold text-gold-100"
+                >
+                  Add Feature
+                </button>
+              )}
             </div>
 
             {!isAdding ? (
@@ -235,141 +237,126 @@ export default function Features() {
                 customizing the section.
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                    Icon
-                  </label>
-                  <div className="flex flex-col gap-2 items-center">
-                    <select
-                      value={
-                        customIconMode
-                          ? 'custom'
-                          : activeFeature.icon?.name || ''
-                      }
-                      required
-                      onChange={(e) => {
-                        if (e.target.value === 'custom') {
-                          setCustomIconMode(true);
-                          handleIconSelect(activeFeatureIndex, {
-                            name: '',
-                            svg: '',
-                          });
-                          return;
+              <>
+                <div className="grid gap-4 md:grid-cols-2 mb-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                      Icon
+                    </label>
+                    <div className="flex flex-col gap-2 items-center">
+                      <select
+                        value={
+                          customIconMode
+                            ? 'custom'
+                            : activeFeature.icon?.name || ''
                         }
-                        setCustomIconMode(false);
-                        const sel = ICON_SET.find(
-                          (i) => i.name === e.target.value,
-                        );
-                        if (sel) handleIconSelect(activeFeatureIndex, sel);
-                      }}
-                      className="w-full rounded-xl border border-gold-200 px-3 py-2"
-                    >
-                      <option value="">Select an icon</option>
-                      {ICON_SET.map((ic) => (
-                        <option key={ic.name} value={ic.name}>
-                          {ic.name}
-                        </option>
-                      ))}
-                      <option value="custom">Custom (paste SVG below)</option>
-                    </select>
-                    {customIconMode && (
-                      <div className="w-full space-y-2 mt-2">
-                        <span className="text-xs text-maroon-700/70">
-                          Icon Name:
-                        </span>
+                        required
+                        onChange={(e) => {
+                          if (e.target.value === 'custom') {
+                            setCustomIconMode(true);
+                            handleIconSelect(activeFeatureIndex, {
+                              name: '',
+                              svg: '',
+                            });
+                            return;
+                          }
+                          setCustomIconMode(false);
+                          const sel = ICON_SET.find(
+                            (i) => i.name === e.target.value,
+                          );
+                          if (sel) handleIconSelect(activeFeatureIndex, sel);
+                        }}
+                        className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                      >
+                        <option value="">Select an icon</option>
+                        {ICON_SET.map((ic) => (
+                          <option key={ic.name} value={ic.name}>
+                            {ic.name}
+                          </option>
+                        ))}
+                        <option value="custom">Custom (paste SVG below)</option>
+                      </select>
+
+                      <div className="space-y-4 w-full">
+                        <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                          Title
+                        </label>
                         <input
-                          value={activeFeature.icon?.name || ''}
-                          onChange={(e) =>
-                            handleIconSelect(activeFeatureIndex, {
-                              name: e.target.value,
-                              svg: activeFeature.icon?.svg || '',
-                            })
+                          value={
+                            featuresForm[activeFeatureIndex ?? 0]?.title || ''
                           }
-                          placeholder="Enter custom icon name"
+                          onChange={(e) =>
+                            handleFeatureChange('title', e.target.value)
+                          }
+                          required
                           className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                          placeholder="e.g. Premium Quality"
                         />
-                        <textarea
-                          value={activeFeature.icon?.svg || ''}
-                          onChange={(e) =>
-                            handleIconSelect(activeFeatureIndex, {
-                              name: activeFeature.icon?.name || '',
-                              svg: e.target.value,
-                            })
+                        <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                          Description
+                        </label>
+                        <input
+                          value={
+                            featuresForm[activeFeatureIndex ?? 0]
+                              ?.description || ''
                           }
-                          rows={4}
-                          placeholder="Paste SVG code here"
+                          onChange={(e) =>
+                            handleFeatureChange('description', e.target.value)
+                          }
+                          required
                           className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                          placeholder="Describe the feature"
                         />
                       </div>
-                    )}
-                    {!customIconMode && (
-                      <span className="text-xs text-maroon-700/70">
-                        Preview:
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-1 flex items-center justify-center rounded-xl border border-gold-200 bg-white p-2">
-                    <div className="w-10 h-10 flex items-center justify-center">
-                      <div
-                        className="text-maroon-900 text-lg"
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            featuresForm[activeFeatureIndex ?? 0]?.icon?.svg ||
-                            '',
-                        }}
-                      />
                     </div>
                   </div>
+                  {customIconMode && (
+                    <div className="w-full space-y-2 mt-2">
+                      <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                        Custom Icon
+                      </label>
+                      <input
+                        value={activeFeature.icon?.name || ''}
+                        onChange={(e) =>
+                          handleIconSelect(activeFeatureIndex, {
+                            name: e.target.value,
+                            svg: activeFeature.icon?.svg || '',
+                          })
+                        }
+                        placeholder="Enter custom icon name"
+                        className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                      />
+                      <textarea
+                        value={activeFeature.icon?.svg || ''}
+                        onChange={(e) =>
+                          handleIconSelect(activeFeatureIndex, {
+                            name: activeFeature.icon?.name || '',
+                            svg: e.target.value,
+                          })
+                        }
+                        rows={4}
+                        placeholder="Paste SVG code here"
+                        className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                      Title
-                    </label>
-                    <input
-                      value={featuresForm[activeFeatureIndex ?? 0]?.title || ''}
-                      onChange={(e) =>
-                        handleFeatureChange('title', e.target.value)
-                      }
-                      required
-                      className="w-full rounded-xl border border-gold-200 px-3 py-2"
-                      placeholder="e.g. Premium Quality"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                      Description
-                    </label>
-                    <input
-                      value={
-                        featuresForm[activeFeatureIndex ?? 0]?.description || ''
-                      }
-                      onChange={(e) =>
-                        handleFeatureChange('description', e.target.value)
-                      }
-                      required
-                      className="w-full rounded-xl border border-gold-200 px-3 py-2"
-                      placeholder="Describe the feature"
-                    />
-                  </div>
-                  <div className="flex flex-wrap justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="rounded-xl border border-gold-200 px-4 py-2.5 text-sm font-semibold text-maroon-900"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="rounded-xl bg-maroon-900 px-4 py-2.5 text-sm font-semibold text-gold-100"
-                    >
-                      Save Features
-                    </button>
-                  </div>
+                <div className="flex flex-col flex-wrap justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="rounded-xl border border-gold-200 px-4 py-2.5 text-sm font-semibold text-maroon-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-maroon-900 px-4 py-2.5 text-sm font-semibold text-gold-100"
+                  >
+                    Save Features
+                  </button>
                 </div>
-              </div>
+              </>
             )}
           </div>
 

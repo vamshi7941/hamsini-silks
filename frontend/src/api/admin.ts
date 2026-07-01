@@ -44,6 +44,11 @@ export type FeatureItem = {
 
 export type RibbonContent = string[];
 
+export type HeritageContent = {
+  title: string;
+  subtitle: string;
+};
+
 export const AdminApi = () => {
   const apiUrl =
     (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
@@ -386,6 +391,31 @@ export const AdminApi = () => {
     }
   };
 
+  const saveHeritageContent = async (content: HeritageContent) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/heritage-content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify(content),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save heritage content');
+      }
+      showToast('Heritage section updated successfully', 'success');
+      return json;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to save heritage content',
+        'error',
+      );
+      return null;
+    }
+  };
+
   return {
     addProduct,
     updateProduct,
@@ -398,5 +428,6 @@ export const AdminApi = () => {
     saveHeroContent,
     saveFeatures,
     saveRibbonContent,
+    saveHeritageContent,
   };
 };

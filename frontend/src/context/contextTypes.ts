@@ -1,4 +1,4 @@
-import { FeatureItem, HeroContent } from '@/api/admin';
+import { FeatureItem, HeroContent, HeritageContent } from '@/api/admin';
 import { OrderData, OrderStatus } from '@/types';
 
 export type Product = {
@@ -22,6 +22,7 @@ export type CategoryConfig = {
   name: string;
   slug: string;
   description?: string;
+  image?: string;
   parentId?: string | null;
   type?: 'category' | 'subcategory';
   isActive?: boolean;
@@ -110,6 +111,7 @@ export interface StoreContextType {
     heroContent: HeroContent;
     features: FeatureItem[];
     ribbon: string[];
+    heritage: HeritageContent;
   };
   setSiteContent: React.Dispatch<
     React.SetStateAction<{
@@ -117,6 +119,7 @@ export interface StoreContextType {
       heroContent: HeroContent;
       features: FeatureItem[];
       ribbon: string[];
+      heritage: HeritageContent;
     }>
   >;
 
