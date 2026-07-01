@@ -1,7 +1,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { CartItem, CategoryConfig, Order, Product, StoreContextType, Toast, ToastType, User } from './contextTypes';
+import {
+  CartItem,
+  CategoryConfig,
+  Order,
+  Product,
+  StoreContextType,
+  Toast,
+  ToastType,
+  User,
+} from './contextTypes';
 import { OrderData } from '@/types';
-
+import { FeatureItem } from '@/api/admin';
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
@@ -57,7 +66,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [siteContent, setSiteContent] = useState<{
     categories: CategoryConfig[];
     heroContent: any;
-  }>({ categories: [], heroContent: null });
+    features: FeatureItem[];
+  }>({ categories: [], heroContent: null, features: [] });
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);
 

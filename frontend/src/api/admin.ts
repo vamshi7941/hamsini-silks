@@ -32,6 +32,16 @@ export type HeroContent = {
   badgeText?: string;
 };
 
+export type FeatureItem = {
+  _id?: string;
+  title: string;
+  description: string;
+  icon: {
+    name: string,
+    svg: string
+  };
+};
+
 export const AdminApi = () => {
   const apiUrl =
     (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
@@ -301,10 +311,6 @@ export const AdminApi = () => {
 
   const saveHeroContent = async (content: HeroContent) => {
     try {
-      const payload: Partial<HeroContent> = {};
-      if (content.featuredProductId !== undefined)
-        payload.featuredProductId = content.featuredProductId;
-
       const response = await fetch(`${apiUrl}/api/admin/hero-content`, {
         method: 'POST',
         headers: {
@@ -328,6 +334,31 @@ export const AdminApi = () => {
     }
   };
 
+  const saveFeatures = async (features: FeatureItem[]) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/features`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ features }),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save features');
+      }
+      showToast('Features updated successfully', 'success');
+      return json;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to save features',
+        'error',
+      );
+      return null;
+    }
+  };
+
   return {
     addProduct,
     updateProduct,
@@ -338,5 +369,6 @@ export const AdminApi = () => {
     updateCategory,
     deleteCategory,
     saveHeroContent,
+    saveFeatures,
   };
 };

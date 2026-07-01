@@ -71,6 +71,7 @@ export default function App() {
       setSiteContent({
         categories: content.categories || [],
         heroContent: content.heroContent || null,
+        features: content.features || [],
       }),
     );
   }, []);

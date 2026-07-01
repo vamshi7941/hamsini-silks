@@ -1,3 +1,4 @@
+import Features from './siteCustom/features';
 import Categories from './siteCustom/categories';
 import Hero from './siteCustom/hero';
 
@@ -7,6 +8,8 @@ export default function SiteCustomize() {
       <Categories />
 
       <Hero />
+
+      <Features/>
     </div>
   );
 }

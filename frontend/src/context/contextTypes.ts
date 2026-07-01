@@ -1,4 +1,4 @@
-import { HeroContent } from '@/api/admin';
+import { FeatureItem, HeroContent } from '@/api/admin';
 import { OrderData, OrderStatus } from '@/types';
 
 export type Product = {
@@ -22,7 +22,6 @@ export type CategoryConfig = {
   name: string;
   slug: string;
   description?: string;
-  image?: string;
   parentId?: string | null;
   type?: 'category' | 'subcategory';
   isActive?: boolean;
@@ -109,11 +108,13 @@ export interface StoreContextType {
   siteContent: {
     categories: CategoryConfig[];
     heroContent: HeroContent;
+    features: FeatureItem[];
   };
   setSiteContent: React.Dispatch<
     React.SetStateAction<{
       categories: CategoryConfig[];
       heroContent: HeroContent;
+      features: FeatureItem[];
     }>
   >;
 

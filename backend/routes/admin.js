@@ -3,6 +3,7 @@ import OrderSchema from '../models/OrdersSchema.js';
 import * as customerController from '../controllers/customerController.js';
 import * as adminController from '../controllers/adminController.js';
 import * as promoterController from '../controllers/promoterController.js';
+import * as siteController from '../controllers/siteConfigController.js';
 import { mapOrdersWithShiprocketStatus } from '../utils/utils.js';
 import { requireAdminAuth } from '../middleware/requireAuth.js';
 import { fetchShiprocketOrdersStatus } from '../controllers/shiprocketController.js';
@@ -58,15 +59,17 @@ router
 // === Admin Site Content Routes ====
 router
   .route('/categories')
-  .post(requireAdminAuth, adminController.createCategory);
+  .post(requireAdminAuth, siteController.createCategory);
 
 router
   .route('/categories/:id')
-  .put(requireAdminAuth, adminController.updateCategory)
-  .delete(requireAdminAuth, adminController.deleteCategory);
+  .put(requireAdminAuth, siteController.updateCategory)
+  .delete(requireAdminAuth, siteController.deleteCategory);
 
 router
   .route('/hero-content')
-  .post(requireAdminAuth, adminController.saveHeroContent);
+  .post(requireAdminAuth, siteController.saveHeroContent);
+
+router.route('/features').post(requireAdminAuth, siteController.saveFeatures);
 
 export default router;

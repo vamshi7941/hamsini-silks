@@ -65,6 +65,7 @@ app.get('/api/site-content', async (req, res) => {
         (item) => item.isActive !== false,
       ),
       heroContent: siteConfig.hero || null,
+      features: siteConfig.features || [],
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });

@@ -12,14 +12,12 @@ const SiteConfigSchema = new Schema(
         name: { type: String, required: true, trim: true },
         slug: { type: String, required: true, trim: true },
         description: { type: String, default: '' },
-        image: { type: String, default: '' },
         parentId: { type: String, default: null },
         type: {
           type: String,
           enum: ['category', 'subcategory'],
           default: 'category',
         },
-        isActive: { type: Boolean, default: true },
         order: { type: Number, default: 0 },
       },
     ],
@@ -44,6 +42,18 @@ const SiteConfigSchema = new Schema(
       },
       badgeText: { type: String, default: '' },
     },
+    features: [
+      {
+        _id: { type: Schema.Types.ObjectId, auto: true },
+        title: { type: String, required: true, trim: true },
+        description: { type: String, default: '' },
+        icon: {
+          name: { type: String, default: '' },
+          svg: { type: String, default: '' },
+        },
+        order: { type: Number, default: 0 },
+      },
+    ],
   },
   { timestamps: true },
 );

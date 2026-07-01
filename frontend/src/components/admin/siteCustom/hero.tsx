@@ -102,12 +102,48 @@ export default function Hero() {
                 setHeroForm({ ...heroForm, description: e.target.value })
               }
               className="w-full rounded-xl border border-gold-200 px-3 py-2"
-              rows={3}
+              rows={5}
             />
           </div>
+          <div className="flex flex-col gap-4 my-2">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                Featured Product
+              </label>
+              <select
+                value={heroForm.featuredProductId || ''}
+                onChange={(e) =>
+                  setHeroForm({
+                    ...heroForm,
+                    featuredProductId: e.target.value,
+                  })
+                }
+                className="w-full rounded-xl border border-gold-200 px-3 py-2"
+              >
+                <option value="">-- select product --</option>
+                {products.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.name} ({p._id})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                Badge Text (optional)
+              </label>
+              <input
+                value={heroForm.badgeText || ''}
+                onChange={(e) =>
+                  setHeroForm({ ...heroForm, badgeText: e.target.value })
+                }
+                className="w-full rounded-xl border border-gold-200 px-3 py-2"
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex gap-4">
-          <div className="flex w-1/2 flex-col gap-4">
+        <div className="flex  flex-col lg:flex-row gap-4 gap-4">
+          <div className="flex lg:w-1/2 flex-col gap-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
                 Primary Button Label
@@ -168,42 +204,8 @@ export default function Hero() {
                 className="w-full rounded-xl border border-gold-200 px-3 py-2"
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                Featured Product
-              </label>
-              <select
-                value={heroForm.featuredProductId || ''}
-                onChange={(e) =>
-                  setHeroForm({
-                    ...heroForm,
-                    featuredProductId: e.target.value,
-                  })
-                }
-                className="w-full rounded-xl border border-gold-200 px-3 py-2"
-              >
-                <option value="">-- select product --</option>
-                {products.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name} ({p._id})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                Badge Text (optional)
-              </label>
-              <input
-                value={heroForm.badgeText || ''}
-                onChange={(e) =>
-                  setHeroForm({ ...heroForm, badgeText: e.target.value })
-                }
-                className="w-full rounded-xl border border-gold-200 px-3 py-2"
-              />
-            </div>
           </div>
-          <div className="flex w-1/2 flex-col gap-2">
+          <div className="flex lg:w-1/2 flex-col gap-0">
             <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
               Image URL
             </label>
@@ -219,7 +221,7 @@ export default function Hero() {
                 <img
                   src={heroForm.image}
                   alt="Category preview"
-                  className="h-[40vh] w-full rounded-lg object-contain"
+                  className="h-[28vh] w-full rounded-lg object-cover"
                 />
               </div>
             )}

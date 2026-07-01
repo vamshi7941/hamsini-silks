@@ -1,7 +1,6 @@
 import { AdminApi, CategoryItem } from '@/api/admin';
 import { useStore } from '@/context/StoreContext';
-import { fileToBase64 } from '@/utils/image';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 export default function Categories() {
   const { siteContent, setSiteContent } = useStore();
@@ -9,11 +8,9 @@ export default function Categories() {
     AdminApi();
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     name: '',
     description: '',
-    image: '',
     type: 'category' as 'category' | 'subcategory',
     parentId: '',
   });
@@ -35,7 +32,6 @@ export default function Categories() {
       await updateCategory(editingId, {
         name: form.name,
         description: form.description,
-        image: form.image,
         type: form.type,
         parentId: form.parentId || null,
       });
@@ -43,7 +39,6 @@ export default function Categories() {
       await saveCategory({
         name: form.name,
         description: form.description,
-        image: form.image,
         type: form.type,
         parentId: form.parentId || null,
       });
@@ -52,7 +47,6 @@ export default function Categories() {
     setForm({
       name: '',
       description: '',
-      image: '',
       type: 'category',
       parentId: '',
     });
@@ -65,7 +59,6 @@ export default function Categories() {
     setForm({
       name: item.name,
       description: item.description || '',
-      image: item.image || '',
       type: item.type || 'category',
       parentId: item.parentId || '',
     });
@@ -75,15 +68,6 @@ export default function Categories() {
     if (!window.confirm('Delete this category and its subcategories?')) return;
     const ok = await deleteCategory(id);
     if (ok) refresh();
-  };
-
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const base64 = await fileToBase64(file);
-    setForm((prev) => ({ ...prev, image: base64 }));
-    if (e.target) e.target.value = '';
   };
 
   return (
@@ -155,27 +139,6 @@ export default function Categories() {
               placeholder="Optional description"
             />
           </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-              Image
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="w-full rounded-xl border border-gold-200 px-3 py-2 bg-white"
-              onChange={handleImageChange}
-            />
-            {form.image && (
-              <div className="mt-3 rounded-xl border border-gold-100 p-2">
-                <img
-                  src={form.image}
-                  alt="Category preview"
-                  className="h-28 w-full rounded-lg object-cover"
-                />
-              </div>
-            )}
-          </div>
           <div className="flex gap-3">
             <button
               type="submit"
@@ -191,7 +154,6 @@ export default function Categories() {
                   setForm({
                     name: '',
                     description: '',
-                    image: '',
                     type: 'category',
                     parentId: '',
                   });
@@ -210,7 +172,7 @@ export default function Categories() {
           <h4 className="font-semibold text-maroon-900 mb-4">
             Current Menu Structure
           </h4>
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-3 max-h-[52vh] overflow-y-auto">
             {siteContent.categories.map((item) => (
               <div
                 key={item._id}
