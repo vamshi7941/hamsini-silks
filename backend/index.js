@@ -66,6 +66,11 @@ app.get('/api/site-content', async (req, res) => {
       features: siteConfig.features || [],
       ribbon: siteConfig.ribbon || [],
       heritage: siteConfig.heritage || { title: '', subtitle: '' },
+      handpickedProducts: siteConfig.handpickedProducts || {
+        title: '',
+        subtitle: '',
+        productIds: [],
+      },
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });

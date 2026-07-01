@@ -80,4 +80,8 @@ router
   .route('/heritage-content')
   .post(requireAdminAuth, siteController.saveHeritageContent);
 
+router
+  .route('/handpicked-products')
+  .post(requireAdminAuth, siteController.saveHandpickedProducts);
+
 export default router;

@@ -248,3 +248,36 @@ export async function saveHeritageContent(req, res) {
     return res.status(400).json({ success: false, error: error.message });
   }
 }
+
+export async function saveHandpickedProducts(req, res) {
+  try {
+    const { title, subtitle, handpickedProducts } = req.body || {};
+
+    if (!Array.isArray(handpickedProducts)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Handpicked products must be an array',
+      });
+    }
+
+    const siteConfig = await getOrCreateSiteConfig();
+    siteConfig.handpickedProducts = {
+      title: title?.trim() || siteConfig.handpickedProducts?.title || '',
+      subtitle:
+        subtitle?.trim() || siteConfig.handpickedProducts?.subtitle || '',
+      productIds: handpickedProducts
+        .filter((item) => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    };
+
+    await siteConfig.save();
+
+    return res.status(200).json({
+      success: true,
+      handpickedProducts: siteConfig.handpickedProducts,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+}

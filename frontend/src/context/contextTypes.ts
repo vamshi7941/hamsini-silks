@@ -1,4 +1,9 @@
-import { FeatureItem, HeroContent, HeritageContent } from '@/api/admin';
+import {
+  FeatureItem,
+  HandpickedContent,
+  HeroContent,
+  HeritageContent,
+} from '@/api/admin';
 import { OrderData, OrderStatus } from '@/types';
 
 export type Product = {
@@ -112,6 +117,7 @@ export interface StoreContextType {
     features: FeatureItem[];
     ribbon: string[];
     heritage: HeritageContent;
+    handpickedProducts: HandpickedContent;
   };
   setSiteContent: React.Dispatch<
     React.SetStateAction<{
@@ -120,6 +126,7 @@ export interface StoreContextType {
       features: FeatureItem[];
       ribbon: string[];
       heritage: HeritageContent;
+      handpickedProducts: HandpickedContent;
     }>
   >;
 

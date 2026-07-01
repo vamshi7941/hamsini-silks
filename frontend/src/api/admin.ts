@@ -49,6 +49,12 @@ export type HeritageContent = {
   subtitle: string;
 };
 
+export type HandpickedContent = {
+  title: string;
+  subtitle: string;
+  productIds: string[];
+};
+
 export const AdminApi = () => {
   const apiUrl =
     (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
@@ -416,6 +422,37 @@ export const AdminApi = () => {
     }
   };
 
+  const saveHandpickedProducts = async (content: HandpickedContent) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/handpicked-products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({
+          title: content.title,
+          subtitle: content.subtitle,
+          handpickedProducts: content.productIds,
+        }),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save handpicked products');
+      }
+      showToast('Handpicked products updated successfully', 'success');
+      return json;
+    } catch (err) {
+      showToast(
+        err instanceof Error
+          ? err.message
+          : 'Failed to save handpicked products',
+        'error',
+      );
+      return null;
+    }
+  };
+
   return {
     addProduct,
     updateProduct,
@@ -429,5 +466,6 @@ export const AdminApi = () => {
     saveFeatures,
     saveRibbonContent,
     saveHeritageContent,
+    saveHandpickedProducts,
   };
 };

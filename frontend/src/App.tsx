@@ -74,6 +74,11 @@ export default function App() {
         features: content.features || [],
         ribbon: content.ribbon || [],
         heritage: content.heritage || null,
+        handpickedProducts: content.handpickedProducts || {
+          title: '',
+          subtitle: '',
+          productIds: [],
+        },
       }),
     );
   }, []);

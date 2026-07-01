@@ -6,6 +6,10 @@ const { Schema } = mongoose;
 const SiteConfigSchema = new Schema(
   {
     siteName: { type: String, default: 'Hamsini Silks' },
+    ribbon: {
+      type: [String],
+      default: [],
+    },
     categories: [
       {
         _id: { type: Schema.Types.ObjectId, auto: true },
@@ -56,10 +60,6 @@ const SiteConfigSchema = new Schema(
         order: { type: Number, default: 0 },
       },
     ],
-    ribbon: {
-      type: [String],
-      default: [],
-    },
     heritage: {
       title: { type: String, default: 'Heritage Weaves of India' },
       subtitle: {
@@ -68,6 +68,15 @@ const SiteConfigSchema = new Schema(
           'From the temple looms of Kanchipuram to the royal ateliers of Varanasi, each saree tells the story of a craft passed down through generations.',
       },
     },
+    handpickedProducts: {
+      title: { type: String, default: 'Handpicked for You' },
+      subtitle: {
+        type: String,
+        default:
+          'Discover our curated selection of exquisite sarees, chosen for their craftsmanship, beauty, and timeless appeal.',
+      },
+      productIds: { type: [String], default: [] },
+    }
   },
   { timestamps: true },
 );

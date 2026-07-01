@@ -72,12 +72,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       title: string;
       subtitle: string;
     };
+    handpickedProducts: {
+      title: string;
+      subtitle: string;
+      productIds: string[];
+    };
   }>({
     categories: [],
     heroContent: null,
     features: [],
     ribbon: [],
     heritage: { title: '', subtitle: '' },
+    handpickedProducts: { title: '', subtitle: '', productIds: [] },
   });
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);

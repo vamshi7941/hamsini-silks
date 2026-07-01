@@ -3,6 +3,7 @@ import Categories from './siteCustom/categories';
 import Hero from './siteCustom/hero';
 import Ribbon from './siteCustom/ribbon';
 import Collections from './siteCustom/collections';
+import HandPicked from './siteCustom/handPicked';
 
 export default function SiteCustomize() {
   return (
@@ -17,6 +18,8 @@ export default function SiteCustomize() {
       <Features />
 
       <Collections />
+
+      <HandPicked />
     </div>
   );
 }
