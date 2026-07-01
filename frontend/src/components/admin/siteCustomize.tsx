@@ -4,6 +4,7 @@ import Hero from './siteCustom/hero';
 import Ribbon from './siteCustom/ribbon';
 import Collections from './siteCustom/collections';
 import HandPicked from './siteCustom/handPicked';
+import SpecialOffers from './siteCustom/specialOffers';
 
 export default function SiteCustomize() {
   return (
@@ -20,6 +21,8 @@ export default function SiteCustomize() {
       <Collections />
 
       <HandPicked />
+
+      <SpecialOffers />
     </div>
   );
 }

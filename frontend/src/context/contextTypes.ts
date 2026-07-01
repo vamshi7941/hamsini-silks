@@ -1,4 +1,5 @@
 import {
+  BridalContent,
   FeatureItem,
   HandpickedContent,
   HeroContent,
@@ -118,6 +119,7 @@ export interface StoreContextType {
     ribbon: string[];
     heritage: HeritageContent;
     handpickedProducts: HandpickedContent;
+    bridal: BridalContent;
   };
   setSiteContent: React.Dispatch<
     React.SetStateAction<{
@@ -127,6 +129,7 @@ export interface StoreContextType {
       ribbon: string[];
       heritage: HeritageContent;
       handpickedProducts: HandpickedContent;
+      bridal: BridalContent;
     }>
   >;
 

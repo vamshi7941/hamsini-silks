@@ -84,4 +84,8 @@ router
   .route('/handpicked-products')
   .post(requireAdminAuth, siteController.saveHandpickedProducts);
 
+router
+  .route('/bridal-content')
+  .post(requireAdminAuth, siteController.saveBridalContent);
+
 export default router;

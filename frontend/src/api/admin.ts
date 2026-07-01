@@ -55,6 +55,28 @@ export type HandpickedContent = {
   productIds: string[];
 };
 
+export type BridalImageContent = {
+  src?: string;
+  alt?: string;
+};
+
+export type BridalContent = {
+  eyebrow?: string;
+  titlePrefix?: string;
+  titleHighlight?: string;
+  titleSuffix?: string;
+  subtitle?: string;
+  description?: string;
+  badgePercent?: string;
+  badgeText?: string;
+  couponCode?: string;
+  couponLabel?: string;
+  savingsText?: string;
+  buttonLabel?: string;
+  buttonTarget?: string;
+  images?: BridalImageContent[];
+};
+
 export const AdminApi = () => {
   const apiUrl =
     (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001';
@@ -453,6 +475,31 @@ export const AdminApi = () => {
     }
   };
 
+  const saveBridalContent = async (content: BridalContent) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/bridal-content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify(content),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save bridal content');
+      }
+      showToast('Bridal section updated successfully', 'success');
+      return json;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to save bridal content',
+        'error',
+      );
+      return null;
+    }
+  };
+
   return {
     addProduct,
     updateProduct,
@@ -467,5 +514,6 @@ export const AdminApi = () => {
     saveRibbonContent,
     saveHeritageContent,
     saveHandpickedProducts,
+    saveBridalContent,
   };
 };

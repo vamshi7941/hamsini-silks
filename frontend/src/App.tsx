@@ -79,6 +79,22 @@ export default function App() {
           subtitle: '',
           productIds: [],
         },
+        bridal: content.bridal || {
+          eyebrow: '',
+          titlePrefix: '',
+          titleHighlight: '',
+          titleSuffix: '',
+          subtitle: '',
+          description: '',
+          badgePercent: '',
+          badgeText: '',
+          couponCode: '',
+          couponLabel: '',
+          savingsText: '',
+          buttonLabel: '',
+          buttonTarget: '',
+          images: [],
+        },
       }),
     );
   }, []);

@@ -76,7 +76,40 @@ const SiteConfigSchema = new Schema(
           'Discover our curated selection of exquisite sarees, chosen for their craftsmanship, beauty, and timeless appeal.',
       },
       productIds: { type: [String], default: [] },
-    }
+    },
+    bridal: {
+      eyebrow: { type: String, default: 'LIMITED TIME OFFER' },
+      titlePrefix: { type: String, default: 'Flat' },
+      titleHighlight: { type: String, default: '30% Off' },
+      titleSuffix: { type: String, default: 'on Bridal Collection' },
+      subtitle: { type: String, default: '॥ शुभ विवाह ॥' },
+      description: {
+        type: String,
+        default:
+          'Celebrate your most sacred day in heirloom Kanjivaram silks hand-woven over months by master craftsmen of Kanchipuram. Each saree is registered, certified, and gifted in a velvet trousseau box.',
+      },
+      badgePercent: { type: String, default: '30%' },
+      badgeText: { type: String, default: 'OFF' },
+      couponCode: { type: String, default: 'BRIDE30' },
+      couponLabel: { type: String, default: 'USE CODE AT CHECKOUT' },
+      savingsText: { type: String, default: 'Save up to ₹20,000' },
+      buttonLabel: { type: String, default: 'SHOP BRIDAL' },
+      buttonTarget: { type: String, default: 'Bridal Kanjivaram' },
+      images: {
+        type: [
+          {
+            src: { type: String, default: '' },
+            alt: { type: String, default: '' },
+          },
+        ],
+        default: [
+          { src: '/images/model1.jpg', alt: 'Bridal pink saree' },
+          { src: '/images/saree-banarasi.jpg', alt: 'Banarasi saree' },
+          { src: '/images/saree-kanjivaram.jpg', alt: 'Kanjivaram saree' },
+          { src: '/images/model2.jpg', alt: 'Bridal mustard saree' },
+        ],
+      },
+    },
   },
   { timestamps: true },
 );

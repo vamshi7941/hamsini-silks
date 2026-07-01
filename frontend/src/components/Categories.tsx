@@ -10,14 +10,14 @@ export default function Categories() {
 
   return (
     <section id="collections" className="py-12 sm:py-16 lg:py-20 bg-[#fdf8f1]">
-      <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+      <div className="max-w-7xl px-4 mx-auto sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="OUR COLLECTIONS"
           title={siteContent?.heritage?.title || 'Heritage Weaves of India'}
           subtitle={siteContent?.heritage?.subtitle || ''}
         />
 
-        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {siteContent.categories
             .filter(
               (cat) => cat.type !== 'subcategory' && cat.isActive !== false,
@@ -30,7 +30,7 @@ export default function Categories() {
                   setSelectedCategory(cat.name);
                   navigate(`/category/${slugify(cat.name)}`);
                 }}
-                className="group relative overflow-hidden rounded-2xl sm:rounded-3xl aspect-[3/4] bg-maroon-900 text-left block cursor-pointer transition-transform duration-300 hover:-translate-y-1 w-3/5 sm:w-[20vw] lg:w-[16vw] xl:w-[14vw]"
+                className="group relative overflow-hidden rounded-2xl sm:rounded-3xl aspect-[3/4] bg-maroon-900 text-left block w-full cursor-pointer transition-transform duration-300 hover:-translate-y-1"
               >
                 <img
                   src={cat.image}

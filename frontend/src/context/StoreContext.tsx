@@ -77,6 +77,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       subtitle: string;
       productIds: string[];
     };
+    bridal: {
+      eyebrow: string;
+      titlePrefix: string;
+      titleHighlight: string;
+      titleSuffix: string;
+      subtitle: string;
+      description: string;
+      badgePercent: string;
+      badgeText: string;
+      couponCode: string;
+      couponLabel: string;
+      savingsText: string;
+      buttonLabel: string;
+      buttonTarget: string;
+    };
   }>({
     categories: [],
     heroContent: null,
@@ -84,6 +99,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     ribbon: [],
     heritage: { title: '', subtitle: '' },
     handpickedProducts: { title: '', subtitle: '', productIds: [] },
+    bridal: {
+      eyebrow: '',
+      titlePrefix: '',
+      titleHighlight: '',
+      titleSuffix: '',
+      subtitle: '',
+      description: '',
+      badgePercent: '',
+      badgeText: '',
+      couponCode: '',
+      couponLabel: '',
+      savingsText: '',
+      buttonLabel: '',
+      buttonTarget: '',
+      images: [],
+    },
   });
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);

@@ -281,3 +281,62 @@ export async function saveHandpickedProducts(req, res) {
     return res.status(400).json({ success: false, error: error.message });
   }
 }
+
+export async function saveBridalContent(req, res) {
+  try {
+    const {
+      eyebrow,
+      titlePrefix,
+      titleHighlight,
+      titleSuffix,
+      subtitle,
+      description,
+      badgePercent,
+      badgeText,
+      couponCode,
+      couponLabel,
+      savingsText,
+      buttonLabel,
+      buttonTarget,
+      images,
+    } = req.body || {};
+
+    const siteConfig = await getOrCreateSiteConfig();
+    const normalizedImages = Array.isArray(images)
+      ? images.slice(0, 4).map((image) => ({
+          src: typeof image?.src === 'string' ? image.src.trim() : '',
+          alt: typeof image?.alt === 'string' ? image.alt.trim() : '',
+        }))
+      : [];
+
+    while (normalizedImages.length < 4) {
+      normalizedImages.push({ src: '', alt: '' });
+    }
+
+    siteConfig.bridal = {
+      eyebrow: eyebrow?.trim() || siteConfig.bridal?.eyebrow || '',
+      titlePrefix: titlePrefix?.trim() || siteConfig.bridal?.titlePrefix || '',
+      titleHighlight:
+        titleHighlight?.trim() || siteConfig.bridal?.titleHighlight || '',
+      titleSuffix: titleSuffix?.trim() || siteConfig.bridal?.titleSuffix || '',
+      subtitle: subtitle?.trim() || siteConfig.bridal?.subtitle || '',
+      description: description?.trim() || siteConfig.bridal?.description || '',
+      badgePercent:
+        badgePercent?.trim() || siteConfig.bridal?.badgePercent || '',
+      badgeText: badgeText?.trim() || siteConfig.bridal?.badgeText || '',
+      couponCode: couponCode?.trim() || siteConfig.bridal?.couponCode || '',
+      couponLabel: couponLabel?.trim() || siteConfig.bridal?.couponLabel || '',
+      savingsText: savingsText?.trim() || siteConfig.bridal?.savingsText || '',
+      buttonLabel: buttonLabel?.trim() || siteConfig.bridal?.buttonLabel || '',
+      buttonTarget:
+        buttonTarget?.trim() || siteConfig.bridal?.buttonTarget || '',
+      images: normalizedImages,
+    };
+
+    await siteConfig.save();
+
+    return res.status(200).json({ success: true, bridal: siteConfig.bridal });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+}

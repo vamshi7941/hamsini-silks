@@ -71,6 +71,27 @@ app.get('/api/site-content', async (req, res) => {
         subtitle: '',
         productIds: [],
       },
+      bridal: siteConfig.bridal || {
+        eyebrow: '',
+        titlePrefix: '',
+        titleHighlight: '',
+        titleSuffix: '',
+        subtitle: '',
+        description: '',
+        badgePercent: '',
+        badgeText: '',
+        couponCode: '',
+        couponLabel: '',
+        savingsText: '',
+        buttonLabel: '',
+        buttonTarget: '',
+        images: [
+          { src: '/images/model1.jpg', alt: 'Bridal pink saree' },
+          { src: '/images/saree-banarasi.jpg', alt: 'Banarasi saree' },
+          { src: '/images/saree-kanjivaram.jpg', alt: 'Kanjivaram saree' },
+          { src: '/images/model2.jpg', alt: 'Bridal mustard saree' },
+        ],
+      },
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
