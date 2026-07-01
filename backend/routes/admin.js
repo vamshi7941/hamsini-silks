@@ -72,4 +72,8 @@ router
 
 router.route('/features').post(requireAdminAuth, siteController.saveFeatures);
 
+router
+  .route('/ribbon-content')
+  .post(requireAdminAuth, siteController.saveRibbonContent);
+
 export default router;

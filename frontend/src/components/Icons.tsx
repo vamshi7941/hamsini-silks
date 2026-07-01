@@ -109,66 +109,6 @@ export const MenuIcon = ({ className = 'h-6 w-6' }: IconProps) => (
   </svg>
 );
 
-export const TruckIcon = ({ className = 'h-7 w-7' }: IconProps) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  >
-    <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z" strokeLinejoin="round" />
-    <circle cx="5.5" cy="18.5" r="2.5" />
-    <circle cx="18.5" cy="18.5" r="2.5" />
-  </svg>
-);
-
-export const ShieldIcon = ({ className = 'h-7 w-7' }: IconProps) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  >
-    <path
-      d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-      strokeLinejoin="round"
-    />
-    <path d="m9 12 2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-export const ReturnIcon = ({ className = 'h-7 w-7' }: IconProps) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  >
-    <path
-      d="M3 12a9 9 0 1 0 3-6.7L3 8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path d="M3 3v5h5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-export const CardIcon = ({ className = 'h-7 w-7' }: IconProps) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  >
-    <rect x="2" y="5" width="20" height="14" rx="2" />
-    <path d="M2 10h20M6 15h4" strokeLinecap="round" />
-  </svg>
-);
-
 export const InstagramIcon = ({ className = 'h-5 w-5' }: IconProps) => (
   <svg
     viewBox="0 0 24 24"

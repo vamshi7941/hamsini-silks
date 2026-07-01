@@ -54,6 +54,10 @@ const SiteConfigSchema = new Schema(
         order: { type: Number, default: 0 },
       },
     ],
+    ribbon: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );

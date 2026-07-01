@@ -109,12 +109,14 @@ export interface StoreContextType {
     categories: CategoryConfig[];
     heroContent: HeroContent;
     features: FeatureItem[];
+    ribbon: string[];
   };
   setSiteContent: React.Dispatch<
     React.SetStateAction<{
       categories: CategoryConfig[];
       heroContent: HeroContent;
       features: FeatureItem[];
+      ribbon: string[];
     }>
   >;
 

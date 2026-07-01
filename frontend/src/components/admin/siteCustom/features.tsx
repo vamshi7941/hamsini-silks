@@ -31,7 +31,7 @@ const ICON_SET: { name: string; svg: string }[] = [
 ];
 
 export default function Features() {
-  const { siteContent, setSiteContent } = useStore();
+  const { siteContent, setSiteContent, showToast } = useStore();
   const { fetchSiteContent, saveFeatures } = AdminApi();
 
   const [featuresForm, setFeaturesForm] = useState<FeatureItem[]>([]);
@@ -40,6 +40,9 @@ export default function Features() {
   );
   const [isAdding, setIsAdding] = useState(false);
   const [customIconMode, setCustomIconMode] = useState(false);
+  const [editorSnapshot, setEditorSnapshot] = useState<FeatureItem[] | null>(
+    null,
+  );
 
   const activeIndex = activeFeatureIndex ?? 0;
   const activeFeature = featuresForm[activeIndex] || emptyFeature();
@@ -97,7 +100,17 @@ export default function Features() {
   };
 
   const handleAddFeature = () => {
+    if (featuresForm.length >= 4) {
+      showToast('You can only add up to 4 features.', 'info');
+      return;
+    }
     const nextFeatures = [...featuresForm, emptyFeature()];
+    setEditorSnapshot(
+      featuresForm.map((feature) => ({
+        ...feature,
+        icon: { ...feature.icon },
+      })),
+    );
     setFeaturesForm(nextFeatures);
     setActiveFeatureIndex(nextFeatures.length - 1);
     setIsAdding(true);
@@ -105,6 +118,12 @@ export default function Features() {
   };
 
   const handleEditFeature = (index: number) => {
+    setEditorSnapshot(
+      featuresForm.map((feature) => ({
+        ...feature,
+        icon: { ...feature.icon },
+      })),
+    );
     setActiveFeatureIndex(index);
     setIsAdding(true);
     const iconName = featuresForm[index]?.icon?.name || '';
@@ -115,6 +134,15 @@ export default function Features() {
   };
 
   const handleRemoveFeature = (index: number) => {
+    const feature = featuresForm[index];
+    const featureName = feature?.title?.trim() || `Feature ${index + 1}`;
+
+    const confirmed = window.confirm(
+      `Remove ${featureName}? This will update the features section.`,
+    );
+
+    if (!confirmed) return;
+
     const updatedFeatures = featuresForm.filter(
       (_, featureIndex) => featureIndex !== index,
     );
@@ -128,12 +156,22 @@ export default function Features() {
         updatedFeatures.length > 0 ? updatedFeatures.length - 1 : null,
       );
     }
+
+    void handleFeaturesSaveFromState(updatedFeatures);
   };
 
-  const handleFeaturesSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCancelEdit = () => {
+    if (editorSnapshot) {
+      setFeaturesForm(editorSnapshot);
+    }
+    setActiveFeatureIndex(null);
+    setIsAdding(false);
+    setCustomIconMode(false);
+    setEditorSnapshot(null);
+  };
 
-    const sanitizedFeatures = featuresForm
+  const handleFeaturesSaveFromState = async (items: FeatureItem[]) => {
+    const sanitizedFeatures = items
       .filter(
         (feature) =>
           feature.title?.trim() ||
@@ -164,6 +202,11 @@ export default function Features() {
     }
   };
 
+  const handleFeaturesSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleFeaturesSaveFromState(featuresForm);
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-gold-100 p-5 shadow-xs">
       <h4 className="font-semibold text-maroon-900 mb-4">
@@ -171,177 +214,219 @@ export default function Features() {
       </h4>
 
       <form onSubmit={handleFeaturesSave} className="space-y-5">
-        <div className="rounded-2xl border border-gold-100 bg-gold-50/50 p-4">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <h5 className="text-sm font-semibold text-maroon-900">
-              Current Features
-            </h5>
-            <button
-              type="button"
-              onClick={handleAddFeature}
-              className="rounded-xl bg-maroon-900 px-3.5 py-2 text-sm font-semibold text-gold-100"
-            >
-              Add Feature
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {featuresForm.map((feature, index) => (
-              <div
-                key={feature._id || `${feature.title}-${index}`}
-                className="flex items-center justify-between rounded-xl border border-gold-200 bg-white px-3 py-2.5"
-              >
-                <div>
-                  <div className="text-xs text-maroon-700/70 line-clamp-1">
-                    {feature.icon?.name?.trim() || 'No icon yet'}
-                  </div>
-                  <div className="font-semibold text-maroon-900">
-                    {feature.title?.trim() || `Feature ${index + 1}`}
-                  </div>
-                  <div className="text-xs text-maroon-700/70 line-clamp-1">
-                    {feature.description?.trim() || 'No description yet'}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleEditFeature(index)}
-                    className="rounded-lg border border-gold-200 px-2.5 py-1.5 text-xs font-semibold text-maroon-900"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveFeature(index)}
-                    className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {isAdding && (
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                Icon
-              </label>
-              <div className="flex flex-col gap-2 items-center">
-                <select
-                  value={
-                    customIconMode ? 'custom' : activeFeature.icon?.name || ''
-                  }
-                  required
-                  onChange={(e) => {
-                    if (e.target.value === 'custom') {
-                      setCustomIconMode(true);
-                      handleIconSelect(activeFeatureIndex, {
-                        name: '',
-                        svg: '',
-                      });
-                      return;
-                    }
-                    setCustomIconMode(false);
-                    const sel = ICON_SET.find((i) => i.name === e.target.value);
-                    if (sel) handleIconSelect(activeFeatureIndex, sel);
-                  }}
-                  className="w-full rounded-xl border border-gold-200 px-3 py-2"
-                >
-                  <option value="">Select an icon</option>
-                  {ICON_SET.map((ic) => (
-                    <option key={ic.name} value={ic.name}>
-                      {ic.name}
-                    </option>
-                  ))}
-                  <option value="custom">Custom (paste SVG below)</option>
-                </select>
-                {customIconMode && (
-                  <div className="w-full space-y-2 mt-2">
-                    <span className="text-xs text-maroon-700/70">Icon Name:</span>
-                    <input
-                      value={activeFeature.icon?.name || ''}
-                      onChange={(e) =>
-                        handleIconSelect(activeFeatureIndex, {
-                          name: e.target.value,
-                          svg: activeFeature.icon?.svg || '',
-                        })
-                      }
-                      placeholder="Enter custom icon name"
-                      className="w-full rounded-xl border border-gold-200 px-3 py-2"
-                    />
-                    <textarea
-                      value={activeFeature.icon?.svg || ''}
-                      onChange={(e) =>
-                        handleIconSelect(activeFeatureIndex, {
-                          name: activeFeature.icon?.name || '',
-                          svg: e.target.value,
-                        })
-                      }
-                      rows={4}
-                      placeholder="Paste SVG code here"
-                      className="w-full rounded-xl border border-gold-200 px-3 py-2"
-                    />
-                  </div>
-                )}
-                {!customIconMode && (
-                  <span className="text-xs text-maroon-700/70">Preview:</span>
-                )}
-              </div>
-              <div className="mt-1 flex items-center justify-center rounded-xl border border-gold-200 bg-white p-2">
-                <div className="w-10 h-10 flex items-center justify-center">
-                  <div
-                    className="text-maroon-900 text-lg"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        featuresForm[activeFeatureIndex ?? 0]?.icon?.svg || '',
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                  Title
-                </label>
-                <input
-                  value={featuresForm[activeFeatureIndex ?? 0]?.title || ''}
-                  onChange={(e) => handleFeatureChange('title', e.target.value)}
-                  required
-                  className="w-full rounded-xl border border-gold-200 px-3 py-2"
-                  placeholder="e.g. Premium Quality"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
-                  Description
-                </label>
-                <input
-                  value={
-                    featuresForm[activeFeatureIndex ?? 0]?.description || ''
-                  }
-                  onChange={(e) =>
-                    handleFeatureChange('description', e.target.value)
-                  }
-                  required
-                  className="w-full rounded-xl border border-gold-200 px-3 py-2"
-                  placeholder="Describe the feature"
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap justify-end gap-3">
+        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-2xl border border-gold-100 bg-gold-50/50 p-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h5 className="text-sm font-semibold text-maroon-900">
+                Feature Editor
+              </h5>
               <button
-                type="submit"
-                className="rounded-xl bg-maroon-900 px-4 py-2.5 text-sm font-semibold text-gold-100"
+                type="button"
+                onClick={handleAddFeature}
+                className="rounded-xl bg-maroon-900 px-3.5 py-2 text-sm font-semibold text-gold-100"
               >
-                Save Features
+                Add Feature
               </button>
             </div>
+
+            {!isAdding ? (
+              <div className="rounded-xl border border-gold-200 bg-white p-4 text-sm text-maroon-700/70">
+                Select an existing feature to edit or add a new one to start
+                customizing the section.
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                    Icon
+                  </label>
+                  <div className="flex flex-col gap-2 items-center">
+                    <select
+                      value={
+                        customIconMode
+                          ? 'custom'
+                          : activeFeature.icon?.name || ''
+                      }
+                      required
+                      onChange={(e) => {
+                        if (e.target.value === 'custom') {
+                          setCustomIconMode(true);
+                          handleIconSelect(activeFeatureIndex, {
+                            name: '',
+                            svg: '',
+                          });
+                          return;
+                        }
+                        setCustomIconMode(false);
+                        const sel = ICON_SET.find(
+                          (i) => i.name === e.target.value,
+                        );
+                        if (sel) handleIconSelect(activeFeatureIndex, sel);
+                      }}
+                      className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                    >
+                      <option value="">Select an icon</option>
+                      {ICON_SET.map((ic) => (
+                        <option key={ic.name} value={ic.name}>
+                          {ic.name}
+                        </option>
+                      ))}
+                      <option value="custom">Custom (paste SVG below)</option>
+                    </select>
+                    {customIconMode && (
+                      <div className="w-full space-y-2 mt-2">
+                        <span className="text-xs text-maroon-700/70">
+                          Icon Name:
+                        </span>
+                        <input
+                          value={activeFeature.icon?.name || ''}
+                          onChange={(e) =>
+                            handleIconSelect(activeFeatureIndex, {
+                              name: e.target.value,
+                              svg: activeFeature.icon?.svg || '',
+                            })
+                          }
+                          placeholder="Enter custom icon name"
+                          className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                        />
+                        <textarea
+                          value={activeFeature.icon?.svg || ''}
+                          onChange={(e) =>
+                            handleIconSelect(activeFeatureIndex, {
+                              name: activeFeature.icon?.name || '',
+                              svg: e.target.value,
+                            })
+                          }
+                          rows={4}
+                          placeholder="Paste SVG code here"
+                          className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                        />
+                      </div>
+                    )}
+                    {!customIconMode && (
+                      <span className="text-xs text-maroon-700/70">
+                        Preview:
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center justify-center rounded-xl border border-gold-200 bg-white p-2">
+                    <div className="w-10 h-10 flex items-center justify-center">
+                      <div
+                        className="text-maroon-900 text-lg"
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            featuresForm[activeFeatureIndex ?? 0]?.icon?.svg ||
+                            '',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                      Title
+                    </label>
+                    <input
+                      value={featuresForm[activeFeatureIndex ?? 0]?.title || ''}
+                      onChange={(e) =>
+                        handleFeatureChange('title', e.target.value)
+                      }
+                      required
+                      className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                      placeholder="e.g. Premium Quality"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-maroon-900 mb-1">
+                      Description
+                    </label>
+                    <input
+                      value={
+                        featuresForm[activeFeatureIndex ?? 0]?.description || ''
+                      }
+                      onChange={(e) =>
+                        handleFeatureChange('description', e.target.value)
+                      }
+                      required
+                      className="w-full rounded-xl border border-gold-200 px-3 py-2"
+                      placeholder="Describe the feature"
+                    />
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="rounded-xl border border-gold-200 px-4 py-2.5 text-sm font-semibold text-maroon-900"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-xl bg-maroon-900 px-4 py-2.5 text-sm font-semibold text-gold-100"
+                    >
+                      Save Features
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          <div className="rounded-2xl border border-gold-100 bg-gold-50/50 p-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h5 className="text-sm font-semibold text-maroon-900">
+                Current Features
+              </h5>
+            </div>
+
+            <div className="space-y-2">
+              {featuresForm.map((feature, index) => (
+                <div
+                  key={feature._id || `${feature.title}-${index}`}
+                  className="flex items-center justify-between rounded-xl border border-gold-200 bg-white px-3 py-2.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-maroon-700 to-maroon-900 text-gold-300 flex items-center justify-center">
+                      <div className="w-10 h-10 flex items-center justify-center">
+                        <div
+                          className="h-5 w-5 sm:h-6 sm:w-6 [&>svg]:h-full [&>svg]:w-full [&>svg]:text-current"
+                          dangerouslySetInnerHTML={{
+                            __html: featuresForm[index ?? 0]?.icon?.svg || '',
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-maroon-900">
+                        {feature.title?.trim() || `Feature ${index + 1}`}
+                      </div>
+                      <div className="text-xs text-maroon-700/70 line-clamp-1">
+                        {feature.description?.trim() || 'No description yet'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleEditFeature(index)}
+                      className="rounded-lg border border-gold-200 px-2.5 py-1.5 text-xs font-semibold text-maroon-900"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFeature(index)}
+                      className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </form>
     </div>
   );

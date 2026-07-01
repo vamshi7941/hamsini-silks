@@ -66,6 +66,7 @@ app.get('/api/site-content', async (req, res) => {
       ),
       heroContent: siteConfig.hero || null,
       features: siteConfig.features || [],
+      ribbon: siteConfig.ribbon || [],
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });

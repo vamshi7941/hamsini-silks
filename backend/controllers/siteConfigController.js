@@ -197,3 +197,27 @@ export async function saveFeatures(req, res) {
     return res.status(400).json({ success: false, error: error.message });
   }
 }
+
+export async function saveRibbonContent(req, res) {
+  try {
+    const { ribbon } = req.body || {};
+
+    if (!Array.isArray(ribbon)) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'Ribbon must be an array' });
+    }
+
+    const siteConfig = await getOrCreateSiteConfig();
+    siteConfig.ribbon = ribbon
+      .filter((item) => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    await siteConfig.save();
+
+    return res.status(200).json({ success: true, ribbon: siteConfig.ribbon });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+}

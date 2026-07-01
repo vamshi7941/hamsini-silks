@@ -67,7 +67,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     categories: CategoryConfig[];
     heroContent: any;
     features: FeatureItem[];
-  }>({ categories: [], heroContent: null, features: [] });
+    ribbon: string[];
+  }>({ categories: [], heroContent: null, features: [], ribbon: [] });
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);
 

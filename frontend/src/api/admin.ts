@@ -37,10 +37,12 @@ export type FeatureItem = {
   title: string;
   description: string;
   icon: {
-    name: string,
-    svg: string
+    name: string;
+    svg: string;
   };
 };
+
+export type RibbonContent = string[];
 
 export const AdminApi = () => {
   const apiUrl =
@@ -359,6 +361,31 @@ export const AdminApi = () => {
     }
   };
 
+  const saveRibbonContent = async (ribbon: RibbonContent) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/ribbon-content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ ribbon }),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save ribbon content');
+      }
+      showToast('Ribbon updated successfully', 'success');
+      return json;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to save ribbon content',
+        'error',
+      );
+      return null;
+    }
+  };
+
   return {
     addProduct,
     updateProduct,
@@ -370,5 +397,6 @@ export const AdminApi = () => {
     deleteCategory,
     saveHeroContent,
     saveFeatures,
+    saveRibbonContent,
   };
 };

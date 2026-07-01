@@ -72,6 +72,7 @@ export default function App() {
         categories: content.categories || [],
         heroContent: content.heroContent || null,
         features: content.features || [],
+        ribbon: content.ribbon || [],
       }),
     );
   }, []);

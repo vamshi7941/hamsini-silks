@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const slugify = (value: string) =>
@@ -18,9 +18,23 @@ import { useStore } from '../context/StoreContext';
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [mobileOpenCategory, setMobileOpenCategory] = useState<string | null>(
+    null,
+  );
+  const headerRef = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
   const { cartCount, user, setSelectedCategory, wishlistCount, siteContent } =
     useStore();
+
+  const ribbonMessages = (siteContent?.ribbon || []).filter(Boolean);
+  const marqueeRibbonMessages = ribbonMessages.length
+    ? Array.from({ length: 4 }, (_, groupIndex) =>
+        ribbonMessages.map((message, index) => ({
+          id: `${groupIndex}-${index}-${message}`,
+          text: message,
+        })),
+      ).flat()
+    : [];
 
   const handleNav = (name: string, slug: string = 'all') => {
     setSelectedCategory(name);
@@ -28,31 +42,49 @@ export default function Header() {
     setOpen(false);
   };
 
+  const closeMobileMenu = () => {
+    setOpen(false);
+    setMobileOpenCategory(null);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        headerRef.current &&
+        !headerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+        setMobileOpenCategory(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
   return (
-    <header className="sticky top-0 z-50 bg-[#fdf8f1]/95 backdrop-blur-md border-b border-gold-200/60 shadow-xs">
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-50 bg-[#fdf8f1]/95 backdrop-blur-md border-b border-gold-200/60 shadow-xs"
+    >
       {/* Top announcement bar */}
-      <div className="bg-gradient-to-r from-maroon-800 via-maroon-700 to-maroon-800 text-gold-100 text-[10px] sm:text-xs">
-        <div className="overflow-hidden whitespace-nowrap">
-          <div className="inline-flex animate-marquee py-1.5 sm:py-2 gap-16">
-            {[...Array(2)].map((_, i) => (
-              <div
-                key={i}
-                className="inline-flex gap-8 sm:gap-16 px-4 sm:px-8 items-center"
-              >
-                <span>✦ Free Shipping on orders above ₹5,000</span>
-                <span>
-                  ✦ Flat 30% off on Bridal — Use code{' '}
-                  <strong className="text-gold-300">BRIDE30</strong>
-                </span>
-                <span>✦ Handloom Silk Mark Certified Pure</span>
-                <span>
-                  ✦ Hamsini Atelier Preview: Both Option A & B Available
-                </span>
+      {ribbonMessages.length > 0 && (
+        <div className="bg-gradient-to-r from-maroon-800 via-maroon-700 to-maroon-800 text-gold-100 text-[10px] sm:text-xs">
+          <div className="overflow-hidden whitespace-nowrap">
+            <div className="inline-flex animate-marquee py-1.5 sm:py-2 gap-8 sm:gap-16 min-w-full">
+              <div className="inline-flex items-center gap-8 sm:gap-16 px-4 sm:px-8">
+                {marqueeRibbonMessages.map((item) => (
+                  <span key={item.id} className="whitespace-nowrap">
+                    ✦ {item.text}
+                  </span>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main nav */}
       <div className="px-4 sm:px-6 lg:px-8">
@@ -60,6 +92,7 @@ export default function Header() {
           {/* Logo */}
           <Link
             to="/"
+            onClick={closeMobileMenu}
             className="flex items-center gap-2 sm:gap-3 p-4 text-left cursor-pointer"
           >
             <img
@@ -72,8 +105,12 @@ export default function Header() {
           {/* Desktop nav */}
           <nav className="hidden lg:flex justify-center gap-8 xl:gap-12 pb-2.5 pt-2.5 bg-gradient-to-r from-transparent via-maroon-50/20 to-transparent">
             {[
-              { label: 'Home', to: '/', isCat: false },
-              { label: 'All Weaves', name: 'All', slug: 'all', isCat: true },
+              {
+                label: 'All Collections',
+                name: 'All',
+                slug: 'all',
+                isCat: true,
+              },
               ...siteContent?.categories
                 ?.filter((cat) => cat.type !== 'subcategory')
                 ?.map((cat) => ({
@@ -132,6 +169,7 @@ export default function Header() {
             {user.loggedIn && user.role === 'customer' && (
               <Link
                 to="/wishlist"
+                onClick={closeMobileMenu}
                 className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all sm:inline-flex cursor-pointer"
                 title="Saved Favs"
               >
@@ -146,6 +184,7 @@ export default function Header() {
 
             <Link
               to={user.loggedIn ? '/profile' : '/login'}
+              onClick={closeMobileMenu}
               className={`p-1.5 sm:p-2 rounded-full relative transition-colors cursor-pointer ${
                 user.loggedIn
                   ? 'text-gold-600 bg-gold-50'
@@ -164,6 +203,7 @@ export default function Header() {
             {user.loggedIn && user.role === 'customer' && (
               <Link
                 to="/cart"
+                onClick={closeMobileMenu}
                 className="p-1.5 sm:p-2 text-maroon-700 hover:bg-maroon-50 rounded-full relative transition-all cursor-pointer"
                 title="Shopping Bag"
               >
@@ -191,36 +231,71 @@ export default function Header() {
       {open && (
         <div className="lg:hidden bg-white border-t border-gold-200/60 px-4 sm:px-6 py-2 space-y-1">
           <button
-            onClick={() => {
-              navigate('/');
-              setOpen(false);
-            }}
-            className="w-full text-left py-2 text-maroon-900 font-semibold text-xs tracking-wider border-b border-gold-100 flex items-center justify-between uppercase cursor-pointer"
-          >
-            Home
-            <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500" />
-          </button>
-          <button
             onClick={() => handleNav('All', 'all')}
             className="w-full text-left py-2 text-maroon-900 font-semibold text-xs tracking-wider border-b border-gold-100 flex items-center justify-between uppercase cursor-pointer"
           >
             All Collections
             <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500" />
           </button>
-          {siteContent.categories
-            .filter((cat) => cat.type !== 'subcategory')
-            .map((cat) => (
-              <button
-                key={cat._id}
-                onClick={() =>
-                  handleNav(cat.name, slugify(cat.slug || cat.name))
-                }
-                className="w-full text-left py-2 text-maroon-800 text-xs tracking-wider border-b border-gold-100 flex items-center justify-between cursor-pointer"
-              >
-                {cat.name}
-                <ChevronRightIcon className="h-3.5 w-3.5 text-gold-400" />
-              </button>
-            ))}
+          {(siteContent?.categories ?? [])
+            .filter((cat: any) => cat.type !== 'subcategory')
+            .map((cat: any) => {
+              const subcategories = (siteContent?.categories ?? []).filter(
+                (item: any) =>
+                  item.type === 'subcategory' && item.parentId === cat._id,
+              );
+              const isOpen = mobileOpenCategory === cat._id;
+
+              return (
+                <div key={cat._id} className="border-b border-gold-100">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() =>
+                        handleNav(cat.name, slugify(cat.slug || cat.name))
+                      }
+                      className="flex-1 text-left py-2 text-maroon-800 text-xs tracking-wider cursor-pointer"
+                    >
+                      {cat.name}
+                    </button>
+                    {subcategories.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMobileOpenCategory(isOpen ? null : cat._id);
+                        }}
+                        className="p-2 text-gold-500"
+                        aria-label={`Toggle ${cat.name} subcategories`}
+                      >
+                        <ChevronRightIcon
+                          className={`h-3.5 w-3.5 transition-transform ${
+                            isOpen ? 'rotate-90' : ''
+                          }`}
+                        />
+                      </button>
+                    )}
+                  </div>
+                  {isOpen && subcategories.length > 0 && (
+                    <div className="pb-2 pl-3 space-y-1">
+                      {subcategories.map((subcat: any) => (
+                        <button
+                          key={subcat._id}
+                          onClick={() =>
+                            handleNav(
+                              subcat.name,
+                              slugify(subcat.slug || subcat.name),
+                            )
+                          }
+                          className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] text-maroon-700 hover:bg-gold-50 transition-colors cursor-pointer"
+                        >
+                          {subcat.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           {user.loggedIn && user.role === 'admin' && (
             <button
               onClick={() => {
@@ -229,7 +304,7 @@ export default function Header() {
               }}
               className="w-full text-left py-2 text-maroon-900 font-bold text-xs tracking-wider bg-gold-50/50 px-2 rounded mt-1 flex items-center justify-between cursor-pointer"
             >
-              ⚙️ Atelier Admin Control
+              ⚙️ Admin Control
               <ChevronRightIcon className="h-3.5 w-3.5 text-maroon-900" />
             </button>
           )}
