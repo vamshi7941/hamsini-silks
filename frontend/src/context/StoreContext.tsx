@@ -10,7 +10,8 @@ import {
   User,
 } from './contextTypes';
 import { OrderData } from '@/types';
-import { FeatureItem } from '@/api/admin';
+import { BridalImageContent, FeatureItem } from '@/api/admin';
+import { getSelectedSizeOption } from '@/utils/productInventory';
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
@@ -91,6 +92,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       savingsText: string;
       buttonLabel: string;
       buttonTarget: string;
+      images: BridalImageContent[];
     };
   }>({
     categories: [],
@@ -113,7 +115,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       savingsText: '',
       buttonLabel: '',
       buttonTarget: '',
-      images: [],
+      images: [{ alt: '', src: '' }],
     },
   });
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
@@ -176,11 +178,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     setTimeout(() => setToast(null), 3000);
   };
 
-  const cartTotal = cart.reduce(
+  const availableCartItems = cart.filter((item) => {
+    const selectedSize = getSelectedSizeOption(item.product, item.size);
+    return Boolean(selectedSize && selectedSize.units > 0);
+  });
+
+  const cartTotal = availableCartItems.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0,
   );
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = availableCartItems.reduce(
+    (sum, item) => sum + item.quantity,
+    0,
+  );
 
   const isInWishlist = (productId: string) => wishlist.includes(productId);
   const wishlistCount = wishlist.length;

@@ -106,7 +106,7 @@ export default function VerifyPhonePage() {
                   value={otp}
                   onChange={(e) => setOtp(normalizeOtpValue(e.target.value))}
                   className="w-full rounded-xl border border-[#e7d7b3] bg-[#fdfbf6] px-4 py-3 text-sm text-[#4b1d1d] outline-none ring-0 focus:border-[#9b2c2c]"
-                  placeholder="123456"
+                  placeholder=""
                 />
               </div>
 

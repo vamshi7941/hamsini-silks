@@ -48,10 +48,17 @@ const ProductSchema = new Schema(
     inStock: {
       type: Boolean,
       required: true,
+      default: true,
     },
-    size: {
-      type: String,
-      required: true,
+    sizes: {
+      type: [
+        {
+          name: { type: String, required: true },
+          units: { type: Number, required: true, default: 0 },
+        },
+      ],
+      required: false,
+      default: [],
     },
   },
   { timestamps: true },

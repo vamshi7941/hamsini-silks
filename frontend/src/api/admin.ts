@@ -61,20 +61,20 @@ export type BridalImageContent = {
 };
 
 export type BridalContent = {
-  eyebrow?: string;
-  titlePrefix?: string;
-  titleHighlight?: string;
-  titleSuffix?: string;
-  subtitle?: string;
-  description?: string;
-  badgePercent?: string;
-  badgeText?: string;
-  couponCode?: string;
-  couponLabel?: string;
-  savingsText?: string;
-  buttonLabel?: string;
-  buttonTarget?: string;
-  images?: BridalImageContent[];
+  eyebrow: string;
+  titlePrefix: string;
+  titleHighlight: string;
+  titleSuffix: string;
+  subtitle: string;
+  description: string;
+  badgePercent: string;
+  badgeText: string;
+  couponCode: string;
+  couponLabel: string;
+  savingsText: string;
+  buttonLabel: string;
+  buttonTarget: string;
+  images: BridalImageContent[];
 };
 
 export const AdminApi = () => {
@@ -84,30 +84,15 @@ export const AdminApi = () => {
   const { products, showToast, setOrders, user } = useStore();
   const { fetchAllProducts } = ProductsApi();
 
-  const getNextProductId = (products: Product[]) => {
-    if (products.length === 0) return 'HSPID-0001';
-
-    const highestNumber = products.reduce((max, product) => {
-      const match = product._id.match(/(?:HSPID-)?0*(\d+)$/i);
-      const value = match ? Number(match[1]) : NaN;
-      return Number.isFinite(value) ? Math.max(max, value) : max;
-    }, 0);
-
-    return `HSPID-${String(highestNumber + 1).padStart(4, '0')}`;
-  };
-
   const addProduct = async (product: Product, onClose: () => void) => {
-    const generatedId = getNextProductId(products);
-
-    // Here you would typically make an API call to your backend to add the product
     try {
-      const response = await fetch(`${apiUrl}/api/admin/addProduct`, {
+      const response = await fetch(`${apiUrl}/api/products/addProduct`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
         },
-        body: JSON.stringify({ ...product, _id: generatedId }),
+        body: JSON.stringify(product),
       });
       const json = await response.json();
 
@@ -117,7 +102,6 @@ export const AdminApi = () => {
       }
 
       if (response.ok) {
-        console.log(json);
         fetchAllProducts();
         showToast('New saree published!', 'success');
         onClose();
@@ -138,7 +122,7 @@ export const AdminApi = () => {
     onClose: () => void,
   ) => {
     try {
-      const response = await fetch(`${apiUrl}/api/admin/updateProduct/${id}`, {
+      const response = await fetch(`${apiUrl}/api/products/updateProduct/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +154,7 @@ export const AdminApi = () => {
 
   const deleteProduct = async (id: string, onClose: () => void) => {
     try {
-      const response = await fetch(`${apiUrl}/api/admin/deleteProduct/${id}`, {
+      const response = await fetch(`${apiUrl}/api/products/deleteProduct/${id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -19,7 +19,7 @@ export type Product = {
   badge?: string;
   rating: number;
   inStock?: boolean;
-  size?: string;
+  sizes?: Array<{ name: string; units: number }>;
   updatedAt?: string;
 };
 

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CartItem, useStore } from '../../context/StoreContext';
+import { useStore } from '../../context/StoreContext';
+import type { CartItem } from '../../context/contextTypes';
 import { Auth } from '@/api/auth';
 import { CustomerApi } from '@/api/customer';
 import GuestUser from '../guestUser';
@@ -12,6 +13,8 @@ import {
   normalizePincodeValue,
 } from '@/utils/cn';
 import { OrderData } from '@/types';
+import { getSelectedSizeOption } from '@/utils/productInventory';
+import { ProductsApi } from '@/api/products';
 
 declare global {
   interface Window {
@@ -39,7 +42,6 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const {
     cart,
-    cartTotal,
     user,
     buyNowItem,
     showToast,
@@ -59,6 +61,7 @@ export default function CheckoutPage() {
   } = CustomerApi();
   const { sendPhoneOtp } = Auth();
   const { handleRazorpayPayment } = RazorpayApi();
+  const { fetchAllProducts } = ProductsApi();
 
   if (!user.loggedIn && user.role !== 'customer') return;
 
@@ -89,9 +92,21 @@ export default function CheckoutPage() {
     message: string;
   }>({ type: 'idle', message: '' });
 
+  const checkoutItems = useMemo(() => {
+    if (buyNowItem) return [buyNowItem];
+
+    return cart.filter((item) => {
+      const selectedSize = getSelectedSizeOption(item.product, item.size);
+      return Boolean(selectedSize && selectedSize.units > 0);
+    });
+  }, [buyNowItem, cart]);
+
   const orderSubtotal = buyNowItem
     ? buyNowItem.product.price * buyNowItem.quantity
-    : cartTotal;
+    : checkoutItems.reduce(
+        (sum, item) => sum + item.product.price * item.quantity,
+        0,
+      );
   const discountAmount = Math.round(
     orderSubtotal * (couponDiscountPercentage / 100),
   );
@@ -192,6 +207,7 @@ export default function CheckoutPage() {
     const orderResult = await placeOrder(orderData as OrderData);
 
     if (orderResult?.success) {
+      fetchAllProducts();
       const savedOrder = orderResult.data;
       setOrderId(savedOrder._id);
       await clearCart();
@@ -243,10 +259,8 @@ export default function CheckoutPage() {
     }
   }, [shippingPincode]);
 
-  useEffect(() => {
-    // Build orderData object
-    const items = buyNowItem ? [buyNowItem] : cart;
-    const formattedOrderData: OrderData = {
+  const formattedOrderData = useMemo<OrderData>(
+    () => ({
       order_date: new Date().toISOString(),
       shipping_email: email,
       shipping_phone: phone,
@@ -259,7 +273,7 @@ export default function CheckoutPage() {
       shipping_charges: 0,
       sub_total: orderSubtotal,
       total: orderTotal,
-      items: items.map((item: CartItem) => ({
+      items: checkoutItems.map((item: CartItem) => ({
         sku: item.product._id,
         name: item.product.name,
         selling_price: item.product.price,
@@ -270,28 +284,31 @@ export default function CheckoutPage() {
       shiprocketCourierId,
       paymentMethod: 'COD',
       status: 'NEW',
-    };
+    }),
+    [
+      address,
+      checkoutItems,
+      couponCode,
+      email,
+      name,
+      orderSubtotal,
+      orderTotal,
+      phone,
+      shippingCity,
+      shippingPincode,
+      shippingState,
+      shiprocketCourierId,
+    ],
+  );
 
+  useEffect(() => {
     setOrderData(formattedOrderData);
-  }, [
-    name,
-    email,
-    phone,
-    address,
-    shippingCity,
-    shippingState,
-    shippingPincode,
-    orderSubtotal,
-    orderTotal,
-    cart,
-    buyNowItem,
-    couponCode,
-  ]);
+  }, [formattedOrderData, setOrderData]);
 
   if (!user.loggedIn) return <GuestUser page="checkout" />;
   if (user.role !== 'customer') return <AccessDenied page="checkout" />;
 
-  if (cart.length === 0 && !orderId && !buyNowItem) {
+  if (checkoutItems.length === 0 && !orderId && !buyNowItem) {
     return (
       <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
         <div className="text-center py-16 px-4">
@@ -650,7 +667,7 @@ export default function CheckoutPage() {
                             setOtp(normalizeOtpValue(e.target.value))
                           }
                           className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
-                          placeholder="123456"
+                          placeholder=""
                         />
                       </div>
                       <button
@@ -689,8 +706,11 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 space-y-4 lg:top-24">
             <div className="bg-white rounded-2xl border border-gold-100 shadow-xs p-5">
               <h3 className="font-display text-sm font-bold text-maroon-900 uppercase tracking-wider border-b border-gold-100 pb-3 mb-4">
-                Your Order ({buyNowItem ? 1 : cart.length}{' '}
-                {(buyNowItem ? 1 : cart.length) === 1 ? 'item' : 'items'})
+                Your Order ({buyNowItem ? 1 : checkoutItems.length}{' '}
+                {(buyNowItem ? 1 : checkoutItems.length) === 1
+                  ? 'item'
+                  : 'items'}
+                )
               </h3>
               <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                 {buyNowItem ? (
@@ -716,7 +736,7 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 ) : (
-                  cart.map(({ product: p, quantity }) => (
+                  checkoutItems.map(({ product: p, quantity, size }) => (
                     <div key={p._id} className="flex items-center gap-3">
                       <img
                         src={p.image}
@@ -728,7 +748,7 @@ export default function CheckoutPage() {
                           {p.name}
                         </span>
                         <span className="text-[10px] text-maroon-700/70">
-                          Qty: {quantity}
+                          Qty: {quantity} · Size: {size}
                         </span>
                       </div>
                       <span className="text-sm font-bold text-maroon-900 shrink-0">

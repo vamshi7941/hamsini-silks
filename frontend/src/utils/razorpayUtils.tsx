@@ -1,5 +1,6 @@
 import { CustomerApi } from '@/api/customer';
 import { useStore } from '@/context/StoreContext';
+import { getSelectedSizeOption } from '@/utils/productInventory';
 import { RazorpayPaymentProps } from '@/types';
 
 export const RazorpayApi = () => {
@@ -7,15 +8,23 @@ export const RazorpayApi = () => {
     CustomerApi();
   const {
     buyNowItem,
-    cartTotal,
+    cart,
     couponDiscountPercentage,
     setCouponCode,
     setCouponDiscountPercentage,
   } = useStore();
 
+  const availableCartItems = cart.filter((item) => {
+    const selectedSize = getSelectedSizeOption(item.product, item.size);
+    return Boolean(selectedSize && selectedSize.units > 0);
+  });
+
   const orderSubtotal = buyNowItem
     ? buyNowItem.product.price * buyNowItem.quantity
-    : cartTotal;
+    : availableCartItems.reduce(
+        (sum, item) => sum + item.product.price * item.quantity,
+        0,
+      );
   const discountAmount = Math.round(
     orderSubtotal * (couponDiscountPercentage / 100),
   );

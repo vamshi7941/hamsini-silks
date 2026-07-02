@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
 import { generateSlug } from '@/utils/slug';
 import GuestUser from '../guestUser';
 import AccessDenied from '../accessDenied';
+import { getSelectedSizeOption } from '@/utils/productInventory';
 
 export default function CartPage() {
   const navigate = useNavigate();
   const {
     cart,
-    cartTotal,
     showToast,
     setBuyNowItem,
     user,
@@ -21,7 +21,6 @@ export default function CartPage() {
   } = useStore();
   const { updateQuantity, removeFromCart, validateCoupon } = CustomerApi();
   const [coupon, setCoupon] = useState('');
-
   const handleCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -41,9 +40,24 @@ export default function CartPage() {
     }
   };
 
-  const savings = Math.round(cartTotal * (couponDiscountPercentage / 100));
-  const finalTotal = cartTotal - savings;
-  const shippingFree = cartTotal >= 5000;
+  const availableCart = useMemo(
+    () =>
+      cart.filter((item) => {
+        const selectedSize = getSelectedSizeOption(item.product, item.size);
+        return Boolean(selectedSize && selectedSize.units > 0);
+      }),
+    [cart],
+  );
+  const displayCart = useMemo(() => cart, [cart]);
+  const hasItems = displayCart.length > 0;
+
+  const cartSubtotal = availableCart.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
+    0,
+  );
+  const savings = Math.round(cartSubtotal * (couponDiscountPercentage / 100));
+  const finalTotal = cartSubtotal - savings;
+  const shippingFree = cartSubtotal >= 5000;
 
   if (!user.loggedIn) return <GuestUser page="cart" />;
   if (user.role !== 'customer') return <AccessDenied page="cart" />;
@@ -55,7 +69,8 @@ export default function CartPage() {
           <h1 className="font-display text-xl sm:text-2xl font-bold text-maroon-900">
             Shopping Bag <br />
             <span className="text-maroon-400 text-sm font-normal">
-              ({cart.length} {cart.length === 1 ? 'item' : 'items'})
+              ({availableCart.length}{' '}
+              {availableCart.length === 1 ? 'item' : 'items'})
             </span>
           </h1>
           <button
@@ -68,7 +83,7 @@ export default function CartPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {cart.length === 0 ? (
+        {!hasItems ? (
           <div className="text-center py-24 max-w-md mx-auto">
             <div className="text-7xl mb-5">🛍️</div>
             <h2 className="font-display text-2xl font-bold text-maroon-900 mb-2">
@@ -88,16 +103,20 @@ export default function CartPage() {
         ) : (
           <div className="grid lg:grid-cols-12 gap-8">
             <div className="lg:col-span-7 xl:col-span-8 space-y-4">
-              {cart.map(({ product: p, quantity, size }) => {
+              {displayCart.map(({ product: p, quantity, size }) => {
                 const d = p.originalPrice
                   ? Math.round(
                       ((p.originalPrice - p.price) / p.originalPrice) * 100,
                     )
                   : 0;
+                const selectedSize = getSelectedSizeOption(p, size);
+                const isAvailable = Boolean(
+                  selectedSize && selectedSize.units > 0,
+                );
                 return (
                   <div
-                    key={p._id}
-                    className="bg-white rounded-2xl border border-gold-100 shadow-xs p-4 flex gap-4 hover:border-gold-300 transition-colors"
+                    key={`${p._id}-${size}`}
+                    className={`bg-white rounded-2xl border border-gold-100 shadow-xs p-4 flex gap-4 hover:border-gold-300 transition-colors ${!isAvailable ? 'opacity-80' : ''}`}
                   >
                     <button
                       onClick={() =>
@@ -144,13 +163,21 @@ export default function CartPage() {
                         <div className="text-xs text-maroon-700 mt-1">
                           Size: <span className="font-semibold">{size}</span>
                         </div>
+                        {!isAvailable && (
+                          <div className="mt-2 inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-600">
+                            Out of stock
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
                         <div className="inline-flex items-center border-2 border-gold-200 rounded-xl overflow-hidden">
                           <button
-                            onClick={() => updateQuantity(p._id, quantity - 1)}
-                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-maroon-900 font-bold hover:bg-maroon-50 transition-colors cursor-pointer text-base"
+                            onClick={() =>
+                              updateQuantity(p._id, quantity - 1, size)
+                            }
+                            disabled={!isAvailable}
+                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-maroon-900 font-bold hover:bg-maroon-50 transition-colors cursor-pointer text-base disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             -
                           </button>
@@ -158,8 +185,11 @@ export default function CartPage() {
                             {quantity}
                           </span>
                           <button
-                            onClick={() => updateQuantity(p._id, quantity + 1)}
-                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-maroon-900 font-bold hover:bg-maroon-50 transition-colors cursor-pointer text-base"
+                            onClick={() =>
+                              updateQuantity(p._id, quantity + 1, size)
+                            }
+                            disabled={!isAvailable}
+                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-maroon-900 font-bold hover:bg-maroon-50 transition-colors cursor-pointer text-base disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             +
                           </button>
@@ -170,7 +200,7 @@ export default function CartPage() {
                             ₹{(p.price * quantity).toLocaleString('en-IN')}
                           </span>
                           <button
-                            onClick={() => removeFromCart(p._id)}
+                            onClick={() => removeFromCart(p._id, size)}
                             className="text-maroon-400 hover:text-red-500 transition-colors cursor-pointer"
                             title="Remove"
                           >
@@ -197,7 +227,7 @@ export default function CartPage() {
               >
                 {shippingFree
                   ? "✅ You've unlocked free insured shipping!"
-                  : `🚚 Add ₹${(5000 - cartTotal).toLocaleString('en-IN')} more for free shipping`}
+                  : `🚚 Add ₹${(5000 - cartSubtotal).toLocaleString('en-IN')} more for free shipping`}
               </div>
             </div>
 
@@ -210,11 +240,11 @@ export default function CartPage() {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-maroon-700">
-                      Subtotal ({cart.reduce((a, b) => a + b.quantity, 0)}{' '}
-                      items)
+                      Subtotal (
+                      {availableCart.reduce((a, b) => a + b.quantity, 0)} items)
                     </span>
                     <span className="font-semibold text-maroon-900">
-                      ₹{cartTotal.toLocaleString('en-IN')}
+                      ₹{cartSubtotal.toLocaleString('en-IN')}
                     </span>
                   </div>
                   {savings > 0 && (
@@ -306,9 +336,12 @@ export default function CartPage() {
                     setBuyNowItem(null);
                     navigate('/checkout');
                   }}
-                  className="w-full py-4 rounded-2xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wider shadow-lg transition-all cursor-pointer"
+                  disabled={!availableCart.length}
+                  className="w-full py-4 rounded-2xl bg-gold-500 hover:bg-gold-400 text-white font-bold text-sm tracking-wider shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Proceed to Checkout →
+                  {availableCart.length
+                    ? 'Proceed to Checkout →'
+                    : 'No available items to checkout'}
                 </button>
 
                 <div className="grid grid-cols-3 gap-2 pt-1">

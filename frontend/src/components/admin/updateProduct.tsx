@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Icon } from '../Icons';
-import { fileToBase64, fileListToBase64 } from '../../utils/image';
+import { fileToBase64 } from '../../utils/image';
 import { Product } from '@/context/contextTypes';
+import { normalizeProductSizes } from '@/utils/productInventory';
 
 // ── Image upload zone (used in edit/add modals) ───────────────────────────────
 function ImageUploadZone({
@@ -143,370 +144,51 @@ function ImageUploadZone({
   );
 }
 
-// ── Edit Modal ────────────────────────────────────────────────────────────────
-export function EditProductModal({
+// the common component for both add and edit product modals
+export default function UpdateProduct({
+  action,
   product,
   onClose,
+  onAdd,
   onSave,
 }: {
-  product: Product;
+  action: 'add' | 'edit';
+  product?: Product;
   onClose: () => void;
-  onSave: (id: string, updates: Partial<Product>) => void;
+  onAdd?: (p: Product) => void;
+  onSave?: (id: string, updates: Partial<Product>) => void;
 }) {
   const { siteContent } = useStore();
+  const [productId, setProductId] = useState(product?._id ?? '');
+  const [name, setName] = useState(product?.name ?? '');
+  const [price, setPrice] = useState(product?.price ?? '');
+  const [origPrice, setOrigPrice] = useState(product?.originalPrice ?? '');
+  const [subcategoryId, setSubcategoryId] = useState('');
+
+  const [badge, setBadge] = useState(product?.badge ?? '');
+  const [image, setImage] = useState(product?.image ?? '');
+  const [additionalImages, setAdditionalImages] = useState(
+    product?.images ?? [],
+  );
+
+  const [inStock, setInStock] = useState(product?.inStock ?? true);
   const categoryOptions = siteContent.categories.filter(
     (cat) => cat.type !== 'subcategory',
   );
-  const [name, setName] = useState(product.name);
-  const [price, setPrice] = useState(product.price);
-  const [origPrice, setOrigPrice] = useState(product.originalPrice ?? '');
-  const [badge, setBadge] = useState(product.badge ?? '');
-  const [image, setImage] = useState(product.image);
-  const [additionalImages, setAdditionalImages] = useState<string[]>(
-    product.images ?? [],
-  );
-  const initialCategoryId =
-    categoryOptions.find((cat) => cat.name === product.category)?._id ??
-    categoryOptions[0]?._id ??
-    '';
-  const initialSubcategoryId =
-    siteContent.categories.find(
-      (cat) => cat.type === 'subcategory' && cat.name === product.subcategory,
-    )?._id ?? '';
-  const [selectedCategoryId, setSelectedCategoryId] =
-    useState(initialCategoryId);
-  const [subcategoryId, setSubcategoryId] = useState(initialSubcategoryId);
-  const [inStock, setInStock] = useState(product.inStock !== false);
-  const [size, setSize] = useState(product.size ?? '6.2m (incl. blouse)');
 
-  useEffect(() => {
-    if (!selectedCategoryId && categoryOptions.length) {
-      setSelectedCategoryId(categoryOptions[0]._id);
-    }
-    if (
-      selectedCategoryId &&
-      !categoryOptions.some((cat) => cat._id === selectedCategoryId)
-    ) {
-      setSelectedCategoryId(categoryOptions[0]?._id ?? '');
-      setSubcategoryId('');
-    }
-  }, [categoryOptions, selectedCategoryId]);
-
-  const subcategoryOptions = siteContent.categories.filter(
-    (cat) => cat.type === 'subcategory' && cat.parentId === selectedCategoryId,
+  const [sizes, setSizes] = useState(
+    normalizeProductSizes(product).length > 0
+      ? normalizeProductSizes(product)
+      : [{ name: '', units: 1 }],
   );
-  const selectedCategoryName =
-    categoryOptions.find((cat) => cat._id === selectedCategoryId)?.name ??
-    product.category;
-  const selectedSubcategoryName =
-    subcategoryOptions.find((cat) => cat._id === subcategoryId)?.name ?? '';
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto admin-scroll">
-        <div className="flex items-center justify-between p-6 border-b border-gold-100 sticky top-0 bg-white rounded-t-3xl z-10">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-maroon-900 flex items-center justify-center text-gold-300">
-              <Icon.edit />
-            </div>
-            <div>
-              <h2 className="font-display text-lg font-bold text-maroon-900">
-                Edit Product
-              </h2>
-              <p className="text-xs text-maroon-700/70">
-                Changes go live immediately
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-maroon-50 text-maroon-700 cursor-pointer"
-          >
-            <Icon.close />
-          </button>
-        </div>
-        <div className="p-6 space-y-5">
-          <div>
-            <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
-              📸 Main Image
-            </label>
-            <ImageUploadZone value={image} onChange={setImage} />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
-              🖼️ Additional Images
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="w-full text-xs text-maroon-700 rounded-xl border-2 border-gold-200 p-3"
-              onChange={async (e) => {
-                const newImages = await fileListToBase64(e.target.files);
-                setAdditionalImages((prev) => [...prev, ...newImages]);
-                if (e.target) e.target.value = '';
-              }}
-            />
-            {additionalImages.length > 0 && (
-              <div className="mt-4 grid grid-cols-4 gap-2">
-                {additionalImages.map((src, index) => (
-                  <div
-                    key={index}
-                    className="relative rounded-xl overflow-hidden border border-gold-200"
-                  >
-                    <img
-                      src={src}
-                      alt={`Additional ${index + 1}`}
-                      className="w-full h-24 object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAdditionalImages((prev) =>
-                          prev.filter((_, i) => i !== index),
-                        )
-                      }
-                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-maroon-900 flex items-center justify-center text-xs"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-maroon-900 mb-1">
-                Saree Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 font-medium transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-maroon-900 mb-1">
-                Category
-              </label>
-              <select
-                value={selectedCategoryId}
-                onChange={(e) => {
-                  setSelectedCategoryId(e.target.value);
-                  setSubcategoryId('');
-                }}
-                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 bg-white cursor-pointer transition-colors"
-              >
-                {categoryOptions.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-maroon-900 mb-1">
-                Subcategory{' '}
-                <span className="text-maroon-400 font-normal">optional</span>
-              </label>
-              <select
-                value={subcategoryId}
-                onChange={(e) => setSubcategoryId(e.target.value)}
-                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 bg-white cursor-pointer transition-colors"
-              >
-                <option value="">None</option>
-                {subcategoryOptions.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-maroon-900 mb-1">
-                Price (₹)
-              </label>
-              <input
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
-                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm font-bold text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-maroon-900 mb-1">
-                Original Price{' '}
-                <span className="text-maroon-400 font-normal">optional</span>
-              </label>
-              <input
-                type="number"
-                value={origPrice}
-                onChange={(e) => setOrigPrice(e.target.value)}
-                placeholder="For discount display"
-                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors placeholder:text-maroon-300"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-maroon-900 mb-1">
-                Badge{' '}
-                <span className="text-maroon-400 font-normal">optional</span>
-              </label>
-              <input
-                type="text"
-                value={badge}
-                onChange={(e) => setBadge(e.target.value)}
-                placeholder="Bestseller, New, Limited"
-                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors placeholder:text-maroon-300"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-maroon-900 mb-1">
-                Size / Length Specs
-              </label>
-              <input
-                type="text"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                placeholder="e.g. 6.2m (incl. blouse)"
-                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors placeholder:text-maroon-300"
-              />
-            </div>
-            <div className="sm:col-span-2 bg-maroon-50/50 p-3 rounded-xl border border-gold-200/60 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-maroon-900 block">
-                  Stock Availability Status
-                </span>
-                <span className="text-[10px] text-maroon-700/80">
-                  If disabled, product shows "Out of stock" overlay on website
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={inStock}
-                  onChange={(e) => setInStock(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-maroon-900"></div>
-                <span className="ml-3 text-xs font-bold text-maroon-900 min-w-[70px]">
-                  {inStock ? '✓ In Stock' : '✗ Sold Out'}
-                </span>
-              </label>
-            </div>
-          </div>
-          <div className="bg-maroon-50 rounded-2xl p-4 flex items-center gap-4">
-            <img
-              src={image}
-              alt=""
-              className="w-14 h-18 object-cover rounded-xl border-2 border-gold-200 shrink-0"
-            />
-            <div>
-              <span className="text-[10px] text-gold-700 font-bold uppercase block">
-                {selectedCategoryName}
-                {selectedSubcategoryName ? ` • ${selectedSubcategoryName}` : ''}
-              </span>
-              <h4 className="font-display text-base font-bold text-maroon-900">
-                {name || '—'}
-              </h4>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="font-bold text-maroon-900">
-                  ₹{Number(price).toLocaleString('en-IN')}
-                </span>
-                {origPrice && (
-                  <span className="text-xs text-maroon-400 line-through">
-                    ₹{Number(origPrice).toLocaleString('en-IN')}
-                  </span>
-                )}
-              </div>
-              <div className="mt-1 flex items-center gap-2">
-                <span
-                  className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${inStock ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}
-                >
-                  {inStock ? 'In Stock' : 'Out of Stock'}
-                </span>
-                <span className="text-[10px] text-maroon-700 font-medium">
-                  📏 {size}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="px-6 pb-6 flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl border-2 border-gold-200 text-maroon-900 text-sm font-bold hover:bg-gold-50 cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              onSave(product._id, {
-                name,
-                price: Number(price),
-                originalPrice: origPrice ? Number(origPrice) : undefined,
-                badge: badge || undefined,
-                image,
-                images:
-                  additionalImages.length > 0 ? additionalImages : undefined,
-                category: selectedCategoryName,
-                subcategory: selectedSubcategoryName || undefined,
-                inStock,
-                size,
-              });
-            }}
-            className="flex-1 py-3 rounded-xl bg-maroon-900 text-gold-100 text-sm font-bold hover:bg-maroon-800 flex items-center justify-center gap-2 cursor-pointer shadow-md"
-          >
-            <Icon.save /> Save to Live Store
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Add Product Modal ────────────────────────────────────────────────────────────
-export function AddProductModal({
-  onClose,
-  onAdd,
-}: {
-  onClose: () => void;
-  onAdd: (p: Product) => void;
-}) {
-  const { siteContent } = useStore();
-  const categoryOptions = siteContent.categories.filter(
-    (cat) => cat.type !== 'subcategory',
-  );
-  const [name, setName] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     categoryOptions[0]?._id ?? '',
   );
-  const [subcategoryId, setSubcategoryId] = useState('');
-  const [price, setPrice] = useState<number | ''>('');
-  const [origPrice, setOrigPrice] = useState('');
-  const [badge, setBadge] = useState('');
-  const [image, setImage] = useState('');
-  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
-  const [inStock, setInStock] = useState(true);
-  const [size, setSize] = useState('6.2m (incl. blouse)');
-
-  useEffect(() => {
-    if (!selectedCategoryId && categoryOptions.length) {
-      setSelectedCategoryId(categoryOptions[0]._id);
-    }
-    if (
-      selectedCategoryId &&
-      !categoryOptions.some((cat) => cat._id === selectedCategoryId)
-    ) {
-      setSelectedCategoryId(categoryOptions[0]?._id ?? '');
-      setSubcategoryId('');
-    }
-  }, [categoryOptions, selectedCategoryId]);
 
   const subcategoryOptions = siteContent.categories.filter(
     (cat) => cat.type === 'subcategory' && cat.parentId === selectedCategoryId,
   );
+
   const selectedCategoryName =
     categoryOptions.find((cat) => cat._id === selectedCategoryId)?.name ??
     'Bridal Kanjivaram';
@@ -530,21 +212,56 @@ export function AddProductModal({
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onAdd({
-      _id: `HSPID-${Date.now()}`,
-      name,
-      category: selectedCategoryName,
-      subcategory: selectedSubcategoryName || undefined,
-      price: Number(price),
-      originalPrice: origPrice ? Number(origPrice) : undefined,
-      badge: badge || undefined,
-      image,
-      images: additionalImages.length > 0 ? additionalImages : undefined,
-      rating: 4.9, // hardcoded
-      inStock,
-      size,
-    });
+    onAdd
+      ? onAdd({
+          _id: productId,
+          name,
+          category: selectedCategoryName,
+          subcategory: selectedSubcategoryName || undefined,
+          price: Number(price),
+          originalPrice: origPrice ? Number(origPrice) : undefined,
+          badge: badge || undefined,
+          image,
+          images: additionalImages.length > 0 ? additionalImages : undefined,
+          rating: 4.9, // hardcoded
+          inStock,
+          sizes,
+        })
+      : null;
   };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    product && onSave
+      ? onSave(product._id, {
+          name,
+          price: Number(price),
+          originalPrice: origPrice ? Number(origPrice) : undefined,
+          badge: badge || undefined,
+          image,
+          images: additionalImages.length > 0 ? additionalImages : undefined,
+          category: selectedCategoryName,
+          subcategory: selectedSubcategoryName || undefined,
+          inStock,
+          sizes,
+        })
+      : null;
+  };
+
+  useEffect(() => {
+    if (!selectedCategoryId && categoryOptions.length) {
+      setSelectedCategoryId(categoryOptions[0]._id);
+    }
+    if (
+      selectedCategoryId &&
+      !categoryOptions.some((cat) => cat._id === selectedCategoryId)
+    ) {
+      setSelectedCategoryId(categoryOptions[0]?._id ?? '');
+      setSubcategoryId('');
+    }
+  }, [categoryOptions, selectedCategoryId]);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto admin-scroll">
@@ -555,7 +272,7 @@ export function AddProductModal({
             </div>
             <div>
               <h2 className="font-display text-lg font-bold text-maroon-900">
-                Add Product
+                {action === 'add' ? 'Add New Product' : 'Edit Product'}
               </h2>
               <p className="text-xs text-maroon-700/70">Publishes instantly</p>
             </div>
@@ -567,16 +284,32 @@ export function AddProductModal({
             <Icon.close />
           </button>
         </div>
-        <form onSubmit={handleAdd} className="p-6 space-y-5">
+        <form
+          onSubmit={action === 'add' ? handleAdd : handleSave}
+          className="p-6 space-y-5"
+        >
           <div>
             <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
-              📸 Main Image
+              Product Id
+            </label>
+            <input
+              required
+              type="text"
+              disabled={action === 'edit'}
+              value={productId ?? ''}
+              onChange={(e: any) => setProductId(e.target.value)}
+              className={`w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 bg-gray-50 ${action === 'edit' ? 'cursor-not-allowed' : ''}`}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
+              Main Image
             </label>
             <ImageUploadZone value={image} onChange={setImage} />
           </div>
           <div>
             <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
-              🖼️ Additional Images
+              Additional Images
             </label>
             <input
               type="file"
@@ -704,17 +437,66 @@ export function AddProductModal({
                 className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors placeholder:text-maroon-300"
               />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-maroon-900 mb-1">
-                Size Specs
+                Size Inventory
               </label>
-              <input
-                type="text"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                placeholder="e.g. 6.2m (incl. blouse)"
-                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors placeholder:text-maroon-300"
-              />
+              <p className="text-[11px] text-maroon-700/70 mb-2">
+                Add each size with available units. Customers will choose from
+                these sizes.
+              </p>
+              <div className="space-y-2">
+                {sizes.map((entry, index) => (
+                  <div key={`${entry.name}-${index}`} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={entry.name}
+                      onChange={(e) => {
+                        const nextSizes = [...sizes];
+                        nextSizes[index] = {
+                          ...nextSizes[index],
+                          name: e.target.value,
+                        };
+                        setSizes(nextSizes);
+                      }}
+                      placeholder="Size name"
+                      className="flex-1 px-3 py-2 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      value={entry.units}
+                      onChange={(e) => {
+                        const nextSizes = [...sizes];
+                        nextSizes[index] = {
+                          ...nextSizes[index],
+                          units: Number(e.target.value) || 0,
+                        };
+                        setSizes(nextSizes);
+                      }}
+                      className="w-24 px-3 py-2 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSizes((prev) => prev.filter((_, i) => i !== index))
+                      }
+                      className="px-3 py-2 rounded-xl border border-gold-200 text-maroon-700 hover:bg-gold-50"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setSizes((prev) => [...prev, { name: '', units: 1 }])
+                }
+                className="mt-3 text-xs font-bold text-maroon-900 hover:text-maroon-700"
+              >
+                + Add size
+              </button>
             </div>
             <div className="sm:col-span-2 bg-maroon-50/50 p-3 rounded-xl border border-gold-200/60 flex items-center justify-between">
               <span className="text-xs font-bold text-maroon-900 block">

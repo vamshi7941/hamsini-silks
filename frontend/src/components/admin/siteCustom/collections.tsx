@@ -183,7 +183,7 @@ export default function Collections() {
         </p>
       </div>
 
-      <div className="mt-4 grid grid-cols-4 gap-4">
+      <div className="mt-4 flex gap-4 overflow-x-auto">
         {collections.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gold-200 bg-gold-50/40 p-4 text-sm text-maroon-700/70">
             Create a parent collection first to manage it here.
@@ -194,8 +194,8 @@ export default function Collections() {
               key={item._id}
               className="rounded-2xl border border-gold-100 p-4 shadow-[0_1px_0_rgba(120,61,33,0.06)]"
             >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex-1">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between h-full">
+                <div className="flex flex-col gap-2 justify-between h-full w-[32vw] lg:w-[16vw]">
                   <label className="flex items-start gap-3">
                     <input
                       type="checkbox"

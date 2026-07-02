@@ -1,6 +1,8 @@
 import CustomerSchema from '../models/CustomerSchema.js';
 import OrderSchema from '../models/OrdersSchema.js';
 import PromoterSchema from '../models/PromoterSchema.js';
+import { mapOrdersWithShiprocketStatus } from '../utils/utils.js';
+import { fetchShiprocketOrdersStatus } from './shiprocketController.js';
 
 export async function getCustomerById(req, res) {
   const { _id } = req.query;
@@ -142,10 +144,16 @@ export async function getOrdersByCustomerId(req, res) {
       });
     }
 
+    const shiprocketOrders = await fetchShiprocketOrdersStatus();
+    const updatedOrders = mapOrdersWithShiprocketStatus(
+      orders,
+      shiprocketOrders,
+    );
+
     return res.status(200).json({
       message: 'Orders retrieved successfully',
       success: true,
-      orders,
+      orders: updatedOrders,
     });
   } catch (error) {
     return res.status(500).json({

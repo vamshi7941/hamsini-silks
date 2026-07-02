@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import CustomerSchema from '../models/CustomerSchema.js';
 import OrderSchema from '../models/OrdersSchema.js';
+import ProductSchema from '../models/ProductSchema.js';
 import {
   createShiprocketAdhocOrder,
   assignShiprocketAwbInternal,
@@ -46,6 +47,48 @@ export const getRazorpayConfig = () => ({
   ),
 });
 
+const normalizeSizeName = (value) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase();
+
+const findProductSizeEntry = (product, sizeName) => {
+  if (!product) return null;
+
+  const normalizedName = normalizeSizeName(sizeName);
+  return (product.sizes || []).find(
+    (entry) => normalizeSizeName(entry?.name) === normalizedName,
+  );
+};
+
+const validateAndDecrementInventory = async (items = []) => {
+  for (const item of items) {
+    const product = await ProductSchema.findById(item.sku);
+    if (!product) continue;
+
+    const sizeEntry = findProductSizeEntry(product, item.size);
+    if (!sizeEntry) continue;
+
+    const requestedUnits = Math.max(1, Number(item.units || 1));
+    if (Number(sizeEntry.units) < requestedUnits) {
+      throw new Error('One or more selected sizes are out of stock.');
+    }
+
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      const matchingEntry = product.sizes.find(
+        (entry) =>
+          normalizeSizeName(entry?.name) === normalizeSizeName(sizeEntry.name),
+      );
+
+      if (matchingEntry) {
+        matchingEntry.units = Number(matchingEntry.units) - requestedUnits;
+      }
+      product.inStock = product.sizes.some((entry) => Number(entry.units) > 0);
+      await product.save();
+    }
+  }
+};
+
 export const placeOrderWithShiprocket = async ({
   customerId,
   orderData,
@@ -56,6 +99,8 @@ export const placeOrderWithShiprocket = async ({
   if (!customer) {
     throw new Error('Customer not found');
   }
+
+  await validateAndDecrementInventory(orderData?.items || []);
 
   const order = buildOrderDocument({
     customerId,

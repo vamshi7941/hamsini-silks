@@ -1,6 +1,7 @@
-import { CartItem, useStore } from '@/context/StoreContext';
-import { Product } from '@/data';
+import { CartItem, Product } from '@/context/contextTypes';
+import { useStore } from '@/context/StoreContext';
 import { OrderData, OrderItem } from '@/types';
+import { getSelectedSizeOption } from '@/utils/productInventory';
 
 export const CustomerApi = () => {
   const apiUrl =
@@ -434,20 +435,35 @@ export const CustomerApi = () => {
     quantity = 1,
     activeSize = '6.2m (with blouse)',
   ) => {
-    const newCart =
-      cart.length > 0
-        ? cart.find((item) => item.product._id === product._id)
-          ? cart.map((item) =>
-              item.product._id === product._id
-                ? {
-                    ...item,
-                    quantity: item.quantity + quantity,
-                    size: activeSize,
-                  }
-                : item,
-            )
-          : [...cart, { product, quantity, size: activeSize }]
-        : [{ product, quantity, size: activeSize }];
+    const selectedSizeOption = getSelectedSizeOption(product, activeSize);
+    if (!selectedSizeOption || selectedSizeOption.units <= 0) {
+      showToast('This size is currently out of stock.', 'warning');
+      return;
+    }
+
+    const safeQuantity = Math.min(quantity, selectedSizeOption.units);
+    if (safeQuantity < quantity) {
+      showToast(
+        `Only ${selectedSizeOption.units} unit(s) available for this size.`,
+        'warning',
+      );
+    }
+
+    const existingItem = cart.find(
+      (item) => item.product._id === product._id && item.size === activeSize,
+    );
+
+    const newCart = existingItem
+      ? cart.map((item) =>
+          item.product._id === product._id && item.size === activeSize
+            ? {
+                ...item,
+                quantity: item.quantity + safeQuantity,
+                size: activeSize,
+              }
+            : item,
+        )
+      : [...cart, { product, quantity: safeQuantity, size: activeSize }];
 
     await updateCart(newCart, user).then((res: any) => {
       if (res.success) {
@@ -459,8 +475,11 @@ export const CustomerApi = () => {
     });
   };
 
-  const removeFromCart = async (productId: string) => {
-    const newCart = cart.filter((item) => item.product._id !== productId);
+  const removeFromCart = async (productId: string, size?: string) => {
+    const newCart = cart.filter((item) => {
+      const matchesProduct = item.product._id === productId;
+      return size ? !(matchesProduct && item.size === size) : !matchesProduct;
+    });
 
     await updateCart(newCart, user).then((res) => {
       if (res.success) {
@@ -472,13 +491,35 @@ export const CustomerApi = () => {
     });
   };
 
-  const updateQuantity = async (productId: string, quantity: number) => {
+  const updateQuantity = async (
+    productId: string,
+    quantity: number,
+    size?: string,
+  ) => {
     if (quantity <= 0) {
-      await removeFromCart(productId);
+      await removeFromCart(productId, size);
       return;
     }
+
+    const matchingItem = cart.find(
+      (item) => item.product._id === productId && item.size === size,
+    );
+    const sizeOption = matchingItem
+      ? getSelectedSizeOption(matchingItem.product, matchingItem.size)
+      : null;
+
+    if (sizeOption && quantity > sizeOption.units) {
+      showToast(
+        `Only ${sizeOption.units} unit(s) available for this size.`,
+        'warning',
+      );
+      return;
+    }
+
     const newCart = cart.map((item) =>
-      item.product._id === productId ? { ...item, quantity } : item,
+      item.product._id === productId && item.size === size
+        ? { ...item, quantity }
+        : item,
     );
 
     await updateCart(newCart, user).then((res) => {

@@ -15,9 +15,7 @@ import Features from './components/Features';
 import Categories from './components/Categories';
 import Products from './components/Products';
 import Bridal from './components/Bridal';
-import Heritage from './components/Heritage';
 import Testimonials from './components/Testimonials';
-import Instagram from './components/Instagram';
 import Newsletter from './components/Newsletter';
 import Footer from './components/Footer';
 
@@ -44,9 +42,7 @@ function HomePage() {
       <Categories />
       <Products />
       <Bridal />
-      <Heritage />
       <Testimonials />
-      <Instagram />
       <Newsletter />
     </div>
   );
