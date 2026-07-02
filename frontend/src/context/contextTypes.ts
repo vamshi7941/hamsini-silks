@@ -4,6 +4,7 @@ import {
   HandpickedContent,
   HeroContent,
   HeritageContent,
+  VideoItem,
 } from '@/api/admin';
 import { OrderData, OrderStatus } from '@/types';
 
@@ -114,22 +115,24 @@ export interface StoreContextType {
 
   siteContent: {
     categories: CategoryConfig[];
-    heroContent: HeroContent;
+    heroContent: HeroContent | null;
     features: FeatureItem[];
     ribbon: string[];
     heritage: HeritageContent;
     handpickedProducts: HandpickedContent;
     bridal: BridalContent;
+    videos: VideoItem[];
   };
   setSiteContent: React.Dispatch<
     React.SetStateAction<{
       categories: CategoryConfig[];
-      heroContent: HeroContent;
+      heroContent: HeroContent | null;
       features: FeatureItem[];
       ribbon: string[];
       heritage: HeritageContent;
       handpickedProducts: HandpickedContent;
       bridal: BridalContent;
+      videos: VideoItem[];
     }>
   >;
 

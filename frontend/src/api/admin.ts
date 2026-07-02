@@ -60,6 +60,11 @@ export type BridalImageContent = {
   alt?: string;
 };
 
+export type VideoItem = {
+  url: string;
+  aspectRatio?: string;
+};
+
 export type BridalContent = {
   eyebrow: string;
   titlePrefix: string;
@@ -122,14 +127,17 @@ export const AdminApi = () => {
     onClose: () => void,
   ) => {
     try {
-      const response = await fetch(`${apiUrl}/api/products/updateProduct/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
+      const response = await fetch(
+        `${apiUrl}/api/products/updateProduct/${id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
+          body: JSON.stringify(updates),
         },
-        body: JSON.stringify(updates),
-      });
+      );
       const json = await response.json();
 
       if (response.status === 401) {
@@ -154,13 +162,16 @@ export const AdminApi = () => {
 
   const deleteProduct = async (id: string, onClose: () => void) => {
     try {
-      const response = await fetch(`${apiUrl}/api/products/deleteProduct/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
+      const response = await fetch(
+        `${apiUrl}/api/products/deleteProduct/${id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
         },
-      });
+      );
       const json = await response.json();
 
       if (response.status === 401) {
@@ -484,6 +495,31 @@ export const AdminApi = () => {
     }
   };
 
+  const saveVideoContent = async (videos: VideoItem[]) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/video-content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ videos }),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save video content');
+      }
+      showToast('Video testimonials updated successfully', 'success');
+      return json;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to save video content',
+        'error',
+      );
+      return null;
+    }
+  };
+
   return {
     addProduct,
     updateProduct,
@@ -499,5 +535,6 @@ export const AdminApi = () => {
     saveHeritageContent,
     saveHandpickedProducts,
     saveBridalContent,
+    saveVideoContent,
   };
 };

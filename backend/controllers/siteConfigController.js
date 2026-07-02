@@ -340,3 +340,34 @@ export async function saveBridalContent(req, res) {
     return res.status(400).json({ success: false, error: error.message });
   }
 }
+
+export async function saveVideoContent(req, res) {
+  try {
+    const { videos } = req.body || {};
+
+    if (!Array.isArray(videos)) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'Videos must be an array' });
+    }
+
+    const normalizedVideos = videos
+      .slice(0, 8)
+      .map((video) => ({
+        url: typeof video?.url === 'string' ? video.url.trim() : '',
+        aspectRatio:
+          typeof video?.aspectRatio === 'string' && video.aspectRatio.trim()
+            ? video.aspectRatio.trim()
+            : '16/9',
+      }))
+      .filter((video) => video.url);
+
+    const siteConfig = await getOrCreateSiteConfig();
+    siteConfig.videos = normalizedVideos;
+    await siteConfig.save();
+
+    return res.status(200).json({ success: true, videos: siteConfig.videos });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+}

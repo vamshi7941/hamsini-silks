@@ -1,51 +1,93 @@
-import { testimonials } from "../data";
-import SectionHeader from "./SectionHeader";
-import { StarIcon } from "./Icons";
+import { useMemo } from 'react';
+import { useStore } from '@/context/StoreContext';
+import SectionHeader from './SectionHeader';
+
+const getEmbedUrl = (url: string) => {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  const youtubeMatch = trimmed.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/,
+  );
+  if (youtubeMatch) {
+    return `https://www.youtube.com/embed/${youtubeMatch[1]}?rel=0&showinfo=0&enablejsapi=1&playsinline=1`;
+  }
+
+  const instagramMatch = trimmed.match(
+    /instagram\.com\/(?:p|reel)\/([^\/\?]+)/,
+  );
+  if (instagramMatch) {
+    return `https://www.instagram.com/p/${instagramMatch[1]}/embed`;
+  }
+
+  return trimmed;
+};
+
+const parseAspectRatio = (aspectRatio?: string) => {
+  if (!aspectRatio) return 56.25;
+  const parts = aspectRatio.split('/').map((value) => Number(value.trim()));
+  if (parts.length === 2 && parts[0] > 0 && parts[1] > 0) {
+    return (parts[1] / parts[0]) * 100;
+  }
+  return 56.25;
+};
 
 export default function Testimonials() {
+  const { siteContent } = useStore();
+  const videos = useMemo(
+    () =>
+      (siteContent.videos || [])
+        .map((video) => ({
+          ...video,
+          embedUrl: getEmbedUrl(video.url),
+          aspectRatio: parseAspectRatio(video.aspectRatio),
+        }))
+        .filter((video) => video.embedUrl),
+    [siteContent.videos],
+  );
+
+  if (!videos.length) {
+    return null;
+  }
+
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-maroon-50/40 to-[#fdf8f1]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="WORDS OF LOVE"
-          title="From Our Patrons"
-          subtitle="Stories drape themselves in our silks. Here are a few that have come back to us."
+          eyebrow="FROM OUR PATRONS"
+          title="Video Stories"
+          subtitle="Real moments from our community, presented with flexible aspect ratios."
         />
 
-        <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
-          {testimonials.map((t, i) => (
-            <div
-              key={t.name}
-              className={`relative p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-white border border-gold-200 shadow-sm hover:shadow-xl hover:border-gold-400 transition-all ${
-                i === 1 ? "md:-translate-y-2 sm:md:-translate-y-4" : ""
-              }`}
-            >
-              {/* Decorative quote */}
-              <div className="absolute -top-3 sm:-top-4 left-6 sm:left-8 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-gold-500 to-gold-600 text-maroon-900 font-display text-xl sm:text-2xl flex items-center justify-center shadow-md">
-                ❝
-              </div>
+        <div
+          className="mt-8 overflow-x-auto pb-6 scroll-smooth snap-x snap-mandatory"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <div className="flex flex-nowrap gap-6 sm:justify-center px-2 sm:px-4 items-stretch">
+            {videos.map((video, index) => {
+              const src = `${video.embedUrl}${video.embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1&playsinline=1`;
 
-              <div className="flex gap-0.5 mb-3 sm:mb-4">
-                {Array.from({ length: t.rating }).map((_, j) => (
-                  <StarIcon key={j} className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gold-500" />
-                ))}
-              </div>
-
-              <p className="font-serif text-sm sm:text-lg italic text-maroon-800 leading-relaxed mb-4 sm:mb-6">
-                "{t.text}"
-              </p>
-
-              <div className="flex items-center gap-3 pt-3 sm:pt-4 border-t border-gold-100">
-                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-maroon-700 to-maroon-900 text-gold-300 font-display text-base sm:text-xl flex items-center justify-center">
-                  {t.name[0]}
+              return (
+                <div
+                  key={`${video.url}-${index}`}
+                  className="snap-center flex-shrink-0 rounded-3xl border border-gold-100 bg-white shadow-sm transition-all duration-500 w-[min(50vw,560px)] sm:w-[min(16vw,560px)] opacity-100"
+                >
+                  <div
+                    className="relative w-full overflow-hidden rounded-3xl"
+                    style={{ paddingBottom: `${video.aspectRatio}%` }}
+                  >
+                    <iframe
+                      className="absolute inset-0 h-full w-full"
+                      src={src}
+                      title={`Video testimonial ${index + 1}`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
                 </div>
-                <div>
-                  <div className="font-display text-sm sm:text-base text-maroon-900">{t.name}</div>
-                  <div className="text-[10px] sm:text-xs text-maroon-700/70 tracking-wider">{t.location.toUpperCase()}</div>
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

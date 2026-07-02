@@ -92,6 +92,7 @@ app.get('/api/site-content', async (req, res) => {
           { src: '/images/model2.jpg', alt: 'Bridal mustard saree' },
         ],
       },
+      videos: siteConfig.videos || [],
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });

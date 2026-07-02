@@ -5,6 +5,7 @@ import Ribbon from './siteCustom/ribbon';
 import Collections from './siteCustom/collections';
 import HandPicked from './siteCustom/handPicked';
 import SpecialOffers from './siteCustom/specialOffers';
+import Videos from './siteCustom/videos';
 
 export default function SiteCustomize() {
   return (
@@ -23,6 +24,8 @@ export default function SiteCustomize() {
       <HandPicked />
 
       <SpecialOffers />
+
+      <Videos />
     </div>
   );
 }

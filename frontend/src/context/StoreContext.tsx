@@ -10,7 +10,12 @@ import {
   User,
 } from './contextTypes';
 import { OrderData } from '@/types';
-import { BridalImageContent, FeatureItem } from '@/api/admin';
+import type {
+  BridalImageContent,
+  FeatureItem,
+  HeroContent,
+  VideoItem,
+} from '@/api/admin';
 import { getSelectedSizeOption } from '@/utils/productInventory';
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -66,7 +71,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [siteContent, setSiteContent] = useState<{
     categories: CategoryConfig[];
-    heroContent: any;
+    heroContent: HeroContent | null;
     features: FeatureItem[];
     ribbon: string[];
     heritage: {
@@ -94,6 +99,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       buttonTarget: string;
       images: BridalImageContent[];
     };
+    videos: VideoItem[];
   }>({
     categories: [],
     heroContent: null,
@@ -117,6 +123,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       buttonTarget: '',
       images: [{ alt: '', src: '' }],
     },
+    videos: [],
   });
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);

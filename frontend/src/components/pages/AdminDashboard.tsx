@@ -14,6 +14,7 @@ import SiteCustomize from '../admin/siteCustomize';
 import UpdateProduct from '../admin/updateProduct';
 import ImageEditor from '../admin/imageEditor';
 import DeleteConfirmModal from '../admin/deleteConfirmationModel';
+import Media from '../admin/media';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -119,13 +120,13 @@ export default function AdminDashboard() {
           )}
 
           {/* ═══════════════════ MEDIA LIBRARY ═══════════════════ */}
-          {/* {activeTab === 'media' && (
+          {activeTab === 'media' && (
             <Media
               setEditingImage={setEditingImage}
               setActiveTab={setActiveTab}
               setShowAddModal={setShowAddModal}
             />
-          )} */}
+          )}
 
           {/* ═══════════════════ PROMOTERS ═══════════════════ */}
           {activeTab === 'promoters' && <Promoters />}

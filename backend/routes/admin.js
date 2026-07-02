@@ -88,4 +88,8 @@ router
   .route('/bridal-content')
   .post(requireAdminAuth, siteController.saveBridalContent);
 
+router
+  .route('/video-content')
+  .post(requireAdminAuth, siteController.saveVideoContent);
+
 export default router;

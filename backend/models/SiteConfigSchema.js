@@ -110,6 +110,15 @@ const SiteConfigSchema = new Schema(
         ],
       },
     },
+    videos: {
+      type: [
+        {
+          url: { type: String, default: '' },
+          aspectRatio: { type: String, default: '16/9' },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true },
 );
