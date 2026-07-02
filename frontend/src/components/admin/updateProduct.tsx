@@ -164,7 +164,19 @@ export default function UpdateProduct({
   const [price, setPrice] = useState(product?.price ?? '');
   const [origPrice, setOrigPrice] = useState(product?.originalPrice ?? '');
   const [subcategoryId, setSubcategoryId] = useState('');
+  const [description, setDescription] = useState(() => {
+    const d = product?.description ?? '';
+    return d.includes('<') ? d : d.replace(/\n/g, '<br/>');
+  });
+  const editorRef = useRef<HTMLDivElement | null>(null);
 
+  const exec = (cmd: string) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(cmd, false as any);
+    // update state after command
+    setDescription(editorRef.current.innerHTML);
+  };
   const [badge, setBadge] = useState(product?.badge ?? '');
   const [image, setImage] = useState(product?.image ?? '');
   const [additionalImages, setAdditionalImages] = useState(
@@ -217,15 +229,16 @@ export default function UpdateProduct({
           _id: productId,
           name,
           category: selectedCategoryName,
-          subcategory: selectedSubcategoryName || undefined,
+          subcategory: selectedSubcategoryName || '',
           price: Number(price),
           originalPrice: origPrice ? Number(origPrice) : undefined,
           badge: badge || undefined,
           image,
-          images: additionalImages.length > 0 ? additionalImages : undefined,
+          images: additionalImages.length > 0 ? additionalImages : [],
           rating: 4.9, // hardcoded
           inStock,
           sizes,
+          description,
         })
       : null;
   };
@@ -240,11 +253,12 @@ export default function UpdateProduct({
           originalPrice: origPrice ? Number(origPrice) : undefined,
           badge: badge || undefined,
           image,
-          images: additionalImages.length > 0 ? additionalImages : undefined,
+          images: additionalImages.length > 0 ? additionalImages : [],
           category: selectedCategoryName,
           subcategory: selectedSubcategoryName || undefined,
           inStock,
           sizes,
+          description,
         })
       : null;
   };
@@ -514,6 +528,40 @@ export default function UpdateProduct({
                   {inStock ? '✓ In Stock' : '✗ Sold Out'}
                 </span>
               </label>
+            </div>
+            {/* description */}
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-maroon-900 mb-1">
+                Description
+              </label>
+              <div className="mb-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => exec('bold')}
+                  title="Bold"
+                  className="px-3 py-1 rounded-lg border border-gold-200 bg-white text-sm font-bold"
+                >
+                  B
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exec('italic')}
+                  title="Italic"
+                  className="px-3 py-1 rounded-lg border border-gold-200 bg-white text-sm italic"
+                >
+                  I
+                </button>
+              </div>
+              <div
+                ref={editorRef}
+                onInput={(e) =>
+                  setDescription((e.target as HTMLDivElement).innerHTML)
+                }
+                contentEditable
+                suppressContentEditableWarning
+                className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors placeholder:text-maroon-300 min-h-[80px]"
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
             </div>
           </div>
           <div className="flex gap-3 pt-2">

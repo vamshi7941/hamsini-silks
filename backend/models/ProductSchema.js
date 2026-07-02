@@ -45,6 +45,10 @@ const ProductSchema = new Schema(
       type: Number,
       required: false,
     },
+    description: {
+      type: String,
+      required: false,
+    },
     inStock: {
       type: Boolean,
       required: true,

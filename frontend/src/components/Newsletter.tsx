@@ -29,11 +29,14 @@ export default function Newsletter() {
           <div className="text-[10px] sm:text-[11px] tracking-[0.3em] sm:tracking-[0.4em] text-gold-300 mb-2 sm:mb-3 font-bold">
             JOIN THE HAMSINI FAMILY
           </div>
-          <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl text-gold-100 mb-2 sm:mb-3 font-bold">
+          <h3 className="font-display text-2xl lg:text-4xl text-gold-100 mb-2 sm:mb-3 font-bold">
             Be the first to drape{' '}
             <em className="gold-shimmer not-italic">new arrivals</em>
           </h3>
 
+          <span className="text-[16px] sm:text-[18px] text-gold-200/50 mb-2 sm:mb-0">
+            Subscribe to our newsletter for exclusive updates and offers.
+          </span>
           <form
             onSubmit={handleSubmit}
             className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-lg mt-6 mx-auto"

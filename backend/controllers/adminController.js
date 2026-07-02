@@ -82,6 +82,7 @@ export async function addProduct(req, res) {
     subcategory,
     price,
     originalPrice,
+    description,
     image,
     images,
     badge,
@@ -111,6 +112,7 @@ export async function addProduct(req, res) {
       price,
       originalPrice,
       image,
+      description,
       images: Array.isArray(images) ? images : [],
       badge,
       rating,
@@ -139,6 +141,7 @@ export async function updateProduct(req, res) {
     price,
     originalPrice,
     image,
+    description,
     images,
     badge,
     rating,
@@ -165,6 +168,7 @@ export async function updateProduct(req, res) {
     product.images = Array.isArray(images) ? images : product.images;
     product.badge = badge || product.badge;
     product.rating = rating || product.rating;
+    product.description = description || product.description;
 
     const normalizedSizes =
       sizes !== undefined
