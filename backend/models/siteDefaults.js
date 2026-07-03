@@ -3,35 +3,40 @@ export const footerHelpDefault = [
     label: 'Track Order',
     href: '/track-order',
     title: 'Track Your Order',
-    description: 'Monitor your order status in real-time',
+    description:
+      'Easily monitor the progress of your order from the moment it leaves our warehouse until it reaches your doorstep.',
     content:
-      'Keep track of your order from dispatch to delivery. Enter your order ID to get real-time updates.',
+      'Our order tracking system allows you to stay updated at every stage of the delivery process. Simply enter your order ID to view real-time updates, including dispatch confirmation, courier details, estimated delivery time, and current location of your package. This ensures transparency and peace of mind, so you’ll always know exactly when to expect your order.',
   },
   {
     label: 'Shipping & Delivery',
     href: '/shipping-and-delivery',
     title: 'Shipping & Delivery',
-    description: 'Learn about our shipping options',
+    description:
+      'Learn more about our shipping methods, delivery timelines, and packaging standards to ensure your order arrives safely.',
     content:
-      'We offer standard and express shipping to all locations. Orders are carefully packaged and dispatched within 24 hours.',
+      'We provide both standard and express shipping options to cater to your needs. Standard shipping typically takes 3–5 business days, while express shipping ensures faster delivery within 1–2 business days. All orders are carefully packaged to prevent damage during transit and dispatched within 24 hours of confirmation. You’ll receive a tracking link once your order is shipped, allowing you to follow its journey until it arrives at your location.',
   },
   {
     label: 'Returns & Exchange',
-    href: '/returnes-and-exchange',
+    href: '/returns-and-exchange',
     title: 'Returns & Exchange',
-    description: 'Easy returns and exchanges',
+    description:
+      'Enjoy hassle-free returns and exchanges with our customer-friendly policy designed to give you confidence in your purchase.',
     content:
-      'We offer hassle-free returns and exchanges within 7 days of delivery for unused items in original packaging.',
+      'If you’re not completely satisfied with your purchase, we offer easy returns and exchanges within 7 days of delivery. Items must be unused, in their original packaging, and accompanied by proof of purchase. Once your return request is approved, you can choose between a full refund or an exchange for another product. Our goal is to make the process smooth and stress-free, ensuring that you shop with complete peace of mind.',
   },
   {
     label: 'FAQs',
     href: '/faqs',
     title: 'Frequently Asked Questions',
-    description: 'Answers to common questions',
+    description:
+      'Find detailed answers to common queries about our products, ordering process, shipping, and return policies.',
     content:
-      'Find answers to commonly asked questions about our products, ordering, and shipping policies.',
+      'Our FAQ section is designed to provide quick solutions to the most common questions customers have. Whether you’re curious about payment methods, delivery timelines, return eligibility, or product details, you’ll find clear and concise answers here. This resource helps you save time and ensures you have all the information you need to make confident purchasing decisions.',
   },
 ];
+
 
 export const footerAboutDefault = [
   {

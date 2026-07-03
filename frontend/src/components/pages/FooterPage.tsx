@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { slugify } from '@/utils/cn';
 import type { FooterLink } from '@/api/admin';
+import { marked } from 'marked';
 
 export default function FooterPage() {
   const location = useLocation();
@@ -87,9 +88,17 @@ export default function FooterPage() {
 
           {/* Main Content */}
           <div className="prose prose-sm sm:prose max-w-none mb-12">
-            <div className="bg-white rounded-lg p-8 sm:p-12 border border-gold-200/30 shadow-sm">
-              <div className="text-maroon-900 whitespace-pre-wrap leading-relaxed">
-                {selectedLink.content || 'No additional content available.'}
+            <div className="bg-white rounded-lg p-4 sm:p-12 border border-gold-200/30 shadow-sm">
+              <div className="text-maroon-900 leading-tight">
+                <div
+                  className="markdown-content"
+                  dangerouslySetInnerHTML={{
+                    __html: marked(
+                      selectedLink.content ||
+                        'No additional content available.',
+                    ),
+                  }}
+                />
               </div>
             </div>
           </div>
