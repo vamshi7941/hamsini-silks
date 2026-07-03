@@ -341,6 +341,47 @@ export async function saveBridalContent(req, res) {
   }
 }
 
+export async function saveFooterContent(req, res) {
+  try {
+    const { help, about } = req.body || {};
+
+    const normalizeFooterLinks = (items, defaultLinks) => {
+      if (!Array.isArray(items)) return defaultLinks;
+      return items
+        .map((item) => ({
+          label: typeof item?.label === 'string' ? item.label.trim() : '',
+          href: typeof item?.href === 'string' ? item.href.trim() : '',
+        }))
+        .filter((item) => item.label);
+    };
+
+    const siteConfig = await getOrCreateSiteConfig();
+    siteConfig.footer = {
+      help: normalizeFooterLinks(
+        help,
+        siteConfig.footer?.help || [
+          { label: 'Track Order', href: '/track-order' },
+          { label: 'Shipping & Delivery', href: '/shipping-and-delivery' },
+          { label: 'Returns & Exchange', href: '/returnes-and-exchange' },
+          { label: 'FAQs', href: '/faqs' },
+        ],
+      ),
+      about: normalizeFooterLinks(
+        about,
+        siteConfig.footer?.about || [
+          { label: 'Our Heritage', href: '/our-heritage' },
+        ],
+      ),
+    };
+
+    await siteConfig.save();
+
+    return res.status(200).json({ success: true, footer: siteConfig.footer });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+}
+
 export async function saveVideoContent(req, res) {
   try {
     const { videos } = req.body || {};

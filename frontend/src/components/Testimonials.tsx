@@ -1,6 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useStore } from '@/context/StoreContext';
 import SectionHeader from './SectionHeader';
+
+// Extend window interface for YouTube API
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
 
 const getEmbedUrl = (url: string) => {
   const trimmed = url.trim();
@@ -34,6 +42,11 @@ const parseAspectRatio = (aspectRatio?: string) => {
 
 export default function Testimonials() {
   const { siteContent } = useStore();
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const playersRef = useRef<{ [key: number]: any }>({});
+  const iframeRefs = useRef<{ [key: number]: HTMLIFrameElement | null }>({});
+  const videoTimersRef = useRef<{ [key: number]: NodeJS.Timeout | null }>({});
+
   const videos = useMemo(
     () =>
       (siteContent.videos || [])
@@ -45,6 +58,89 @@ export default function Testimonials() {
         .filter((video) => video.embedUrl),
     [siteContent.videos],
   );
+
+  // Initialize YouTube API
+  useEffect(() => {
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(tag);
+
+      (window as any).onYouTubeIframeAPIReady = () => {
+        // API ready
+      };
+    }
+  }, []);
+
+  const advanceToNextVideo = useCallback(() => {
+    setCurrentVideoIndex((prevIndex) => {
+      if (prevIndex < videos.length - 1) {
+        return prevIndex + 1;
+      }
+      return 0;
+    });
+  }, [videos.length]);
+
+  // Handle video state changes
+  useEffect(() => {
+    if (!window.YT || videos.length === 0) return;
+
+    const currentIframe = iframeRefs.current[currentVideoIndex];
+    if (!currentIframe) return;
+
+    const isYouTube = currentIframe.src.includes('youtube.com');
+
+    if (isYouTube) {
+      // Clear any existing timer
+      if (videoTimersRef.current[currentVideoIndex]) {
+        clearTimeout(videoTimersRef.current[currentVideoIndex]!);
+      }
+
+      // Create or get player
+      const createPlayer = () => {
+        try {
+          if (!playersRef.current[currentVideoIndex] && window.YT?.Player) {
+            playersRef.current[currentVideoIndex] = new window.YT.Player(
+              currentIframe,
+              {
+                events: {
+                  onStateChange: (event: any) => {
+                    // 0 = ended, 1 = playing, 2 = paused, 3 = buffering, 5 = video cued
+                    if (event.data === window.YT.PlayerState.ENDED) {
+                      advanceToNextVideo();
+                    }
+                  },
+                },
+              },
+            );
+          }
+
+          const player = playersRef.current[currentVideoIndex];
+          if (player && player.playVideo) {
+            setTimeout(() => {
+              player.playVideo();
+            }, 100);
+          }
+        } catch (error) {
+          console.error('Error creating YouTube player:', error);
+        }
+      };
+
+      if (window.YT?.Player) {
+        createPlayer();
+      } else {
+        // Wait for YT API to be ready
+        const timer = setTimeout(createPlayer, 500);
+        videoTimersRef.current[currentVideoIndex] = timer;
+      }
+    }
+
+    return () => {
+      if (videoTimersRef.current[currentVideoIndex]) {
+        clearTimeout(videoTimersRef.current[currentVideoIndex]!);
+      }
+    };
+  }, [currentVideoIndex, videos, advanceToNextVideo]);
 
   if (!videos.length) {
     return null;
@@ -65,7 +161,9 @@ export default function Testimonials() {
         >
           <div className="flex flex-nowrap gap-6 sm:justify-center px-2 sm:px-4 items-stretch">
             {videos.map((video, index) => {
-              const src = `${video.embedUrl}${video.embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1&playsinline=1`;
+              // Only autoplay the current video, others should not autoplay
+              const shouldAutoplay = index === currentVideoIndex;
+              const src = `${video.embedUrl}${video.embedUrl.includes('?') ? '&' : '?'}${shouldAutoplay ? 'autoplay=1' : 'autoplay=0'}&mute=1&playsinline=1`;
 
               return (
                 <div
@@ -77,6 +175,11 @@ export default function Testimonials() {
                     style={{ paddingBottom: `${video.aspectRatio}%` }}
                   >
                     <iframe
+                      ref={(el) => {
+                        if (el) {
+                          iframeRefs.current[index] = el;
+                        }
+                      }}
                       className="absolute inset-0 h-full w-full"
                       src={src}
                       title={`Video testimonial ${index + 1}`}

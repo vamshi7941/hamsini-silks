@@ -110,6 +110,31 @@ const SiteConfigSchema = new Schema(
         ],
       },
     },
+    footer: {
+      help: {
+        type: [
+          {
+            label: { type: String, default: '' },
+            href: { type: String, default: '' },
+          },
+        ],
+        default: [
+          { label: 'Track Order', href: '/track-order' },
+          { label: 'Shipping & Delivery', href: '/shipping-and-delivery' },
+          { label: 'Returns & Exchange', href: '/returnes-and-exchange' },
+          { label: 'FAQs', href: '/faqs' },
+        ],
+      },
+      about: {
+        type: [
+          {
+            label: { type: String, default: '' },
+            href: { type: String, default: '' },
+          },
+        ],
+        default: [{ label: 'Our Heritage', href: '/our-heritage' }],
+      },
+    },
     videos: {
       type: [
         {

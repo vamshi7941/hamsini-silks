@@ -65,6 +65,16 @@ export type VideoItem = {
   aspectRatio?: string;
 };
 
+export type FooterLink = {
+  label: string;
+  href: string;
+};
+
+export type FooterContent = {
+  help: FooterLink[];
+  about: FooterLink[];
+};
+
 export type BridalContent = {
   eyebrow: string;
   titlePrefix: string;
@@ -495,6 +505,31 @@ export const AdminApi = () => {
     }
   };
 
+  const saveFooterContent = async (content: FooterContent) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/footer-content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify(content),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Failed to save footer content');
+      }
+      showToast('Footer links updated successfully', 'success');
+      return json;
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to save footer content',
+        'error',
+      );
+      return null;
+    }
+  };
+
   const saveVideoContent = async (videos: VideoItem[]) => {
     try {
       const response = await fetch(`${apiUrl}/api/admin/video-content`, {
@@ -535,6 +570,7 @@ export const AdminApi = () => {
     saveHeritageContent,
     saveHandpickedProducts,
     saveBridalContent,
+    saveFooterContent,
     saveVideoContent,
   };
 };

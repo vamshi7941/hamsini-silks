@@ -1,6 +1,7 @@
 import {
   BridalContent,
   FeatureItem,
+  FooterContent,
   HandpickedContent,
   HeroContent,
   HeritageContent,
@@ -122,6 +123,7 @@ export interface StoreContextType {
     heritage: HeritageContent;
     handpickedProducts: HandpickedContent;
     bridal: BridalContent;
+    footer: FooterContent;
     videos: VideoItem[];
   };
   setSiteContent: React.Dispatch<
@@ -133,6 +135,7 @@ export interface StoreContextType {
       heritage: HeritageContent;
       handpickedProducts: HandpickedContent;
       bridal: BridalContent;
+      footer: FooterContent;
       videos: VideoItem[];
     }>
   >;

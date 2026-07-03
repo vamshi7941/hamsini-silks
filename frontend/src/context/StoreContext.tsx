@@ -13,6 +13,7 @@ import { OrderData } from '@/types';
 import type {
   BridalImageContent,
   FeatureItem,
+  FooterContent,
   HeroContent,
   VideoItem,
 } from '@/api/admin';
@@ -99,6 +100,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       buttonTarget: string;
       images: BridalImageContent[];
     };
+    footer: FooterContent;
     videos: VideoItem[];
   }>({
     categories: [],
@@ -122,6 +124,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       buttonLabel: '',
       buttonTarget: '',
       images: [{ alt: '', src: '' }],
+    },
+    footer: {
+      help: [
+        { label: 'Track Order', href: '/track-order' },
+        { label: 'Shipping & Delivery', href: '/shipping-and-delivery' },
+        { label: 'Returns & Exchange', href: '/returnes-and-exchange' },
+        { label: 'FAQs', href: '/faqs' },
+      ],
+      about: [{ label: 'Our Heritage', href: '/our-heritage' }],
     },
     videos: [],
   });

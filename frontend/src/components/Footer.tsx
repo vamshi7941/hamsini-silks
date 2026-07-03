@@ -1,45 +1,32 @@
 import { Link } from 'react-router-dom';
 import { InstagramIcon, FacebookIcon, WhatsAppIcon } from './Icons';
 import { useStore } from '../context/StoreContext';
-
-const cols = [
-  {
-    title: 'Shop',
-    links: [
-      'New Arrivals',
-      'Bridal Kanjivaram',
-      'Banarasi Silk',
-      'Soft Silk Pattu',
-      'Designer Collection',
-      'Gift Cards',
-    ],
-  },
-  {
-    title: 'Customer Care',
-    links: [
-      'Track Order',
-      'Shipping & Delivery',
-      'Returns & Exchange',
-      'Size Guide',
-      'Care Instructions',
-      'FAQs',
-    ],
-  },
-  {
-    title: 'About Us',
-    links: [
-      'Our Heritage',
-      'Our Weavers',
-      'Sustainability',
-      'Press',
-      'Bridal Studio',
-      'Careers',
-    ],
-  },
-];
+import { slugify } from '@/utils/cn';
 
 export default function Footer() {
-  const { showToast } = useStore();
+  const { showToast, siteContent } = useStore();
+  const categories =
+    siteContent.categories.filter((cat) => !cat.parentId) || [];
+
+  const footerData = siteContent.footer;
+
+  const cols = [
+    {
+      title: 'Shop',
+      links: categories.map((cat) => ({
+        label: cat.name,
+        href: `/category/${slugify(cat.name)}`,
+      })),
+    },
+    {
+      title: 'Help',
+      links: footerData.help,
+    },
+    {
+      title: 'About',
+      links: footerData.about,
+    },
+  ];
 
   return (
     <footer className="bg-[#1a0805] text-gold-100 pt-12 sm:pt-16 pb-6 sm:pb-8 relative overflow-hidden shrink-0">
@@ -104,12 +91,12 @@ export default function Footer() {
                 </h4>
                 <ul className="space-y-2 sm:space-y-2.5">
                   {col.links.map((link) => (
-                    <li key={link}>
+                    <li key={`${col.title}-${link.label}-${link.href}`}>
                       <Link
-                        to={link === 'Track Order' ? '/login' : '/shop'}
+                        to={link.href || '/shop'}
                         className="text-xs sm:text-sm text-gold-200/70 hover:text-gold-300 transition-colors text-left block cursor-pointer"
                       >
-                        {link}
+                        {link.label}
                       </Link>
                     </li>
                   ))}

@@ -89,6 +89,10 @@ router
   .post(requireAdminAuth, siteController.saveBridalContent);
 
 router
+  .route('/footer-content')
+  .post(requireAdminAuth, siteController.saveFooterContent);
+
+router
   .route('/video-content')
   .post(requireAdminAuth, siteController.saveVideoContent);
 

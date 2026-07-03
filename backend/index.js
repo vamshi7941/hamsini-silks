@@ -92,6 +92,17 @@ app.get('/api/site-content', async (req, res) => {
           { src: '/images/model2.jpg', alt: 'Bridal mustard saree' },
         ],
       },
+      footer: siteConfig.footer || {
+        help: [
+          { label: 'Track Order', href: '/track-order' },
+          { label: 'Shipping & Delivery', href: '/shipping-and-delivery' },
+          { label: 'Returns & Exchange', href: '/returnes-and-exchange' },
+          { label: 'FAQs', href: '/faqs' },
+        ],
+        about: [
+          { label: 'Our Heritage', href: '/our-heritage' },
+        ],
+      },
       videos: siteConfig.videos || [],
     });
   } catch (error) {

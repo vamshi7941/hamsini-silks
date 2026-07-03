@@ -91,6 +91,15 @@ export default function App() {
           buttonTarget: '',
           images: [],
         },
+        footer: content.footer || {
+          help: [
+            { label: 'Track Order', href: '/track-order' },
+            { label: 'Shipping & Delivery', href: '/shipping-and-delivery' },
+            { label: 'Returns & Exchange', href: '/returnes-and-exchange' },
+            { label: 'FAQs', href: '/faqs' },
+          ],
+          about: [{ label: 'Our Heritage', href: '/our-heritage' }],
+        },
         videos: content.videos || [],
       }),
     );
