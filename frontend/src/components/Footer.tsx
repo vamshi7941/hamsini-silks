@@ -20,11 +20,17 @@ export default function Footer() {
     },
     {
       title: 'Help',
-      links: footerData.help,
+      links: footerData.help.map((link) => ({
+        label: link.label,
+        href: `/help/${slugify(link.label)}`,
+      })),
     },
     {
       title: 'About',
-      links: footerData.about,
+      links: footerData.about.map((link) => ({
+        label: link.label,
+        href: `/about/${slugify(link.label)}`,
+      })),
     },
   ];
 
@@ -93,7 +99,7 @@ export default function Footer() {
                   {col.links.map((link) => (
                     <li key={`${col.title}-${link.label}-${link.href}`}>
                       <Link
-                        to={link.href || '/shop'}
+                        to={link.href}
                         className="text-xs sm:text-sm text-gold-200/70 hover:text-gold-300 transition-colors text-left block cursor-pointer"
                       >
                         {link.label}

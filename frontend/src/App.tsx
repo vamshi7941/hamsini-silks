@@ -31,8 +31,14 @@ import WishlistPage from './components/pages/WishlistPage';
 import MyOrdersPage from './components/pages/MyOrdersPage';
 import { AdminApi } from './api/admin';
 import { CustomerApi } from './api/customer';
+import {
+  bridalImagesDefault,
+  handpickedDefault,
+  videosDefault,
+} from './constants/siteDefaults';
 import ProfilePage from './components/pages/Profile';
 import VerifyPhonePage from './components/pages/VerifyPhonePage';
+import FooterPage from './components/pages/FooterPage';
 
 function HomePage() {
   return (
@@ -71,9 +77,9 @@ export default function App() {
         ribbon: content.ribbon || [],
         heritage: content.heritage || null,
         handpickedProducts: content.handpickedProducts || {
-          title: '',
-          subtitle: '',
-          productIds: [],
+          title: handpickedDefault.title,
+          subtitle: handpickedDefault.subtitle,
+          productIds: handpickedDefault.productIds,
         },
         bridal: content.bridal || {
           eyebrow: '',
@@ -89,18 +95,13 @@ export default function App() {
           savingsText: '',
           buttonLabel: '',
           buttonTarget: '',
-          images: [],
+          images: bridalImagesDefault,
         },
         footer: content.footer || {
-          help: [
-            { label: 'Track Order', href: '/track-order' },
-            { label: 'Shipping & Delivery', href: '/shipping-and-delivery' },
-            { label: 'Returns & Exchange', href: '/returnes-and-exchange' },
-            { label: 'FAQs', href: '/faqs' },
-          ],
-          about: [{ label: 'Our Heritage', href: '/our-heritage' }],
+          help: [],
+          about: [],
         },
-        videos: content.videos || [],
+        videos: content.videos || videosDefault,
       }),
     );
   }, []);
@@ -157,6 +158,8 @@ export default function App() {
           <Route path="/promoter" element={<PromotersDashboard />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/my-orders" element={<MyOrdersPage />} />
+          <Route path="/help/:slug" element={<FooterPage />} />
+          <Route path="/about/:slug" element={<FooterPage />} />
           <Route
             path="/verify-phone"
             element={

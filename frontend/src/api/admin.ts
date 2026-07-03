@@ -68,6 +68,9 @@ export type VideoItem = {
 export type FooterLink = {
   label: string;
   href: string;
+  title?: string;
+  description?: string;
+  content?: string;
 };
 
 export type FooterContent = {

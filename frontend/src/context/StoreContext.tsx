@@ -18,6 +18,13 @@ import type {
   VideoItem,
 } from '@/api/admin';
 import { getSelectedSizeOption } from '@/utils/productInventory';
+import {
+  bridalImagesDefault,
+  handpickedDefault,
+  ribbonDefault,
+  videosDefault,
+  heroDefault,
+} from '@/constants/siteDefaults';
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
@@ -104,11 +111,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     videos: VideoItem[];
   }>({
     categories: [],
-    heroContent: null,
+    heroContent: heroDefault,
     features: [],
-    ribbon: [],
+    ribbon: ribbonDefault,
     heritage: { title: '', subtitle: '' },
-    handpickedProducts: { title: '', subtitle: '', productIds: [] },
+    handpickedProducts: {
+      title: handpickedDefault.title,
+      subtitle: handpickedDefault.subtitle,
+      productIds: handpickedDefault.productIds,
+    },
     bridal: {
       eyebrow: '',
       titlePrefix: '',
@@ -123,18 +134,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
       savingsText: '',
       buttonLabel: '',
       buttonTarget: '',
-      images: [{ alt: '', src: '' }],
+      images: bridalImagesDefault,
     },
-    footer: {
-      help: [
-        { label: 'Track Order', href: '/track-order' },
-        { label: 'Shipping & Delivery', href: '/shipping-and-delivery' },
-        { label: 'Returns & Exchange', href: '/returnes-and-exchange' },
-        { label: 'FAQs', href: '/faqs' },
-      ],
-      about: [{ label: 'Our Heritage', href: '/our-heritage' }],
-    },
-    videos: [],
+    footer: { help: [], about: [] },
+    videos: videosDefault,
   });
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);

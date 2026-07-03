@@ -1,5 +1,14 @@
 import mongoose from 'mongoose';
 import { StringDecoder } from 'string_decoder';
+import {
+  footerHelpDefault,
+  footerAboutDefault,
+  ribbonDefault,
+  handpickedDefault,
+  bridalImagesDefault,
+  videosDefault,
+  heroDefault,
+} from './siteDefaults.js';
 
 const { Schema } = mongoose;
 
@@ -8,7 +17,7 @@ const SiteConfigSchema = new Schema(
     siteName: { type: String, default: 'Hamsini Silks' },
     ribbon: {
       type: [String],
-      default: [],
+      default: ribbonDefault,
     },
     categories: [
       {
@@ -69,13 +78,9 @@ const SiteConfigSchema = new Schema(
       },
     },
     handpickedProducts: {
-      title: { type: String, default: 'Handpicked for You' },
-      subtitle: {
-        type: String,
-        default:
-          'Discover our curated selection of exquisite sarees, chosen for their craftsmanship, beauty, and timeless appeal.',
-      },
-      productIds: { type: [String], default: [] },
+      title: { type: String, default: handpickedDefault.title },
+      subtitle: { type: String, default: handpickedDefault.subtitle },
+      productIds: { type: [String], default: handpickedDefault.productIds },
     },
     bridal: {
       eyebrow: { type: String, default: 'LIMITED TIME OFFER' },
@@ -102,12 +107,7 @@ const SiteConfigSchema = new Schema(
             alt: { type: String, default: '' },
           },
         ],
-        default: [
-          { src: '/images/model1.jpg', alt: 'Bridal pink saree' },
-          { src: '/images/saree-banarasi.jpg', alt: 'Banarasi saree' },
-          { src: '/images/saree-kanjivaram.jpg', alt: 'Kanjivaram saree' },
-          { src: '/images/model2.jpg', alt: 'Bridal mustard saree' },
-        ],
+        default: bridalImagesDefault,
       },
     },
     footer: {
@@ -116,23 +116,24 @@ const SiteConfigSchema = new Schema(
           {
             label: { type: String, default: '' },
             href: { type: String, default: '' },
+            title: { type: String, default: '' },
+            description: { type: String, default: '' },
+            content: { type: String, default: '' },
           },
         ],
-        default: [
-          { label: 'Track Order', href: '/track-order' },
-          { label: 'Shipping & Delivery', href: '/shipping-and-delivery' },
-          { label: 'Returns & Exchange', href: '/returnes-and-exchange' },
-          { label: 'FAQs', href: '/faqs' },
-        ],
+        default: footerHelpDefault,
       },
       about: {
         type: [
           {
             label: { type: String, default: '' },
             href: { type: String, default: '' },
+            title: { type: String, default: '' },
+            description: { type: String, default: '' },
+            content: { type: String, default: '' },
           },
         ],
-        default: [{ label: 'Our Heritage', href: '/our-heritage' }],
+        default: footerAboutDefault,
       },
     },
     videos: {
@@ -142,7 +143,7 @@ const SiteConfigSchema = new Schema(
           aspectRatio: { type: String, default: '16/9' },
         },
       ],
-      default: [],
+      default: videosDefault,
     },
   },
   { timestamps: true },
