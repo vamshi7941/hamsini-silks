@@ -229,23 +229,34 @@ export async function verifyLoginOtp(req, res) {
     const istString = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     const customerId = `customer:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    const customer = await Customer.findOneAndUpdate(
-      { phone },
-      {
-        $set: {
-          _id: customerId,
-          fullName: name,
-          phone,
-          loggedInAtIST: istString,
-          role: 'customer',
+    const existingCustomer = await Customer.findOne({ phone });
+
+    let customer;
+    if (existingCustomer) {
+      customer = await Customer.findOneAndUpdate(
+        { phone },
+        { $set: { loggedInAtIST: istString } },
+        { new: true },
+      );
+    } else {
+      customer = await Customer.findOneAndUpdate(
+        { phone },
+        {
+          $set: {
+            _id: customerId,
+            fullName: name,
+            phone,
+            loggedInAtIST: istString,
+            role: 'customer',
+          },
         },
-      },
-      {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true,
-      },
-    );
+        {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true,
+        },
+      );
+    }
 
     const token = createToken(customer._id);
 
