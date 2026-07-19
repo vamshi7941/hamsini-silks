@@ -381,6 +381,7 @@ export async function verifyRazorpayPayment(req, res) {
       status: 'NEW',
     });
 
+    await sendOrderDetailsVia360Messenger(order.shipping_phone, order);
     return res.status(200).json({
       message: 'Payment verified and order placed successfully',
       success: true,
