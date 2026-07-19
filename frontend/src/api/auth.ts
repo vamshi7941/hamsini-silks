@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { User, useStore } from '@/context/StoreContext';
+import { useStore } from '@/context/StoreContext';
 import {
   signInWithGooglePopup,
   getFirebaseAuthErrorMessage,
 } from '../firebase';
+import { User } from '@/context/contextTypes';
 
 export const Auth = () => {
   const { setUser, showToast, setCart, setWishlist } = useStore();
@@ -80,7 +81,7 @@ export const Auth = () => {
   const normalizePhoneNumber = (phone: string) =>
     phone.replace(/\D/g, '').slice(-10);
 
-  const sendPhoneOtp = async (phone: string) => {
+  const sendPhoneOtp = async (phone: string, email?: string) => {
     const normalizedPhone = normalizePhoneNumber(phone);
 
     if (!/^\d{10}$/.test(normalizedPhone)) {
@@ -93,7 +94,7 @@ export const Auth = () => {
       const response = await fetch(`${apiUrl}/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: normalizedPhone }),
+        body: JSON.stringify({ phone: normalizedPhone, email: email || '' }),
       });
       const json = await response.json();
 

@@ -25,7 +25,7 @@ export default function VerifyPhonePage() {
 
     setSendingOtp(true);
     try {
-      await sendPhoneOtp(phone);
+      await sendPhoneOtp(phone, user.email);
       setOtpSent(true);
     } catch (error) {
       console.error('Send OTP failed', error);

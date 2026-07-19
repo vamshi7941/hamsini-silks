@@ -135,6 +135,7 @@ const sendOtpVia360Messenger = async (phone, otp) => {
 
 export async function sendOtp(req, res) {
   const phone = normalizePhone(req.body.phone);
+  const email = String(req.body.email || '').trim();
   const url = req.body.url || '';
 
   if (!phone || phone.length !== 10) {
@@ -145,12 +146,21 @@ export async function sendOtp(req, res) {
   }
 
   try {
-    const existingCustomer = await Customer.findOne({ phone });
-    if (existingCustomer && url.includes('/auth')) {
+    const customerByPhone = await Customer.findOne({ phone });
+    const customerByEmail = email ? await Customer.findOne({ email }) : null;
+
+    if (customerByPhone && url.includes('/auth')) {
       return res.status(400).json({
         success: false,
         message:
           'This phone number is already registered. Please use different phone number.',
+      });
+    }
+
+    if (customerByPhone && customerByEmail && customerByPhone._id !== customerByEmail._id) {
+      return res.status(400).json({
+        success: false,
+        message: 'This phone number or email is already associated with another account.',
       });
     }
 
@@ -227,47 +237,59 @@ export async function verifyLoginOtp(req, res) {
   try {
     const now = new Date();
     const istString = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-    const customerId = `customer:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    const existingCustomer = await Customer.findOne({ phone });
+    const customerByPhone = await Customer.findOne({ phone });
+    const customerByEmail = email ? await Customer.findOne({ email }) : null;
 
-    let customer;
-    if (existingCustomer) {
-      customer = await Customer.findOneAndUpdate(
+    if (email) {
+      if (customerByPhone && customerByEmail && customerByPhone._id !== customerByEmail._id) {
+        return res.status(400).json({
+          success: false,
+          message: 'This phone number or email is already associated with another account.',
+        });
+      }
+    }
+
+    if (customerByPhone) {
+      const updated = await Customer.findOneAndUpdate(
         { phone },
         { $set: { loggedInAtIST: istString } },
         { new: true },
       );
-    } else {
-      customer = await Customer.findOneAndUpdate(
-        { phone },
-        {
-          $set: {
-            _id: customerId,
-            fullName: name,
-            phone,
-            loggedInAtIST: istString,
-            role: 'customer',
-          },
-        },
-        {
-          upsert: true,
-          new: true,
-          setDefaultsOnInsert: true,
-        },
-      );
+      const token = createToken(updated._id);
+      return res.json({ success: true, message: 'OTP verified successfully.', token, user: updated.toObject() });
     }
 
-    const token = createToken(customer._id);
+    if (customerByEmail) {
+      const updated = await Customer.findOneAndUpdate(
+        { email },
+        { $set: { phone, loggedInAtIST: istString } },
+        { new: true },
+      );
+      const token = createToken(updated._id);
+      return res.json({ success: true, message: 'OTP verified successfully.', token, user: updated.toObject() });
+    }
 
-    return res.json({
-      success: true,
-      message: 'OTP verified successfully.',
-      token,
-      user: customer.toObject(),
+    const customerId = `customer:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const customer = await Customer.create({
+      _id: customerId,
+      fullName: name,
+      phone,
+      email: email || undefined,
+      loggedInAtIST: istString,
+      role: 'customer',
     });
+
+    const token = createToken(customer._id);
+    return res.json({ success: true, message: 'OTP verified successfully.', token, user: customer.toObject() });
   } catch (error) {
     console.error('Error verifying OTP:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'This phone number or email is already associated with another account.',
+      });
+    }
     return res.status(500).json({
       success: false,
       message: 'Unable to verify OTP right now. Please try again.',
