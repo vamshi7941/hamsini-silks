@@ -47,6 +47,78 @@ export const getRazorpayConfig = () => ({
   ),
 });
 
+const toE164 = (phone) => {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (digits.length === 10) return `+91${digits}`;
+  return digits ? `+${digits}` : '';
+};
+
+const sendOrderDetailsVia360Messenger = async (phone, order) => {
+  const whatsappToken = process.env.WHATSAPP_TOKEN;
+
+  if (!whatsappToken) {
+    console.log(
+      '360 Messenger credentials not configured. Order notification mocked.',
+    );
+    return { success: false, mocked: true };
+  }
+
+  const itemLines = (order?.items || [])
+    .map(
+      (item, index) =>
+        `${index + 1}. ${item.name} (${item.size}) x${item.units} - ₹${Number(item.selling_price || 0) * Number(item.units || 1)}`,
+    )
+    .join('\n');
+
+  const text = `Hello ${order?.shipping_name || 'Customer'}, your order has been placed successfully! 🎉
+
+Order ID: ${order?.order_id}
+Date: ${new Date(order?.order_date || Date.now()).toLocaleString()}
+
+Items:
+${itemLines}
+
+Subtotal: ₹${order?.sub_total || 0}
+Shipping: ₹${order?.shipping_charges || 0}
+Discount: ₹${order?.discountApplied || 0}
+Total: ₹${order?.total || 0}
+
+Payment Method: ${order?.paymentMethod}
+Status: Placed
+
+Delivery Address:
+${order?.shipping_address}, ${order?.shipping_city}, ${order?.shipping_state} - ${order?.shipping_pincode}
+
+Thank you for shopping with Hamsini!`;
+
+  const payload = {
+    phonenumber: toE164(phone),
+    text,
+  };
+
+  console.log(
+    'Sending order details via 360 Messenger to:',
+    payload.phonenumber,
+  );
+  const response = await fetch('https://api.360messenger.com/v2/sendMessage', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${whatsappToken}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams(payload).toString(),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      errorText || 'Failed to send order notification via 360 Messenger.',
+    );
+  }
+
+  return { success: true, mocked: false };
+};
+
 const normalizeSizeName = (value) =>
   String(value ?? '')
     .trim()
@@ -334,6 +406,15 @@ export async function placeOrder(req, res) {
       paymentMethod: orderData?.paymentMethod || 'COD',
       status: 'NEW',
     });
+
+    try {
+      await sendOrderDetailsVia360Messenger(order.shipping_phone, order);
+    } catch (whatsappError) {
+      console.error(
+        'Failed to send WhatsApp order notification:',
+        whatsappError,
+      );
+    }
 
     return res.status(200).json({
       message: 'Order placed successfully',
