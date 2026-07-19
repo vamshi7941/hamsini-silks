@@ -100,6 +100,39 @@ export async function googleLogin(req, res) {
   }
 }
 
+const sendOtpVia360Messenger = async (phone, otp) => {
+  const whatsappToken = process.env.WHATSAPP_TOKEN;
+
+  if (!whatsappToken) {
+    console.log(
+      '360 Messenger credentials not configured. OTP generated locally:',
+    );
+    return { success: false, mocked: true };
+  }
+
+  const payload = {
+    phonenumber: toE164(phone),
+    text: `Your Hamsini verification code is ${otp}.`,
+  };
+  console.log('Sending OTP via 360 Messenger:', payload, whatsappToken);
+  const response = await fetch(`https://api.360messenger.com/v2/sendMessage`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${whatsappToken}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams(payload).toString(),
+  });
+  console.log('360 Messenger response body:', await response.text());
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || 'Failed to send OTP via 360 Messenger.');
+  }
+
+  return { success: true, mocked: false };
+};
+
 export async function sendOtp(req, res) {
   const phone = normalizePhone(req.body.phone);
   const url = req.body.url || '';
@@ -124,7 +157,14 @@ export async function sendOtp(req, res) {
     const otp = generateOtp();
     otpStore.set(phone, { otp, createdAt: Date.now() });
 
-    const send = await sendOtpViaTwilio(phone, otp);
+    const send = await sendOtpVia360Messenger(phone, otp);
+
+    if (!send.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Unable to send OTP right now. Please try again.',
+      });
+    }
 
     return res.json({
       success: true,
@@ -190,12 +230,10 @@ export async function verifyLoginOtp(req, res) {
     const customerId = `customer:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const customer = await Customer.findOneAndUpdate(
-      { email },
+      { phone },
       {
-        $setOnInsert: {
-          _id: customerId,
-        },
         $set: {
+          _id: customerId,
           fullName: name,
           phone,
           loggedInAtIST: istString,
@@ -226,7 +264,7 @@ export async function verifyLoginOtp(req, res) {
   }
 }
 
-// just verify otp for placing order 
+// just verify otp for placing order
 export async function verifyOtpForOrder(req, res) {
   const phone = normalizePhone(req.body.phone);
   const otp = String(req.body.otp || '').trim();

@@ -7,7 +7,7 @@ export const footerHelpDefault: FooterLink[] = [
     title: 'Track Your Order',
     description: 'Monitor your order status in real-time',
     content:
-      'Keep track of your order from dispatch to delivery. Enter your order ID to get real-time updates.',
+      'Stay informed at every step of your journey with us. From the moment your order is placed to the instant it reaches your doorstep, you can follow its progress, review dispatch updates, and know exactly when to expect delivery.',
   },
   {
     label: 'Shipping & Delivery',
@@ -15,7 +15,7 @@ export const footerHelpDefault: FooterLink[] = [
     title: 'Shipping & Delivery',
     description: 'Learn about our shipping options',
     content:
-      'We offer standard and express shipping to all locations. Orders are carefully packaged and dispatched within 24 hours.',
+      'We carefully package every order with premium attention and dispatch it through trusted delivery partners to ensure a secure and timely arrival. Whether you are ordering for a celebration or a personal wardrobe refresh, our shipping process is designed to be dependable, transparent, and convenient across locations.',
   },
   {
     label: 'Returns & Exchange',
@@ -23,7 +23,7 @@ export const footerHelpDefault: FooterLink[] = [
     title: 'Returns & Exchange',
     description: 'Easy returns and exchanges',
     content:
-      'We offer hassle-free returns and exchanges within 7 days of delivery for unused items in original packaging.',
+      'We want every purchase to feel effortless and confident. If an item does not meet your expectations, our simple returns and exchange policy allows you to request a change within a defined window, provided the piece remains unused, intact, and in its original packaging.',
   },
   {
     label: 'FAQs',
@@ -31,7 +31,7 @@ export const footerHelpDefault: FooterLink[] = [
     title: 'Frequently Asked Questions',
     description: 'Answers to common questions',
     content:
-      'Find answers to commonly asked questions about our products, ordering, and shipping policies.',
+      'Our frequently asked questions section is designed to make shopping easier by answering common concerns about product details, sizing, order timings, payment options, and delivery expectations. It is a helpful guide for customers who want clarity before placing their order.',
   },
 ];
 
@@ -42,7 +42,7 @@ export const footerAboutDefault: FooterLink[] = [
     title: 'Our Heritage',
     description: 'Discover our rich history',
     content:
-      'Five decades of weaving stories into silk. From the temple looms of Kanchipuram, draping the women of India since 1972.',
+      'Rooted in tradition and shaped by generations of craftsmanship, our story is woven into every creation. From the timeless artistry of Kanchipuram to the elegance of modern bridal couture, we continue to preserve heritage while bringing beauty and meaning to every saree we create.',
   },
 ];
 
