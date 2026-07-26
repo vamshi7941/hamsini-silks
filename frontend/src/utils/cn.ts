@@ -13,3 +13,10 @@ export const normalizeOtpValue = (value: string) =>
 
 export const normalizePincodeValue = (value: string) =>
   value.replace(/\D/g, '').slice(0, 6);
+
+export const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');

@@ -6,7 +6,7 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find().select('-image');
+    const products = await Product.find().select('-image -images');
     res.json(products);
   } catch (err) {
     console.error('Error fetching products:', err);
@@ -16,12 +16,14 @@ router.get('/', async (req, res) => {
 
 router.get('/:id/image', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).select('image');
+    const product = await Product.findById(req.params.id).select(
+      'image images',
+    );
     if (!product)
       return res
         .status(404)
         .json({ success: false, message: 'Product not found' });
-    res.json({ image: product.image });
+    res.json({ image: product.image, images: product.images || [] });
   } catch (err) {
     console.error('Error fetching product image:', err);
     res.status(500).json({ success: false, message: 'Server error' });

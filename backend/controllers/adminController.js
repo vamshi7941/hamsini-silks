@@ -1,10 +1,28 @@
 import AdminSchema from '../models/AdminSchema.js';
 import ProductSchema from '../models/ProductSchema.js';
 import OrderSchema from '../models/OrdersSchema.js';
+import SiteConfigSchema from '../models/SiteConfigSchema.js';
 import jwt from 'jsonwebtoken';
 
 const createToken = (_id) => {
   return jwt.sign({ _id }, process.env.SECRET, { expiresIn: '3d' });
+};
+
+const normalizeSizesPayload = (incomingSizes, fallbackInStock) => {
+  const parsedSizes = Array.isArray(incomingSizes)
+    ? incomingSizes
+        .map((entry) => ({
+          name: String(entry?.name ?? '').trim(),
+          units: Number(entry?.units ?? 0),
+        }))
+        .filter((entry) => entry.name)
+    : [];
+
+  if (parsedSizes.length > 0) {
+    return parsedSizes;
+  }
+
+  return fallbackInStock ? [{ name: '', units: 1 }] : [];
 };
 
 /** insert all questinos */
@@ -61,37 +79,45 @@ export async function addProduct(req, res) {
     _id,
     name,
     category,
+    subcategory,
     price,
     originalPrice,
+    description,
     image,
     images,
     badge,
     rating,
     inStock,
-    size,
+    sizes,
   } = req.body;
-
   try {
     const existing = await ProductSchema.findOne({ $or: [{ _id }, { name }] });
     if (existing) {
-      const conflictField = existing._id === _id ? '_id' : 'name';
+      const conflictField = existing._id === _id ? 'PRODUCT ID' : 'Name';
       return res
         .status(400)
         .json({ error: `${conflictField} already exists`, success: false });
     }
 
+    const normalizedSizes = normalizeSizesPayload(sizes, inStock);
+    const effectiveInStock = normalizedSizes.some(
+      (entry) => Number(entry.units) > 0,
+    );
+
     const product = new ProductSchema({
       _id,
       name,
       category,
+      subcategory,
       price,
       originalPrice,
       image,
+      description,
       images: Array.isArray(images) ? images : [],
       badge,
       rating,
-      inStock,
-      size,
+      inStock: effectiveInStock,
+      sizes: normalizedSizes,
     });
 
     await product.save();
@@ -111,14 +137,16 @@ export async function updateProduct(req, res) {
   const {
     name,
     category,
+    subcategory,
     price,
     originalPrice,
     image,
+    description,
     images,
     badge,
     rating,
     inStock,
-    size,
+    sizes,
   } = req.body;
 
   try {
@@ -132,14 +160,30 @@ export async function updateProduct(req, res) {
 
     product.name = name || product.name;
     product.category = category || product.category;
+    product.subcategory =
+      subcategory !== undefined ? subcategory : product.subcategory;
     product.price = price || product.price;
     product.originalPrice = originalPrice || product.originalPrice;
     product.image = image || product.image;
     product.images = Array.isArray(images) ? images : product.images;
     product.badge = badge || product.badge;
     product.rating = rating || product.rating;
-    product.inStock = inStock !== undefined ? inStock : product.inStock;
-    product.size = size || product.size;
+    product.description = description || product.description;
+
+    const normalizedSizes =
+      sizes !== undefined
+        ? normalizeSizesPayload(sizes, inStock)
+        : product.sizes?.length
+          ? product.sizes
+          : [];
+    const nextInStock = normalizedSizes.length
+      ? normalizedSizes.some((entry) => Number(entry.units) > 0)
+      : inStock !== undefined
+        ? inStock
+        : product.inStock;
+
+    product.inStock = nextInStock;
+    product.sizes = normalizedSizes;
 
     await product.save();
     return res.status(200).json({

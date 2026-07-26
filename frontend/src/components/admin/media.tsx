@@ -93,9 +93,9 @@ export default function Media({
               usedIn: products.filter((p) => p.image === '/images/artisan.jpg')
                 .length,
             },
-          ].map((img, i) => (
+          ].map((img) => (
             <div
-              key={i}
+              key={img.path}
               className="bg-white rounded-2xl border border-gold-100 shadow-xs overflow-hidden hover:shadow-md hover:border-gold-300 transition-all group"
             >
               <div className="relative aspect-square overflow-hidden bg-maroon-50">
@@ -108,10 +108,7 @@ export default function Media({
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button
                     onClick={() =>
-                      setEditingImage({
-                        src: img.path,
-                        label: img.label,
-                      })
+                      setEditingImage({ src: img.path, label: img.label })
                     }
                     className="px-3 py-2 bg-white text-maroon-900 rounded-xl text-xs font-bold hover:bg-gold-50 flex items-center gap-1.5 cursor-pointer shadow-lg transition-transform hover:scale-105"
                   >
@@ -120,10 +117,7 @@ export default function Media({
                   <button
                     onClick={() => {
                       setActiveTab('catalogue');
-                      showToast(
-                        'Go to Catalogue to assign this image',
-                        'warning',
-                      );
+                      showToast('Go to Catalogue to assign this image');
                     }}
                     className="px-3 py-2 bg-maroon-900 text-gold-100 rounded-xl text-xs font-bold hover:bg-maroon-800 flex items-center gap-1.5 cursor-pointer shadow-lg transition-transform hover:scale-105"
                   >
@@ -147,10 +141,7 @@ export default function Media({
                   </span>
                   <button
                     onClick={() =>
-                      setEditingImage({
-                        src: img.path,
-                        label: img.label,
-                      })
+                      setEditingImage({ src: img.path, label: img.label })
                     }
                     className="text-[10px] text-gold-600 font-bold hover:text-gold-700 cursor-pointer flex items-center gap-1"
                   >

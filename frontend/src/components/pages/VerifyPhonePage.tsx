@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Auth } from '../../api/auth';
 
@@ -11,6 +11,8 @@ export default function VerifyPhonePage() {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const countdownRef = useRef<number | null>(null);
 
   const normalizePhoneValue = (value: string) =>
     value.replace(/\D/g, '').slice(0, 10);
@@ -25,14 +27,50 @@ export default function VerifyPhonePage() {
 
     setSendingOtp(true);
     try {
-      await sendPhoneOtp(phone);
+      await sendPhoneOtp(phone, user.email);
       setOtpSent(true);
+      setResendCountdown(30);
     } catch (error) {
       console.error('Send OTP failed', error);
     } finally {
       setSendingOtp(false);
     }
   };
+
+  const handleResendOtp = async () => {
+    if (resendCountdown > 0) return;
+    await handleSendOtp();
+  };
+
+  useEffect(() => {
+    if (resendCountdown <= 0) {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      return;
+    }
+
+    countdownRef.current = window.setInterval(() => {
+      setResendCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, [resendCountdown]);
 
   const handleVerifyOtp = async () => {
     if (!/^\d{10}$/.test(phone)) {
@@ -106,7 +144,7 @@ export default function VerifyPhonePage() {
                   value={otp}
                   onChange={(e) => setOtp(normalizeOtpValue(e.target.value))}
                   className="w-full rounded-xl border border-[#e7d7b3] bg-[#fdfbf6] px-4 py-3 text-sm text-[#4b1d1d] outline-none ring-0 focus:border-[#9b2c2c]"
-                  placeholder="123456"
+                  placeholder=""
                 />
               </div>
 
@@ -116,6 +154,17 @@ export default function VerifyPhonePage() {
                 className="w-full rounded-xl bg-[#4b1d1d] px-4 py-3 text-sm font-semibold text-[#fff9ec] transition-colors hover:bg-[#6a2424]"
               >
                 {verifyingOtp ? 'Verifying OTP…' : 'Verify OTP'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendCountdown > 0}
+                className="w-full rounded-xl border border-[#e7d7b3] px-4 py-3 text-sm font-semibold text-[#4b1d1d] transition-colors hover:bg-[#fdfbf6] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {resendCountdown > 0
+                  ? `Resend OTP in ${resendCountdown}s`
+                  : 'Resend OTP'}
               </button>
             </>
           )}

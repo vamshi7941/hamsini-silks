@@ -1,52 +1,24 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import ProductCard from "./ProductCard";
-import SectionHeader from "./SectionHeader";
-import { useStore } from "../context/StoreContext";
-
-const tabs = ["All", "Kanjivaram", "Banarasi", "Pattu", "Designer"];
+import { Link } from 'react-router-dom';
+import ProductCard from './ProductCard';
+import SectionHeader from './SectionHeader';
+import { useStore } from '../context/StoreContext';
 
 export default function Products() {
-  const [active, setActive] = useState("All");
-  const { products } = useStore();
+  const { products, siteContent } = useStore();
 
-  const categoryMap: Record<string, string> = {
-    All: "All",
-    Kanjivaram: "Bridal Kanjivaram",
-    Banarasi: "Banarasi Silk",
-    Pattu: "Soft Silk Pattu",
-    Designer: "Designer Silk",
-  };
-
-  const filtered = active === "All"
-    ? products.slice(0, 8) // Show top 8 bestsellers on Home
-    : products.filter((p) => p.category === categoryMap[active]);
-
+  const filtered = products.filter((product) => {
+    if (siteContent?.handpickedProducts?.productIds?.length > 0) {
+      return siteContent?.handpickedProducts?.productIds?.includes(product._id);
+    }
+  });
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-maroon-50/30 to-[#fdf8f1] pattern-paisley">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="HANDPICKED FOR YOU"
-          title="Curated Bestsellers"
-          subtitle="Each piece carries the soul of an artisan and the beauty of centuries-old motifs. Store updates reflect instantly below."
+          title={siteContent?.handpickedProducts?.title}
+          subtitle={siteContent?.handpickedProducts?.subtitle}
         />
-
-        {/* Tabs */}
-        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-8 sm:mb-10">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActive(tab)}
-              className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium tracking-wide transition-all ${
-                active === tab
-                  ? "bg-maroon-800 text-gold-100 shadow-md"
-                  : "bg-white/80 text-maroon-700 border border-gold-200 hover:border-maroon-400"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
           {filtered.map((product) => (

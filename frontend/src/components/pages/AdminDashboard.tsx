@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
-import type { Product } from '../../data';
+import { Product } from '@/context/contextTypes';
 import { AdminApi } from '@/api/admin';
 import { Icon } from '../Icons';
 import GuestUser from '../guestUser';
@@ -9,11 +9,12 @@ import Overview from '../admin/overview';
 import SideBar from '../admin/sideBar';
 import Orders from '../admin/orders';
 import Catalogue from '../admin/catalogue';
-import Media from '../admin/media';
 import Promoters from '../admin/promoters';
-import { AddProductModal, EditProductModal } from '../admin/updateProduct';
+import SiteCustomize from '../admin/siteCustomize';
+import UpdateProduct from '../admin/updateProduct';
 import ImageEditor from '../admin/imageEditor';
 import DeleteConfirmModal from '../admin/deleteConfirmationModel';
+import Media from '../admin/media';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,8 @@ export type AdminTab =
   | 'orders'
   | 'catalogue'
   | 'media'
-  | 'promoters';
+  | 'promoters'
+  | 'site-customize';
 
 // ── MAIN ADMIN DASHBOARD ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
@@ -64,7 +66,9 @@ export default function AdminDashboard() {
                     ? 'Catalogue'
                     : activeTab === 'media'
                       ? 'Media Studio'
-                      : 'Promoters'}
+                      : activeTab === 'promoters'
+                        ? 'Promoters'
+                        : 'Site Customize'}
             </h1>
             <p className="text-xs text-maroon-700/60 hidden sm:block mt-0.5">
               {new Date().toLocaleDateString('en-IN', {
@@ -126,15 +130,19 @@ export default function AdminDashboard() {
 
           {/* ═══════════════════ PROMOTERS ═══════════════════ */}
           {activeTab === 'promoters' && <Promoters />}
+
+          {/* ═══════════════════ SITE CUSTOMIZE ═══════════════════ */}
+          {activeTab === 'site-customize' && <SiteCustomize />}
         </main>
       </div>
 
       {/* Modals */}
       {editingProduct && (
-        <EditProductModal
+        <UpdateProduct
+          action="edit"
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
-          onSave={(id, up) => {
+          onSave={(id: string, up: any) => {
             updateProduct(id, up, () => setEditingProduct(null));
           }}
         />
@@ -151,7 +159,8 @@ export default function AdminDashboard() {
         />
       )}
       {showAddModal && (
-        <AddProductModal
+        <UpdateProduct
+          action="add"
           onClose={() => setShowAddModal(false)}
           onAdd={(p: Product) => {
             addProduct(p, () => setShowAddModal(false));

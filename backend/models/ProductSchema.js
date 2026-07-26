@@ -15,6 +15,11 @@ const ProductSchema = new Schema(
       type: String,
       required: true,
     },
+    subcategory: {
+      type: String,
+      required: false,
+      default: '',
+    },
     price: {
       type: Number,
       required: true,
@@ -40,13 +45,24 @@ const ProductSchema = new Schema(
       type: Number,
       required: false,
     },
+    description: {
+      type: String,
+      required: false,
+    },
     inStock: {
       type: Boolean,
       required: true,
+      default: true,
     },
-    size: {
-      type: String,
-      required: true,
+    sizes: {
+      type: [
+        {
+          name: { type: String, required: true },
+          units: { type: Number, required: true, default: 0 },
+        },
+      ],
+      required: false,
+      default: [],
     },
   },
   { timestamps: true },

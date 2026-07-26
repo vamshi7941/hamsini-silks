@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CartItem, useStore } from '../../context/StoreContext';
+import { useStore } from '../../context/StoreContext';
+import type { CartItem } from '../../context/contextTypes';
 import { Auth } from '@/api/auth';
 import { CustomerApi } from '@/api/customer';
 import GuestUser from '../guestUser';
@@ -12,6 +13,8 @@ import {
   normalizePincodeValue,
 } from '@/utils/cn';
 import { OrderData } from '@/types';
+import { getSelectedSizeOption } from '@/utils/productInventory';
+import { ProductsApi } from '@/api/products';
 
 declare global {
   interface Window {
@@ -39,7 +42,6 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const {
     cart,
-    cartTotal,
     user,
     buyNowItem,
     showToast,
@@ -59,6 +61,7 @@ export default function CheckoutPage() {
   } = CustomerApi();
   const { sendPhoneOtp } = Auth();
   const { handleRazorpayPayment } = RazorpayApi();
+  const { fetchAllProducts } = ProductsApi();
 
   if (!user.loggedIn && user.role !== 'customer') return;
 
@@ -82,6 +85,8 @@ export default function CheckoutPage() {
   const [otp, setOtp] = useState('');
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const countdownRef = useRef<number | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentFeedback, setPaymentFeedback] = useState<{
@@ -89,13 +94,27 @@ export default function CheckoutPage() {
     message: string;
   }>({ type: 'idle', message: '' });
 
+  const checkoutItems = useMemo(() => {
+    if (buyNowItem) return [buyNowItem];
+
+    return cart.filter((item) => {
+      const selectedSize = getSelectedSizeOption(item.product, item.size);
+      return Boolean(selectedSize && selectedSize.units > 0);
+    });
+  }, [buyNowItem, cart]);
+
   const orderSubtotal = buyNowItem
     ? buyNowItem.product.price * buyNowItem.quantity
-    : cartTotal;
+    : checkoutItems.reduce(
+        (sum, item) => sum + item.product.price * item.quantity,
+        0,
+      );
   const discountAmount = Math.round(
     orderSubtotal * (couponDiscountPercentage / 100),
   );
-  const orderTotal = orderSubtotal - discountAmount;
+  const shippingFree = orderSubtotal >= 5000;
+  const shippingCharge = shippingFree ? 0 : 150;
+  const orderTotal = orderSubtotal - discountAmount + shippingCharge;
 
   useEffect(() => {
     const loadMethods = async () => {
@@ -122,12 +141,48 @@ export default function CheckoutPage() {
       setOtpSent(true);
       setOtpVerified(false);
       setOtp('');
+      setResendCountdown(30);
     } catch (error) {
       console.error('Send OTP failed', error);
     } finally {
       setSendingOtp(false);
     }
   };
+
+  const handleResendOtp = async () => {
+    if (resendCountdown > 0) return;
+    await handleSendOtp();
+  };
+
+  useEffect(() => {
+    if (resendCountdown <= 0) {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      return;
+    }
+
+    countdownRef.current = window.setInterval(() => {
+      setResendCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, [resendCountdown]);
 
   const handleVerifyOtp = async () => {
     const normalizedPhone = normalizePhoneValue(phone);
@@ -192,6 +247,7 @@ export default function CheckoutPage() {
     const orderResult = await placeOrder(orderData as OrderData);
 
     if (orderResult?.success) {
+      fetchAllProducts();
       const savedOrder = orderResult.data;
       setOrderId(savedOrder._id);
       await clearCart();
@@ -200,6 +256,7 @@ export default function CheckoutPage() {
       setOtpSent(false);
       setOtp('');
       setOtpVerified(false);
+      setResendCountdown(0);
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -243,10 +300,8 @@ export default function CheckoutPage() {
     }
   }, [shippingPincode]);
 
-  useEffect(() => {
-    // Build orderData object
-    const items = buyNowItem ? [buyNowItem] : cart;
-    const formattedOrderData: OrderData = {
+  const formattedOrderData = useMemo<OrderData>(
+    () => ({
       order_date: new Date().toISOString(),
       shipping_email: email,
       shipping_phone: phone,
@@ -256,10 +311,10 @@ export default function CheckoutPage() {
       shipping_state: shippingState,
       shipping_country: 'India',
       shipping_pincode: shippingPincode,
-      shipping_charges: 0,
+      shipping_charges: shippingCharge,
       sub_total: orderSubtotal,
       total: orderTotal,
-      items: items.map((item: CartItem) => ({
+      items: checkoutItems.map((item: CartItem) => ({
         sku: item.product._id,
         name: item.product.name,
         selling_price: item.product.price,
@@ -270,28 +325,31 @@ export default function CheckoutPage() {
       shiprocketCourierId,
       paymentMethod: 'COD',
       status: 'NEW',
-    };
+    }),
+    [
+      address,
+      checkoutItems,
+      couponCode,
+      email,
+      name,
+      orderSubtotal,
+      orderTotal,
+      phone,
+      shippingCity,
+      shippingPincode,
+      shippingState,
+      shiprocketCourierId,
+    ],
+  );
 
+  useEffect(() => {
     setOrderData(formattedOrderData);
-  }, [
-    name,
-    email,
-    phone,
-    address,
-    shippingCity,
-    shippingState,
-    shippingPincode,
-    orderSubtotal,
-    orderTotal,
-    cart,
-    buyNowItem,
-    couponCode,
-  ]);
+  }, [formattedOrderData, setOrderData]);
 
   if (!user.loggedIn) return <GuestUser page="checkout" />;
   if (user.role !== 'customer') return <AccessDenied page="checkout" />;
 
-  if (cart.length === 0 && !orderId && !buyNowItem) {
+  if (checkoutItems.length === 0 && !orderId && !buyNowItem) {
     return (
       <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
         <div className="text-center py-16 px-4">
@@ -473,7 +531,14 @@ export default function CheckoutPage() {
                       required
                       type="tel"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      maxLength={10}
+                      onChange={(event) => {
+                        let value = event.target.value;
+                        if (value.startsWith('0')) {
+                          value = value.slice(1);
+                        }
+                        setPhone(value);
+                      }}
                       disabled={otpVerified}
                       className={`w-full px-4 py-3 border-2 rounded-xl text-sm text-maroon-900 focus:outline-none transition-colors ${otpVerified ? 'border-emerald-300 bg-emerald-50 text-emerald-900 cursor-not-allowed' : 'border-gold-200 focus:border-maroon-700'}`}
                     />
@@ -650,7 +715,7 @@ export default function CheckoutPage() {
                             setOtp(normalizeOtpValue(e.target.value))
                           }
                           className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
-                          placeholder="123456"
+                          placeholder=""
                         />
                       </div>
                       <button
@@ -662,6 +727,17 @@ export default function CheckoutPage() {
                         {verifyingOtp
                           ? 'Verifying and placing order…'
                           : `Verify & Place Order · ₹${orderTotal.toLocaleString('en-IN')}`}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={resendCountdown > 0}
+                        className="w-full py-3 rounded-xl border-2 border-gold-200 text-maroon-900 font-bold text-sm tracking-wide transition-colors cursor-pointer hover:bg-gold-50 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {resendCountdown > 0
+                          ? `Resend OTP in ${resendCountdown}s`
+                          : 'Resend OTP'}
                       </button>
                     </div>
                   )}
@@ -689,8 +765,11 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 space-y-4 lg:top-24">
             <div className="bg-white rounded-2xl border border-gold-100 shadow-xs p-5">
               <h3 className="font-display text-sm font-bold text-maroon-900 uppercase tracking-wider border-b border-gold-100 pb-3 mb-4">
-                Your Order ({buyNowItem ? 1 : cart.length}{' '}
-                {(buyNowItem ? 1 : cart.length) === 1 ? 'item' : 'items'})
+                Your Order ({buyNowItem ? 1 : checkoutItems.length}{' '}
+                {(buyNowItem ? 1 : checkoutItems.length) === 1
+                  ? 'item'
+                  : 'items'}
+                )
               </h3>
               <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                 {buyNowItem ? (
@@ -716,7 +795,7 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 ) : (
-                  cart.map(({ product: p, quantity }) => (
+                  checkoutItems.map(({ product: p, quantity, size }) => (
                     <div key={p._id} className="flex items-center gap-3">
                       <img
                         src={p.image}
@@ -728,7 +807,7 @@ export default function CheckoutPage() {
                           {p.name}
                         </span>
                         <span className="text-[10px] text-maroon-700/70">
-                          Qty: {quantity}
+                          Qty: {quantity} · Size: {size}
                         </span>
                       </div>
                       <span className="text-sm font-bold text-maroon-900 shrink-0">
@@ -755,9 +834,17 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between text-maroon-700">
-                  <span>Shipping</span>
-                  <span className="font-semibold text-emerald-700">FREE</span>
+                <div className="flex justify-between">
+                  <span className="text-maroon-700">Shipping</span>
+                  <span
+                    className={
+                      shippingFree
+                        ? 'text-emerald-700 font-semibold'
+                        : 'font-semibold text-maroon-900'
+                    }
+                  >
+                    {shippingFree ? 'FREE' : '₹150'}
+                  </span>
                 </div>
                 <div className="flex justify-between font-bold text-base border-t border-gold-100 pt-2 mt-2">
                   <span className="text-maroon-900">Total</span>

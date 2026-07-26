@@ -1,92 +1,30 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Product } from '../data';
-import { OrderData, OrderStatus } from '@/types';
-
-export type CartItem = {
-  product: Product;
-  quantity: number;
-  size: string;
-};
-
-export type Order = {
-  _id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  items: CartItem[];
-  total: number;
-  paymentMethod: string;
-  status: OrderStatus;
-  orderedDate?: string;
-  promoCode?: string;
-  discountApplied?: number;
-};
-
-export type User = {
-  name: string;
-  email: string;
-  phone: string;
-  role: 'customer' | 'admin' | 'promoter';
-  loggedIn: boolean;
-  token: string;
-  _id: string;
-  promoCode?: string;
-  discountPercentage?: number;
-};
-
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
-
-export type Toast = {
-  message: string;
-  type: ToastType;
-};
-
-interface StoreContextType {
-  products: Product[];
-  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
-
-  cart: CartItem[];
-  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
-
-  cartTotal: number;
-  cartCount: number;
-
-  buyNowItem: CartItem | null;
-  setBuyNowItem: (item: CartItem | null) => void;
-
-  couponCode: string;
-  setCouponCode: React.Dispatch<React.SetStateAction<string>>;
-  couponDiscountPercentage: number;
-  setCouponDiscountPercentage: React.Dispatch<React.SetStateAction<number>>;
-
-  wishlist: string[];
-  setWishlist: React.Dispatch<React.SetStateAction<string[]>>;
-
-  isInWishlist: (productId: string) => boolean;
-  wishlistCount: number;
-
-  orders: OrderData[];
-  setOrders: React.Dispatch<React.SetStateAction<OrderData[]>>;
-
-  orderData: OrderData | null;
-  setOrderData: React.Dispatch<React.SetStateAction<OrderData | null>>;
-
-  imagesLoaded: Boolean;
-  setImagesLoaded: React.Dispatch<React.SetStateAction<Boolean>>;
-
-  user: User;
-  setUser: React.Dispatch<React.SetStateAction<User>>;
-
-  selectedCategory: string;
-  setSelectedCategory: (cat: string) => void;
-
-  themeOption: 'A' | 'B';
-  setThemeOption: (option: 'A' | 'B') => void;
-
-  toast: Toast | null;
-  showToast: (msg: string, type?: ToastType) => void;
-}
+import {
+  CartItem,
+  CategoryConfig,
+  Order,
+  Product,
+  StoreContextType,
+  Toast,
+  ToastType,
+  User,
+} from './contextTypes';
+import { OrderData } from '@/types';
+import type {
+  BridalImageContent,
+  FeatureItem,
+  FooterContent,
+  HeroContent,
+  VideoItem,
+} from '@/api/admin';
+import { getSelectedSizeOption } from '@/utils/productInventory';
+import {
+  bridalImagesDefault,
+  handpickedDefault,
+  ribbonDefault,
+  videosDefault,
+  heroDefault,
+} from '@/constants/siteDefaults';
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
@@ -100,10 +38,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [couponCode, setCouponCode] = useState<string>('');
   const [couponDiscountPercentage, setCouponDiscountPercentage] =
     useState<number>(0);
-  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [wishlist, setWishlist] = useState<string[]>([]);
-  const [themeOption, setThemeOptionState] = useState<'A' | 'B'>('A');
 
   const [user, setUser] = useState<User>(() => {
     try {
@@ -140,6 +77,68 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [siteContent, setSiteContent] = useState<{
+    categories: CategoryConfig[];
+    heroContent: HeroContent | null;
+    features: FeatureItem[];
+    ribbon: string[];
+    heritage: {
+      title: string;
+      subtitle: string;
+    };
+    handpickedProducts: {
+      title: string;
+      subtitle: string;
+      productIds: string[];
+    };
+    bridal: {
+      eyebrow: string;
+      titlePrefix: string;
+      titleHighlight: string;
+      titleSuffix: string;
+      subtitle: string;
+      description: string;
+      badgePercent: string;
+      badgeText: string;
+      couponCode: string;
+      couponLabel: string;
+      savingsText: string;
+      buttonLabel: string;
+      buttonTarget: string;
+      images: BridalImageContent[];
+    };
+    footer: FooterContent;
+    videos: VideoItem[];
+  }>({
+    categories: [],
+    heroContent: heroDefault,
+    features: [],
+    ribbon: ribbonDefault,
+    heritage: { title: '', subtitle: '' },
+    handpickedProducts: {
+      title: handpickedDefault.title,
+      subtitle: handpickedDefault.subtitle,
+      productIds: handpickedDefault.productIds,
+    },
+    bridal: {
+      eyebrow: '',
+      titlePrefix: '',
+      titleHighlight: '',
+      titleSuffix: '',
+      subtitle: '',
+      description: '',
+      badgePercent: '',
+      badgeText: '',
+      couponCode: '',
+      couponLabel: '',
+      savingsText: '',
+      buttonLabel: '',
+      buttonTarget: '',
+      images: bridalImagesDefault,
+    },
+    footer: { help: [], about: [] },
+    videos: videosDefault,
+  });
   const [globalLoadingCount, setGlobalLoadingCount] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);
 
@@ -200,16 +199,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
     setTimeout(() => setToast(null), 3000);
   };
 
-  const setThemeOption = (opt: 'A' | 'B') => {
-    setThemeOptionState(opt);
-    showToast(`Switched to Option ${opt} Design Theme!`, 'success');
-  };
+  const availableCartItems = cart.filter((item) => {
+    const selectedSize = getSelectedSizeOption(item.product, item.size);
+    return Boolean(selectedSize && selectedSize.units > 0);
+  });
 
-  const cartTotal = cart.reduce(
+  const cartTotal = availableCartItems.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0,
   );
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = availableCartItems.reduce(
+    (sum, item) => sum + item.quantity,
+    0,
+  );
 
   const isInWishlist = (productId: string) => wishlist.includes(productId);
   const wishlistCount = wishlist.length;
@@ -255,8 +257,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
         selectedCategory,
         setSelectedCategory,
 
-        themeOption,
-        setThemeOption,
+        siteContent,
+        setSiteContent,
 
         toast,
         showToast,

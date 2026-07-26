@@ -3,7 +3,7 @@ import { statusMap } from '@/utils/orderUtils';
 import { Icon } from '../Icons';
 import { useNavigate } from 'react-router-dom';
 import { AdminTab } from '../pages/AdminDashboard';
-import { OrderData } from '@/types';
+import { OrderStatus } from '@/types';
 
 function StatCard({
   label,
@@ -98,7 +98,7 @@ export default function Overview({
             </button>
           </div>
           <div className="space-y-3">
-            {orders.slice(0, 3).map((o: OrderData, i: number) => (
+            {orders.slice(0, 3).map((o: any, i: number) => (
               <div
                 key={i}
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-maroon-50/40 transition-colors"
@@ -119,7 +119,7 @@ export default function Overview({
                     ₹{o.total.toLocaleString('en-IN')}
                   </span>
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusMap[o.status]}`}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusMap[o.status as OrderStatus]}`}
                   >
                     {o.status}
                   </span>
@@ -176,25 +176,25 @@ export default function Overview({
           onClick={() => setShowAddModal(true)}
           className="px-6 py-3 bg-gold-500 text-white rounded-xl text-sm font-bold hover:bg-gold-400 transition-colors cursor-pointer shadow"
         >
-          ➕ Add New Saree
+          Add New
         </button>
         <button
           onClick={() => setActiveTab('orders')}
           className="px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-500 transition-colors cursor-pointer shadow"
         >
-          📦 View Orders
+          View Orders
         </button>
         <button
           onClick={() => setActiveTab('media')}
           className="px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-500 transition-colors cursor-pointer shadow"
         >
-          🖼️ Media Studio
+          Media Studio
         </button>
         <button
           onClick={() => navigate('/shop')}
           className="px-6 py-3 bg-maroon-900 text-gold-200 rounded-xl text-sm font-bold hover:bg-maroon-800 transition-colors cursor-pointer shadow"
         >
-          🏪 View Store
+          View Store
         </button>
       </div>
     </div>

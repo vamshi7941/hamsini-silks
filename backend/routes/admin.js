@@ -3,13 +3,14 @@ import OrderSchema from '../models/OrdersSchema.js';
 import * as customerController from '../controllers/customerController.js';
 import * as adminController from '../controllers/adminController.js';
 import * as promoterController from '../controllers/promoterController.js';
+import * as siteController from '../controllers/siteConfigController.js';
 import { mapOrdersWithShiprocketStatus } from '../utils/utils.js';
 import { requireAdminAuth } from '../middleware/requireAuth.js';
 import { fetchShiprocketOrdersStatus } from '../controllers/shiprocketController.js';
 
 const router = Router();
 
-router.route('/allOrders').get(async (req, res) => {
+router.route('/allOrders').get(requireAdminAuth, async (req, res) => {
   try {
     const orders = await OrderSchema.find().sort({ orderedDate: -1 });
 
@@ -33,7 +34,8 @@ router.route('/allOrders').get(async (req, res) => {
   }
 });
 
-// ==== Promotor Routes ====
+// ==== Admin Promotor Routes ====
+
 router
   .route('/promoter/create')
   .post(requireAdminAuth, promoterController.createPromoter);
@@ -53,5 +55,45 @@ router
 router
   .route('/promoter/:_id')
   .delete(requireAdminAuth, promoterController.deletePromoter);
+
+// === Admin Site Content Routes ====
+router
+  .route('/categories')
+  .post(requireAdminAuth, siteController.createCategory);
+
+router
+  .route('/categories/:id')
+  .put(requireAdminAuth, siteController.updateCategory)
+  .delete(requireAdminAuth, siteController.deleteCategory);
+
+router
+  .route('/hero-content')
+  .post(requireAdminAuth, siteController.saveHeroContent);
+
+router.route('/features').post(requireAdminAuth, siteController.saveFeatures);
+
+router
+  .route('/ribbon-content')
+  .post(requireAdminAuth, siteController.saveRibbonContent);
+
+router
+  .route('/heritage-content')
+  .post(requireAdminAuth, siteController.saveHeritageContent);
+
+router
+  .route('/handpicked-products')
+  .post(requireAdminAuth, siteController.saveHandpickedProducts);
+
+router
+  .route('/bridal-content')
+  .post(requireAdminAuth, siteController.saveBridalContent);
+
+router
+  .route('/footer-content')
+  .post(requireAdminAuth, siteController.saveFooterContent);
+
+router
+  .route('/video-content')
+  .post(requireAdminAuth, siteController.saveVideoContent);
 
 export default router;

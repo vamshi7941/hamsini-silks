@@ -5,21 +5,7 @@ import { RazorpayPaymentProps } from '@/types';
 export const RazorpayApi = () => {
   const { createRazorpayOrder, verifyRazorpayPayment, clearCart } =
     CustomerApi();
-  const {
-    buyNowItem,
-    cartTotal,
-    couponDiscountPercentage,
-    setCouponCode,
-    setCouponDiscountPercentage,
-  } = useStore();
-
-  const orderSubtotal = buyNowItem
-    ? buyNowItem.product.price * buyNowItem.quantity
-    : cartTotal;
-  const discountAmount = Math.round(
-    orderSubtotal * (couponDiscountPercentage / 100),
-  );
-  const orderTotal = orderSubtotal - discountAmount;
+  const { setCouponCode, setCouponDiscountPercentage } = useStore();
 
   const ensureRazorpayScript = () =>
     new Promise<void>((resolve, reject) => {
@@ -76,6 +62,8 @@ export const RazorpayApi = () => {
       type: 'loading',
       message: 'Preparing Razorpay checkout…',
     });
+
+    const orderTotal = orderData?.total || 0;
 
     try {
       const razorpayResponse = await createRazorpayOrder({

@@ -100,8 +100,42 @@ export async function googleLogin(req, res) {
   }
 }
 
+const sendOtpVia360Messenger = async (phone, otp) => {
+  const whatsappToken = process.env.WHATSAPP_TOKEN;
+
+  if (!whatsappToken) {
+    console.log(
+      '360 Messenger credentials not configured. OTP generated locally:',
+    );
+    return { success: false, mocked: true };
+  }
+
+  const payload = {
+    phonenumber: toE164(phone),
+    text: `Your Hamsini verification code is ${otp}.`,
+  };
+  console.log('Sending OTP via 360 Messenger:', payload, whatsappToken);
+  const response = await fetch(`https://api.360messenger.com/v2/sendMessage`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${whatsappToken}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams(payload).toString(),
+  });
+  console.log('360 Messenger response body:', await response.text());
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || 'Failed to send OTP via 360 Messenger.');
+  }
+
+  return { success: true, mocked: false };
+};
+
 export async function sendOtp(req, res) {
   const phone = normalizePhone(req.body.phone);
+  const email = String(req.body.email || '').trim();
   const url = req.body.url || '';
 
   if (!phone || phone.length !== 10) {
@@ -112,8 +146,10 @@ export async function sendOtp(req, res) {
   }
 
   try {
-    const existingCustomer = await Customer.findOne({ phone });
-    if (existingCustomer && url.includes('/auth')) {
+    const customerByPhone = await Customer.findOne({ phone });
+    const customerByEmail = email ? await Customer.findOne({ email }) : null;
+
+    if (customerByPhone && url.includes('/auth')) {
       return res.status(400).json({
         success: false,
         message:
@@ -121,10 +157,24 @@ export async function sendOtp(req, res) {
       });
     }
 
+    if (customerByPhone && customerByEmail && customerByPhone._id !== customerByEmail._id) {
+      return res.status(400).json({
+        success: false,
+        message: 'This phone number or email is already associated with another account.',
+      });
+    }
+
     const otp = generateOtp();
     otpStore.set(phone, { otp, createdAt: Date.now() });
 
-    const send = await sendOtpViaTwilio(phone, otp);
+    const send = await sendOtpVia360Messenger(phone, otp);
+
+    if (!send.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Unable to send OTP right now. Please try again.',
+      });
+    }
 
     return res.json({
       success: true,
@@ -187,38 +237,59 @@ export async function verifyLoginOtp(req, res) {
   try {
     const now = new Date();
     const istString = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-    const customerId = `customer:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    const customer = await Customer.findOneAndUpdate(
-      { email },
-      {
-        $setOnInsert: {
-          _id: customerId,
-        },
-        $set: {
-          fullName: name,
-          phone,
-          loggedInAtIST: istString,
-          role: 'customer',
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true,
-      },
-    );
+    const customerByPhone = await Customer.findOne({ phone });
+    const customerByEmail = email ? await Customer.findOne({ email }) : null;
+
+    if (email) {
+      if (customerByPhone && customerByEmail && customerByPhone._id !== customerByEmail._id) {
+        return res.status(400).json({
+          success: false,
+          message: 'This phone number or email is already associated with another account.',
+        });
+      }
+    }
+
+    if (customerByPhone) {
+      const updated = await Customer.findOneAndUpdate(
+        { phone },
+        { $set: { loggedInAtIST: istString } },
+        { new: true },
+      );
+      const token = createToken(updated._id);
+      return res.json({ success: true, message: 'OTP verified successfully.', token, user: updated.toObject() });
+    }
+
+    if (customerByEmail) {
+      const updated = await Customer.findOneAndUpdate(
+        { email },
+        { $set: { phone, loggedInAtIST: istString } },
+        { new: true },
+      );
+      const token = createToken(updated._id);
+      return res.json({ success: true, message: 'OTP verified successfully.', token, user: updated.toObject() });
+    }
+
+    const customerId = `customer:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const customer = await Customer.create({
+      _id: customerId,
+      fullName: name,
+      phone,
+      email: email || undefined,
+      loggedInAtIST: istString,
+      role: 'customer',
+    });
 
     const token = createToken(customer._id);
-
-    return res.json({
-      success: true,
-      message: 'OTP verified successfully.',
-      token,
-      user: customer.toObject(),
-    });
+    return res.json({ success: true, message: 'OTP verified successfully.', token, user: customer.toObject() });
   } catch (error) {
     console.error('Error verifying OTP:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'This phone number or email is already associated with another account.',
+      });
+    }
     return res.status(500).json({
       success: false,
       message: 'Unable to verify OTP right now. Please try again.',
@@ -226,7 +297,7 @@ export async function verifyLoginOtp(req, res) {
   }
 }
 
-// just verify otp for placing order 
+// just verify otp for placing order
 export async function verifyOtpForOrder(req, res) {
   const phone = normalizePhone(req.body.phone);
   const otp = String(req.body.otp || '').trim();

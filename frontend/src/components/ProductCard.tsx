@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import type { Product } from '../data';
 import { BagIcon, StarIcon } from './Icons';
 import { useStore } from '../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
 import { generateSlug } from '@/utils/slug';
+import { Product } from '@/context/contextTypes';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { isInWishlist, user } = useStore();
@@ -110,6 +110,9 @@ export default function ProductCard({ product }: { product: Product }) {
         >
           {product.category}
         </Link>
+        <p className="text-[9px] sm:text-[10px] text-maroon-700/70 mb-1.5 font-medium truncate">
+          {product.subcategory}
+        </p>
         <Link
           to={productUrl}
           className="font-display text-sm sm:text-base lg:text-lg text-maroon-900 mb-1.5 leading-tight font-bold cursor-pointer hover:text-maroon-700 transition-colors"
@@ -131,14 +134,18 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* Size Spec */}
-        {product.size && (
+        {product.sizes?.length ? (
           <div className="text-[11px] text-maroon-800/80 mb-3 font-medium bg-gold-50/50 px-2.5 py-1 rounded-lg border border-gold-200/40 inline-block self-start">
             📏{' '}
             <span className="font-semibold text-maroon-900">
-              {product.size}
+              {product.sizes
+                .filter((entry: any) => entry.units > 0)
+                .map((entry) => entry.name)
+                .filter(Boolean)
+                .join(', ')}
             </span>
           </div>
-        )}
+        ) : null}
 
         {/* Price */}
         <div className="mt-auto flex items-baseline gap-2 pt-2.5 border-t border-gold-100 justify-between">

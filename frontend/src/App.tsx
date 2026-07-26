@@ -15,9 +15,7 @@ import Features from './components/Features';
 import Categories from './components/Categories';
 import Products from './components/Products';
 import Bridal from './components/Bridal';
-import Heritage from './components/Heritage';
 import Testimonials from './components/Testimonials';
-import Instagram from './components/Instagram';
 import Newsletter from './components/Newsletter';
 import Footer from './components/Footer';
 
@@ -33,8 +31,14 @@ import WishlistPage from './components/pages/WishlistPage';
 import MyOrdersPage from './components/pages/MyOrdersPage';
 import { AdminApi } from './api/admin';
 import { CustomerApi } from './api/customer';
+import {
+  bridalImagesDefault,
+  handpickedDefault,
+  videosDefault,
+} from './constants/siteDefaults';
 import ProfilePage from './components/pages/Profile';
 import VerifyPhonePage from './components/pages/VerifyPhonePage';
+import FooterPage from './components/pages/FooterPage';
 
 function HomePage() {
   return (
@@ -44,18 +48,16 @@ function HomePage() {
       <Categories />
       <Products />
       <Bridal />
-      <Heritage />
       <Testimonials />
-      <Instagram />
       <Newsletter />
     </div>
   );
 }
 
 export default function App() {
-  const { user, imagesLoaded } = useStore();
+  const { user, imagesLoaded, setSiteContent } = useStore();
   const { fetchAllProducts } = ProductsApi();
-  const { fetchAllOrders } = AdminApi();
+  const { fetchAllOrders, fetchSiteContent } = AdminApi();
   const { getCustomerData } = CustomerApi();
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,7 +69,43 @@ export default function App() {
     if (hasFetchedProducts.current) return;
     hasFetchedProducts.current = true;
     fetchAllProducts();
+    fetchSiteContent().then((content) =>
+      setSiteContent({
+        categories: content.categories || [],
+        heroContent: content.heroContent || null,
+        features: content.features || [],
+        ribbon: content.ribbon || [],
+        heritage: content.heritage || null,
+        handpickedProducts: content.handpickedProducts || {
+          title: handpickedDefault.title,
+          subtitle: handpickedDefault.subtitle,
+          productIds: handpickedDefault.productIds,
+        },
+        bridal: content.bridal || {
+          eyebrow: '',
+          titlePrefix: '',
+          titleHighlight: '',
+          titleSuffix: '',
+          subtitle: '',
+          description: '',
+          badgePercent: '',
+          badgeText: '',
+          couponCode: '',
+          couponLabel: '',
+          savingsText: '',
+          buttonLabel: '',
+          buttonTarget: '',
+          images: bridalImagesDefault,
+        },
+        footer: content.footer || {
+          help: [],
+          about: [],
+        },
+        videos: content.videos || videosDefault,
+      }),
+    );
   }, []);
+  
 
   useEffect(() => {
     if (!imagesLoaded) return;
@@ -110,6 +148,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/shop" element={<ShopPage />} />
+          <Route path="/category/:slug" element={<ShopPage />} />
           <Route path="/product/:slug" element={<ProductDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/cart" element={<CartPage />} />
@@ -120,6 +159,8 @@ export default function App() {
           <Route path="/promoter" element={<PromotersDashboard />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/my-orders" element={<MyOrdersPage />} />
+          <Route path="/help/:slug" element={<FooterPage />} />
+          <Route path="/about/:slug" element={<FooterPage />} />
           <Route
             path="/verify-phone"
             element={

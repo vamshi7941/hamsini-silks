@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { CustomerApi } from '@/api/customer';
 import { generateSlug, findProductBySlug } from '@/utils/slug';
+import {
+  getProductInventoryState,
+  getSelectedSizeOption,
+} from '@/utils/productInventory';
+import { slugify } from '@/utils/cn';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -11,13 +16,171 @@ export default function ProductDetailPage() {
 
   const { addToCart, toggleWishlist } = CustomerApi();
   const [qty, setQty] = useState(1);
-  const [activeSize, setActiveSize] = useState('6.2m (with blouse)');
+  const [activeSize, setActiveSize] = useState('');
 
   const selectedProduct = slug ? findProductBySlug(products, slug) : undefined;
-
   const [activeImage, setActiveImage] = useState<string>('');
+  const [dragStartX, setDragStartX] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [imageContainerWidth, setImageContainerWidth] = useState(0);
+  const imageContainerRef = useRef<HTMLDivElement | null>(null);
 
-  if (!selectedProduct) {
+  const isAdmin = user.role === 'admin';
+  const p = selectedProduct;
+  // unified images list — include main `p.image` if not present in `p.images`
+  const allImages = (() => {
+    if (!p) return [] as string[];
+    const arr = Array.isArray(p.images) ? [...p.images] : [];
+    if (p.image && !arr.includes(p.image)) arr.unshift(p.image);
+    return arr;
+  })();
+
+  const displayedImage = activeImage || p?.image || allImages[0] || '';
+  const discount =
+    p?.originalPrice && p?.price
+      ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
+      : 0;
+  const related = p
+    ? products
+        .filter((r) => r.category === p.category && r._id !== p._id)
+        .slice(0, 4)
+    : [];
+  const inventory = p
+    ? getProductInventoryState(p)
+    : {
+        sizes: [],
+        availableSizes: [],
+        hasInventory: false,
+        isOutOfStock: true,
+      };
+  const availableSizes = inventory.availableSizes;
+  const outOfStock = inventory.isOutOfStock;
+  const selectedSizeOption = p
+    ? getSelectedSizeOption(p, activeSize)
+    : undefined;
+  const liked = p ? isInWishlist(p._id) : false;
+
+  useEffect(() => {
+    if (!activeSize && availableSizes.length > 0) {
+      setActiveSize(availableSizes[0].name);
+    }
+  }, [activeSize, availableSizes]);
+
+  useEffect(() => {
+    if (activeSize && availableSizes.length > 0) {
+      const stillAvailable = availableSizes.some(
+        (entry) => entry.name.toLowerCase() === activeSize.toLowerCase(),
+      );
+      if (!stillAvailable) {
+        setActiveSize(availableSizes[0].name);
+      }
+    }
+  }, [activeSize, availableSizes]);
+
+  useEffect(() => {
+    if (!p) {
+      setActiveImage('');
+      return;
+    }
+
+    setActiveImage(allImages[0] ?? '');
+  }, [p?._id]);
+
+  useEffect(() => {
+    const updateImageContainerWidth = () => {
+      if (imageContainerRef.current) {
+        setImageContainerWidth(imageContainerRef.current.offsetWidth);
+      }
+    };
+
+    updateImageContainerWidth();
+    window.addEventListener('resize', updateImageContainerWidth);
+    return () =>
+      window.removeEventListener('resize', updateImageContainerWidth);
+  }, [p?._id]);
+
+  const getImageIndex = (img: string) =>
+    allImages.findIndex((item) => item === img);
+
+  const getWrappedIndex = (index: number) => {
+    if (!allImages || allImages.length === 0) return -1;
+    return ((index % allImages.length) + allImages.length) % allImages.length;
+  };
+
+  const getSwipeImageCandidate = (offset: number) => {
+    if (!allImages || allImages.length === 0 || offset === 0) return null;
+    const currentIndex = getImageIndex(displayedImage);
+    if (currentIndex === -1) return null;
+    const nextIndex = offset < 0 ? currentIndex + 1 : currentIndex - 1;
+    return allImages[getWrappedIndex(nextIndex)] || null;
+  };
+
+  const getNextImageAfterSwipe = (offset: number) => {
+    const threshold = 80;
+    if (Math.abs(offset) < threshold) return null;
+    return getSwipeImageCandidate(offset);
+  };
+
+  const swipeImageCandidate = getSwipeImageCandidate(dragOffset);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    setDragStartX(event.clientX);
+    setIsDragging(true);
+    setIsAnimating(false);
+    setPendingImage(null);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging || dragStartX === null) return;
+    setDragOffset(event.clientX - dragStartX);
+  };
+
+  const finalizeDrag = () => {
+    const targetImage = getNextImageAfterSwipe(dragOffset);
+    const targetOffset = !imageContainerWidth
+      ? 0
+      : Math.abs(dragOffset) >= 80
+        ? dragOffset < 0
+          ? -imageContainerWidth
+          : imageContainerWidth
+        : 0;
+
+    if (targetImage) {
+      setPendingImage(targetImage);
+    }
+
+    setDragOffset(targetOffset);
+    setIsAnimating(true);
+    setIsDragging(false);
+    setDragStartX(null);
+  };
+
+  const handlePointerUp = () => {
+    if (isDragging) finalizeDrag();
+  };
+
+  const handlePointerCancel = () => {
+    if (isDragging) finalizeDrag();
+  };
+
+  const handlePointerLeave = () => {
+    if (isDragging) finalizeDrag();
+  };
+
+  const handleImageTransitionEnd = () => {
+    if (pendingImage) {
+      setActiveImage(pendingImage);
+    }
+    setPendingImage(null);
+    setDragOffset(0);
+    setIsAnimating(false);
+  };
+
+  if (!p) {
     return (
       <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
         <div className="text-center py-20 px-4">
@@ -36,31 +199,6 @@ export default function ProductDetailPage() {
     );
   }
 
-  const isAdmin = user.role === 'admin';
-  const p = selectedProduct;
-  const displayedImage = activeImage || p.image;
-  const discount = p.originalPrice
-    ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
-    : 0;
-  const related = products
-    .filter((r) => r.category === p.category && r._id !== p._id)
-    .slice(0, 4);
-  const outOfStock = p.inStock === false;
-  const liked = isInWishlist(p._id);
-
-  const features = [
-    { icon: '🏛️', text: 'Pure mulberry silk certified by Silk Mark India' },
-    { icon: '🧵', text: 'Hand-woven by hereditary artisans of Kanchipuram' },
-    { icon: '🚚', text: 'Free insured doorstep delivery across India' },
-    { icon: '↩️', text: '7-day premium exchange & return policy' },
-  ];
-
-  const sizeOptions = [
-    '5.5m (Saree only)',
-    '6.2m (with blouse)',
-    'Custom Pallu Weave',
-  ];
-
   return (
     <div className="min-h-screen bg-[#fdf8f1]">
       {/* Breadcrumb */}
@@ -70,9 +208,12 @@ export default function ProductDetailPage() {
             Home
           </Link>
           <span>›</span>
-          <Link to="/shop" className="hover:text-maroon-900">
+          <span
+            onClick={() => navigate(`/category/${slugify(p.category)}`)}
+            className="hover:text-maroon-900 hover:cursor-pointer"
+          >
             Catalogue
-          </Link>
+          </span>
           <span>›</span>
           <span className="text-maroon-900 font-semibold truncate">
             {p.name}
@@ -84,14 +225,44 @@ export default function ProductDetailPage() {
         <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
           {/* Left: Image */}
           <div className="space-y-4">
-            <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg">
-              <img
-                src={displayedImage}
-                alt={p.name}
-                className={`w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${
-                  outOfStock ? 'opacity-75 grayscale-[20%]' : ''
+            <div
+              ref={imageContainerRef}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
+              onPointerLeave={handlePointerLeave}
+              className="relative aspect-3/4 rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg touch-none"
+            >
+              <div
+                className={`absolute inset-0 transition-transform ${
+                  isAnimating ? 'duration-500 ease-out' : 'duration-0'
                 }`}
-              />
+                style={{
+                  transform: `translateX(${dragOffset}px)`,
+                }}
+                onTransitionEnd={handleImageTransitionEnd}
+              >
+                <div className="relative w-full h-full">
+                  <img
+                    src={displayedImage}
+                    alt={p.name}
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${
+                      outOfStock ? 'opacity-75 grayscale-20' : ''
+                    }`}
+                  />
+                  {swipeImageCandidate ? (
+                    <img
+                      src={swipeImageCandidate}
+                      alt="Swipe preview"
+                      className="absolute top-0 left-0 w-full h-full object-cover"
+                      style={{
+                        transform: `translateX(${dragOffset < 0 ? '100%' : '-100%'})`,
+                      }}
+                    />
+                  ) : null}
+                </div>
+              </div>
 
               {outOfStock && (
                 <div className="absolute inset-0 bg-maroon-950/60 backdrop-blur-[2px] flex items-center justify-center z-20 pointer-events-none">
@@ -134,9 +305,9 @@ export default function ProductDetailPage() {
 
             {/* Thumbnail strip */}
             <div className="grid grid-cols-4 gap-2">
-              {p.images?.map((img, i) => (
+              {allImages.map((img, i) => (
                 <div
-                  key={i}
+                  key={img || i}
                   onClick={() => setActiveImage(img)}
                   className={`aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-colors ${
                     displayedImage === img
@@ -220,60 +391,36 @@ export default function ProductDetailPage() {
 
             {/* Size / Length Selection */}
             <div className="mb-6 space-y-2">
-              <label className="block text-xs font-bold text-maroon-900 uppercase tracking-wider">
-                📏 Traditional Size / Cut Specs
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {sizeOptions.map((sz) => (
-                  <button
-                    key={sz}
-                    type="button"
-                    onClick={() => setActiveSize(sz)}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 ${
-                      activeSize === sz
-                        ? 'border-maroon-900 bg-maroon-900 text-gold-200 shadow-sm'
-                        : 'border-gold-200 bg-white text-maroon-900 hover:bg-gold-50'
-                    }`}
-                  >
-                    {sz}
-                  </button>
-                ))}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-maroon-900 uppercase tracking-wider">
+                  Size / Length:
+                </span>
+                {availableSizes.length > 0 ? (
+                  availableSizes.map((sz) => (
+                    <button
+                      key={sz.name}
+                      type="button"
+                      onClick={() => setActiveSize(sz.name)}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 ${
+                        activeSize === sz.name
+                          ? 'border-maroon-900 bg-maroon-900 text-gold-200 shadow-sm'
+                          : 'border-gold-200 bg-white text-maroon-900 hover:bg-gold-50'
+                      }`}
+                    >
+                      {sz.name}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-xs text-maroon-700/70">
+                    No size options are currently available.
+                  </p>
+                )}
               </div>
-              <p className="text-[10px] text-maroon-700/70 pt-1">
-                Selected spec:{' '}
-                <strong className="text-maroon-900">{activeSize}</strong>.
-                Handloom unstitched blouse material matching the Korvai zari
-                border is included.
-              </p>
             </div>
 
             {/* Description */}
             <div className="text-sm text-maroon-800/90 leading-relaxed mb-6 space-y-2">
-              <p>
-                Crafted on ancestral pit-looms of Kanchipuram, each saree takes
-                up to 45 days to complete. The intricate Korvai border
-                integrates warp and weft in a single unbroken thread,
-                representing the sacred bond of matrimony.
-              </p>
-              <p>
-                Dry clean only. Comes in signature Hamsini velvet trousseau box
-                with heritage certificate.
-              </p>
-            </div>
-
-            {/* Features */}
-            <div className="grid grid-cols-2 gap-2.5 mb-6">
-              {features.map((f, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-2 bg-white rounded-xl p-3 border border-gold-100"
-                >
-                  <span className="text-base shrink-0">{f.icon}</span>
-                  <span className="text-xs text-maroon-800 leading-snug font-medium">
-                    {f.text}
-                  </span>
-                </div>
-              ))}
+              <div dangerouslySetInnerHTML={{ __html: p.description || '' }} />
             </div>
 
             {/* Quantity */}
@@ -293,7 +440,19 @@ export default function ProductDetailPage() {
                     {qty}
                   </span>
                   <button
-                    onClick={() => setQty(qty + 1)}
+                    onClick={() => {
+                      if (
+                        selectedSizeOption &&
+                        qty >= selectedSizeOption.units
+                      ) {
+                        showToast(
+                          `Only ${selectedSizeOption.units} unit(s) available for this size.`,
+                          'warning',
+                        );
+                        return;
+                      }
+                      setQty(qty + 1);
+                    }}
                     className="w-10 h-10 flex items-center justify-center text-maroon-900 font-bold hover:bg-maroon-50 transition-colors cursor-pointer text-lg"
                   >
                     +
@@ -303,7 +462,7 @@ export default function ProductDetailPage() {
             )}
 
             {/* CTA buttons */}
-            <div className="space-y-3 mt-auto">
+            <div className="space-y-3">
               {outOfStock ? (
                 <div className="space-y-3">
                   <button
@@ -327,9 +486,20 @@ export default function ProductDetailPage() {
               ) : (
                 <>
                   <button
-                    onClick={() =>
-                      !isAdmin ? addToCart(p, qty, activeSize) : null
-                    }
+                    onClick={() => {
+                      if (isAdmin) return;
+                      if (
+                        !selectedSizeOption ||
+                        selectedSizeOption.units <= 0
+                      ) {
+                        showToast(
+                          'This size is currently out of stock.',
+                          'warning',
+                        );
+                        return;
+                      }
+                      addToCart(p, qty, activeSize);
+                    }}
                     className="w-full py-4 rounded-2xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99] cursor-pointer"
                   >
                     🛍️ Add to Bag · {qty > 1 ? `${qty} pieces` : '1 piece'}
@@ -337,6 +507,16 @@ export default function ProductDetailPage() {
                   <button
                     onClick={() => {
                       if (isAdmin) return;
+                      if (
+                        !selectedSizeOption ||
+                        selectedSizeOption.units <= 0
+                      ) {
+                        showToast(
+                          'This size is currently out of stock.',
+                          'warning',
+                        );
+                        return;
+                      }
                       setBuyNowItem({
                         product: p,
                         quantity: qty,
@@ -358,11 +538,11 @@ export default function ProductDetailPage() {
         {related.length > 0 && (
           <div className="mt-16">
             <div className="flex items-center gap-4 mb-6">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gold-300" />
+              <div className="h-px flex-1 bg-linear-to-r from-transparent to-gold-300" />
               <h2 className="font-display text-xl font-bold text-maroon-900 px-2">
                 More from {p.category}
               </h2>
-              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gold-300" />
+              <div className="h-px flex-1 bg-linear-to-l from-transparent to-gold-300" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {related.map((r) => {
@@ -377,7 +557,7 @@ export default function ProductDetailPage() {
                     to={`/product/${generateSlug(r._id, r.name)}`}
                     className="text-left bg-white rounded-2xl border border-gold-100 shadow-xs hover:shadow-md hover:border-gold-300 overflow-hidden group transition-all cursor-pointer flex flex-col"
                   >
-                    <div className="aspect-[3/4] overflow-hidden bg-maroon-50 relative w-full">
+                    <div className="aspect-3/4 overflow-hidden bg-maroon-50 relative w-full">
                       <img
                         src={r.image}
                         alt={r.name}

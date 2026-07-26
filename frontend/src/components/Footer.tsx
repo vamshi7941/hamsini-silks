@@ -1,45 +1,38 @@
 import { Link } from 'react-router-dom';
 import { InstagramIcon, FacebookIcon, WhatsAppIcon } from './Icons';
 import { useStore } from '../context/StoreContext';
-
-const cols = [
-  {
-    title: 'Shop',
-    links: [
-      'New Arrivals',
-      'Bridal Kanjivaram',
-      'Banarasi Silk',
-      'Soft Silk Pattu',
-      'Designer Collection',
-      'Gift Cards',
-    ],
-  },
-  {
-    title: 'Customer Care',
-    links: [
-      'Track Order',
-      'Shipping & Delivery',
-      'Returns & Exchange',
-      'Size Guide',
-      'Care Instructions',
-      'FAQs',
-    ],
-  },
-  {
-    title: 'About Us',
-    links: [
-      'Our Heritage',
-      'Our Weavers',
-      'Sustainability',
-      'Press',
-      'Bridal Studio',
-      'Careers',
-    ],
-  },
-];
+import { slugify } from '@/utils/cn';
 
 export default function Footer() {
-  const { showToast } = useStore();
+  const { showToast, siteContent } = useStore();
+  const categories =
+    siteContent.categories.filter((cat) => !cat.parentId) || [];
+
+  const footerData = siteContent.footer;
+
+  const cols = [
+    {
+      title: 'Shop',
+      links: categories.map((cat) => ({
+        label: cat.name,
+        href: `/category/${slugify(cat.name)}`,
+      })),
+    },
+    {
+      title: 'Help',
+      links: footerData.help.map((link) => ({
+        label: link.label,
+        href: `/help/${slugify(link.label)}`,
+      })),
+    },
+    {
+      title: 'About',
+      links: footerData.about.map((link) => ({
+        label: link.label,
+        href: `/about/${slugify(link.label)}`,
+      })),
+    },
+  ];
 
   return (
     <footer className="bg-[#1a0805] text-gold-100 pt-12 sm:pt-16 pb-6 sm:pb-8 relative overflow-hidden shrink-0">
@@ -60,7 +53,7 @@ export default function Footer() {
                 className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
               />
             </Link>
-            <p className="text-gold-200/70 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 max-w-xs">
+            <p className="text-gold-200/70 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
               Five decades of weaving stories into silk. From the temple looms
               of Kanchipuram, draping the women of India since 1972.
             </p>
@@ -68,30 +61,40 @@ export default function Footer() {
             <div className="space-y-2 text-xs sm:text-sm text-gold-200/80">
               <div className="flex gap-2">
                 <span className="text-gold-400">📍</span>
-                <span>No. 42, Silk Road, T. Nagar, Chennai – 600017</span>
+                <span>
+                  Hamsini silks, Vandanapuri Colony, Beeramguda, Hyderabad
+                  <br /> Telangana - 502032
+                </span>
               </div>
               <div className="flex gap-2">
                 <span className="text-gold-400">✆</span>
-                <span>+91 98400 12345</span>
+                <span>+91 77026 96161</span>
               </div>
               <div className="flex gap-2">
                 <span className="text-gold-400">✉</span>
-                <span>care@hamsinisilks.com</span>
+                <span>pnsilks2025@gmail.com</span>
               </div>
             </div>
 
             <div className="flex gap-2 sm:gap-3 my-4 sm:mt-6">
-              {[InstagramIcon, FacebookIcon, WhatsAppIcon].map((Icon, i) => (
-                <button
-                  key={i}
-                  onClick={() =>
-                    showToast('Opening official social channel feed...', 'info')
-                  }
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-gold-700/40 flex items-center justify-center text-gold-300 hover:bg-gold-500 hover:text-maroon-900 hover:border-gold-500 transition-colors cursor-pointer"
-                >
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                </button>
-              ))}
+              <a
+                href="https://www.instagram.com/hamsinisilksofficial?igsh=MWk1N3MyMmx5Z29xZg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-gold-700/40 flex items-center justify-center text-gold-300 hover:bg-gold-500 hover:text-maroon-900 hover:border-gold-500 transition-colors"
+                aria-label="Instagram"
+              >
+                <InstagramIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              </a>
+              <a
+                href="https://wa.me/917702696161"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-gold-700/40 flex items-center justify-center text-gold-300 hover:bg-gold-500 hover:text-maroon-900 hover:border-gold-500 transition-colors"
+                aria-label="WhatsApp"
+              >
+                <WhatsAppIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              </a>
             </div>
           </div>
 
@@ -104,12 +107,12 @@ export default function Footer() {
                 </h4>
                 <ul className="space-y-2 sm:space-y-2.5">
                   {col.links.map((link) => (
-                    <li key={link}>
+                    <li key={`${col.title}-${link.label}-${link.href}`}>
                       <Link
-                        to={link === 'Track Order' ? '/login' : '/shop'}
+                        to={link.href}
                         className="text-xs sm:text-sm text-gold-200/70 hover:text-gold-300 transition-colors text-left block cursor-pointer"
                       >
-                        {link}
+                        {link.label}
                       </Link>
                     </li>
                   ))}

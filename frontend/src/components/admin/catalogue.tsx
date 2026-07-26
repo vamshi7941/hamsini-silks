@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Icon } from '../Icons';
 import { useStore } from '@/context/StoreContext';
-import { Product } from '@/data';
+import { Product } from '@/context/contextTypes';
 
 export default function Catalogue({
   setShowAddModal,
@@ -47,7 +47,7 @@ export default function Catalogue({
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-5 py-2 bg-gold-500 text-white rounded-xl text-sm font-bold hover:bg-gold-600 transition-colors cursor-pointer shadow-xs"
         >
-          <Icon.add /> Add New Saree
+          <Icon.add /> Add New
         </button>
       </div>
 
@@ -115,6 +115,9 @@ export default function Catalogue({
                   <span className="text-[9px] font-bold text-gold-600 uppercase tracking-wider block">
                     {p.category}
                   </span>
+                  <span className="text-[9px] font-medium text-maroon-700/70 uppercase tracking-wider block">
+                    {p.subcategory}
+                  </span>
                   <h4 className="font-display text-sm font-bold text-maroon-900 mt-0.5 truncate">
                     {p.name}
                   </h4>
@@ -125,11 +128,16 @@ export default function Catalogue({
                     </span>
                   </div>
 
-                  {p.size && (
+                  {p.sizes?.length ? (
                     <span className="text-[10px] text-maroon-800 font-medium block mt-1">
-                      📏 {p.size}
+                      📏{' '}
+                      {p.sizes
+                        .filter((entry: any) => entry.units > 0)
+                        .map((entry) => entry.name)
+                        .filter(Boolean)
+                        .join(', ')}
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
 

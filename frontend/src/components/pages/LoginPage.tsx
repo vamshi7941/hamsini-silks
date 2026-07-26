@@ -218,7 +218,7 @@ export default function LoginPage() {
                               setPatronOtp(normalizeOtpValue(e.target.value))
                             }
                             className="w-full px-4 py-3 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors"
-                            placeholder="123456"
+                            placeholder=""
                           />
                         </div>
                         <button
