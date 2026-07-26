@@ -53,7 +53,7 @@ export default function Footer() {
                 className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
               />
             </Link>
-            <p className="text-gold-200/70 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 max-w-xs">
+            <p className="text-gold-200/70 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
               Five decades of weaving stories into silk. From the temple looms
               of Kanchipuram, draping the women of India since 1972.
             </p>
