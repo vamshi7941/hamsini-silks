@@ -105,6 +105,7 @@ export default function App() {
       }),
     );
   }, []);
+  
 
   useEffect(() => {
     if (!imagesLoaded) return;
