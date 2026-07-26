@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import type { CartItem } from '../../context/contextTypes';
@@ -85,6 +85,8 @@ export default function CheckoutPage() {
   const [otp, setOtp] = useState('');
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const countdownRef = useRef<number | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentFeedback, setPaymentFeedback] = useState<{
@@ -110,7 +112,9 @@ export default function CheckoutPage() {
   const discountAmount = Math.round(
     orderSubtotal * (couponDiscountPercentage / 100),
   );
-  const orderTotal = orderSubtotal - discountAmount;
+  const shippingFree = orderSubtotal >= 5000;
+  const shippingCharge = shippingFree ? 0 : 150;
+  const orderTotal = orderSubtotal - discountAmount + shippingCharge;
 
   useEffect(() => {
     const loadMethods = async () => {
@@ -137,12 +141,48 @@ export default function CheckoutPage() {
       setOtpSent(true);
       setOtpVerified(false);
       setOtp('');
+      setResendCountdown(30);
     } catch (error) {
       console.error('Send OTP failed', error);
     } finally {
       setSendingOtp(false);
     }
   };
+
+  const handleResendOtp = async () => {
+    if (resendCountdown > 0) return;
+    await handleSendOtp();
+  };
+
+  useEffect(() => {
+    if (resendCountdown <= 0) {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      return;
+    }
+
+    countdownRef.current = window.setInterval(() => {
+      setResendCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, [resendCountdown]);
 
   const handleVerifyOtp = async () => {
     const normalizedPhone = normalizePhoneValue(phone);
@@ -216,6 +256,7 @@ export default function CheckoutPage() {
       setOtpSent(false);
       setOtp('');
       setOtpVerified(false);
+      setResendCountdown(0);
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -270,7 +311,7 @@ export default function CheckoutPage() {
       shipping_state: shippingState,
       shipping_country: 'India',
       shipping_pincode: shippingPincode,
-      shipping_charges: 0,
+      shipping_charges: shippingCharge,
       sub_total: orderSubtotal,
       total: orderTotal,
       items: checkoutItems.map((item: CartItem) => ({
@@ -490,7 +531,14 @@ export default function CheckoutPage() {
                       required
                       type="tel"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      maxLength={10}
+                      onChange={(event) => {
+                        let value = event.target.value;
+                        if (value.startsWith('0')) {
+                          value = value.slice(1);
+                        }
+                        setPhone(value);
+                      }}
                       disabled={otpVerified}
                       className={`w-full px-4 py-3 border-2 rounded-xl text-sm text-maroon-900 focus:outline-none transition-colors ${otpVerified ? 'border-emerald-300 bg-emerald-50 text-emerald-900 cursor-not-allowed' : 'border-gold-200 focus:border-maroon-700'}`}
                     />
@@ -680,6 +728,17 @@ export default function CheckoutPage() {
                           ? 'Verifying and placing order…'
                           : `Verify & Place Order · ₹${orderTotal.toLocaleString('en-IN')}`}
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={resendCountdown > 0}
+                        className="w-full py-3 rounded-xl border-2 border-gold-200 text-maroon-900 font-bold text-sm tracking-wide transition-colors cursor-pointer hover:bg-gold-50 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {resendCountdown > 0
+                          ? `Resend OTP in ${resendCountdown}s`
+                          : 'Resend OTP'}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -775,9 +834,17 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between text-maroon-700">
-                  <span>Shipping</span>
-                  <span className="font-semibold text-emerald-700">FREE</span>
+                <div className="flex justify-between">
+                  <span className="text-maroon-700">Shipping</span>
+                  <span
+                    className={
+                      shippingFree
+                        ? 'text-emerald-700 font-semibold'
+                        : 'font-semibold text-maroon-900'
+                    }
+                  >
+                    {shippingFree ? 'FREE' : '₹150'}
+                  </span>
                 </div>
                 <div className="flex justify-between font-bold text-base border-t border-gold-100 pt-2 mt-2">
                   <span className="text-maroon-900">Total</span>

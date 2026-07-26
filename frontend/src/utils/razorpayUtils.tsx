@@ -1,34 +1,11 @@
 import { CustomerApi } from '@/api/customer';
 import { useStore } from '@/context/StoreContext';
-import { getSelectedSizeOption } from '@/utils/productInventory';
 import { RazorpayPaymentProps } from '@/types';
 
 export const RazorpayApi = () => {
   const { createRazorpayOrder, verifyRazorpayPayment, clearCart } =
     CustomerApi();
-  const {
-    buyNowItem,
-    cart,
-    couponDiscountPercentage,
-    setCouponCode,
-    setCouponDiscountPercentage,
-  } = useStore();
-
-  const availableCartItems = cart.filter((item) => {
-    const selectedSize = getSelectedSizeOption(item.product, item.size);
-    return Boolean(selectedSize && selectedSize.units > 0);
-  });
-
-  const orderSubtotal = buyNowItem
-    ? buyNowItem.product.price * buyNowItem.quantity
-    : availableCartItems.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0,
-      );
-  const discountAmount = Math.round(
-    orderSubtotal * (couponDiscountPercentage / 100),
-  );
-  const orderTotal = orderSubtotal - discountAmount;
+  const { setCouponCode, setCouponDiscountPercentage } = useStore();
 
   const ensureRazorpayScript = () =>
     new Promise<void>((resolve, reject) => {
@@ -85,6 +62,8 @@ export const RazorpayApi = () => {
       type: 'loading',
       message: 'Preparing Razorpay checkout…',
     });
+
+    const orderTotal = orderData?.total || 0;
 
     try {
       const razorpayResponse = await createRazorpayOrder({
