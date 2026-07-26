@@ -93,7 +93,7 @@ export default function Header() {
             <img
               src="/logo.png"
               alt="Hamsini Silks Logo"
-              className="w-[100px] h-auto transition-transform duration-500 group-hover:scale-105 rounded block"
+              className="w-[80px] h-auto transition-transform duration-500 group-hover:scale-105 rounded block"
             />
           </Link>
 

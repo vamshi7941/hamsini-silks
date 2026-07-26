@@ -61,30 +61,40 @@ export default function Footer() {
             <div className="space-y-2 text-xs sm:text-sm text-gold-200/80">
               <div className="flex gap-2">
                 <span className="text-gold-400">📍</span>
-                <span>No. 42, Silk Road, T. Nagar, Chennai – 600017</span>
+                <span>
+                  Hamsini silks, Vandanapuri Colony, Beeramguda, Hyderabad
+                  <br /> Telangana - 502032
+                </span>
               </div>
               <div className="flex gap-2">
                 <span className="text-gold-400">✆</span>
-                <span>+91 98400 12345</span>
+                <span>+91 77026 96161</span>
               </div>
               <div className="flex gap-2">
                 <span className="text-gold-400">✉</span>
-                <span>care@hamsinisilks.com</span>
+                <span>pnsilks2025@gmail.com</span>
               </div>
             </div>
 
             <div className="flex gap-2 sm:gap-3 my-4 sm:mt-6">
-              {[InstagramIcon, FacebookIcon, WhatsAppIcon].map((Icon, i) => (
-                <button
-                  key={i}
-                  onClick={() =>
-                    showToast('Opening official social channel feed...', 'info')
-                  }
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-gold-700/40 flex items-center justify-center text-gold-300 hover:bg-gold-500 hover:text-maroon-900 hover:border-gold-500 transition-colors cursor-pointer"
-                >
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                </button>
-              ))}
+              <a
+                href="https://www.instagram.com/hamsinisilksofficial?igsh=MWk1N3MyMmx5Z29xZg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-gold-700/40 flex items-center justify-center text-gold-300 hover:bg-gold-500 hover:text-maroon-900 hover:border-gold-500 transition-colors"
+                aria-label="Instagram"
+              >
+                <InstagramIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              </a>
+              <a
+                href="https://wa.me/917702696161"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-gold-700/40 flex items-center justify-center text-gold-300 hover:bg-gold-500 hover:text-maroon-900 hover:border-gold-500 transition-colors"
+                aria-label="WhatsApp"
+              >
+                <WhatsAppIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              </a>
             </div>
           </div>
 
