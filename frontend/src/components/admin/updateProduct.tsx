@@ -461,7 +461,7 @@ export default function UpdateProduct({
               </p>
               <div className="space-y-2">
                 {sizes.map((entry, index) => (
-                  <div key={`${entry.name}-${index}`} className="flex gap-2">
+                  <div key={index} className="flex gap-2">
                     <input
                       type="text"
                       value={entry.name}
