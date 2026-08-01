@@ -79,21 +79,30 @@ export async function googleLogin(req, res) {
     const now = new Date();
     const istString = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
-    const saved = await Customer.findByIdAndUpdate(
-      uid,
-      {
+    let customer = await Customer.findById(uid);
+
+    if (!customer && email) {
+      customer = await Customer.findOne({ email });
+    }
+
+    if (customer) {
+      customer.fullName = name;
+      customer.email = email;
+      customer.loggedInAtIST = istString;
+      customer.role = 'customer';
+      await customer.save();
+    } else {
+      customer = await Customer.create({
         _id: uid,
         fullName: name,
-        email: email,
+        email,
         loggedInAtIST: istString,
         role: 'customer',
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
-    );
+      });
+    }
 
-    const token = createToken(saved._id);
-
-    return res.json({ success: true, customer: saved, token });
+    const token = createToken(customer._id);
+    return res.json({ success: true, customer, token });
   } catch (err) {
     console.error('Error saving Google user:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
