@@ -58,9 +58,11 @@ export default function ProductDetailPage({
   // Mobile pinch-to-zoom state for admin
   const [mobileScale, setMobileScale] = useState(1);
   const [isPinching, setIsPinching] = useState(false);
+  const [oneFingerZoom, setOneFingerZoom] = useState(false);
   const transformOriginRef = useRef<string>('50% 50%');
   const initialPinchDistanceRef = useRef<number | null>(null);
   const initialScaleRef = useRef<number>(1);
+  const oneFingerStartYRef = useRef<number | null>(null);
 
   const getTouchDistance = (t1: Touch, t2: Touch) =>
     Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -72,42 +74,84 @@ export default function ProductDetailPage({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isAdmin) return;
     if (e.touches.length === 2) {
-      // begin pinch
+      // begin two-finger pinch
       e.preventDefault();
       const d = getTouchDistance(e.touches[0], e.touches[1]);
       initialPinchDistanceRef.current = d;
       initialScaleRef.current = mobileScale;
       setIsPinching(true);
+    } else if (e.touches.length === 1) {
+      // begin one-finger zoom (vertical drag to zoom)
+      e.preventDefault();
+      oneFingerStartYRef.current = e.touches[0].clientY;
+      initialScaleRef.current = mobileScale;
+      setOneFingerZoom(true);
+      // set transform origin to touch point
+      const rect = imageContainerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const relX = e.touches[0].clientX - rect.left;
+        const relY = e.touches[0].clientY - rect.top;
+        const originX = (relX / rect.width) * 100;
+        const originY = (relY / rect.height) * 100;
+        transformOriginRef.current = `${originX}% ${originY}%`;
+      }
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isPinching) return;
-    if (e.touches.length !== 2) return;
-    e.preventDefault();
-    const d = getTouchDistance(e.touches[0], e.touches[1]);
-    const rect = imageContainerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const mid = getTouchMidpoint(e.touches[0], e.touches[1]);
-    const relX = mid.x - rect.left;
-    const relY = mid.y - rect.top;
-    const originX = (relX / rect.width) * 100;
-    const originY = (relY / rect.height) * 100;
-    transformOriginRef.current = `${originX}% ${originY}%`;
-    if (initialPinchDistanceRef.current && initialPinchDistanceRef.current > 0) {
-      let scale =
-        initialScaleRef.current * (d / initialPinchDistanceRef.current);
+    if (isPinching) {
+      if (e.touches.length !== 2) return;
+      e.preventDefault();
+      const d = getTouchDistance(e.touches[0], e.touches[1]);
+      const rect = imageContainerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const mid = getTouchMidpoint(e.touches[0], e.touches[1]);
+      const relX = mid.x - rect.left;
+      const relY = mid.y - rect.top;
+      const originX = (relX / rect.width) * 100;
+      const originY = (relY / rect.height) * 100;
+      transformOriginRef.current = `${originX}% ${originY}%`;
+      if (initialPinchDistanceRef.current && initialPinchDistanceRef.current > 0) {
+        let scale =
+          initialScaleRef.current * (d / initialPinchDistanceRef.current);
+        scale = Math.max(1, Math.min(5, scale));
+        setMobileScale(scale);
+      }
+    } else if (oneFingerZoom) {
+      if (e.touches.length !== 1) return;
+      e.preventDefault();
+      const startY = oneFingerStartYRef.current ?? e.touches[0].clientY;
+      const dy = startY - e.touches[0].clientY; // upward drag increases zoom
+      // sensitivity: 300px for doubling
+      let scale = initialScaleRef.current * (1 + dy / 300);
       scale = Math.max(1, Math.min(5, scale));
       setMobileScale(scale);
+      // update transform-origin to follow touch
+      const rect = imageContainerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const relX = e.touches[0].clientX - rect.left;
+        const relY = e.touches[0].clientY - rect.top;
+        const originX = (relX / rect.width) * 100;
+        const originY = (relY / rect.height) * 100;
+        transformOriginRef.current = `${originX}% ${originY}%`;
+      }
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isPinching) return;
-    if (e.touches.length < 2) {
-      setIsPinching(false);
-      initialPinchDistanceRef.current = null;
-      initialScaleRef.current = mobileScale;
+    if (isPinching) {
+      if (e.touches.length < 2) {
+        setIsPinching(false);
+        initialPinchDistanceRef.current = null;
+        initialScaleRef.current = mobileScale;
+      }
+    }
+    if (oneFingerZoom) {
+      if (e.touches.length === 0) {
+        setOneFingerZoom(false);
+        oneFingerStartYRef.current = null;
+        initialScaleRef.current = mobileScale;
+      }
     }
   };
 
@@ -195,17 +239,17 @@ export default function ProductDetailPage({
       : 0;
   const related = p
     ? products
-        .filter((r) => r.category === p.category && r._id !== p._id)
-        .slice(0, 4)
+      .filter((r) => r.category === p.category && r._id !== p._id)
+      .slice(0, 4)
     : [];
   const inventory = p
     ? getProductInventoryState(p)
     : {
-        sizes: [],
-        availableSizes: [],
-        hasInventory: false,
-        isOutOfStock: true,
-      };
+      sizes: [],
+      availableSizes: [],
+      hasInventory: false,
+      isOutOfStock: true,
+    };
   const availableSizes = inventory.availableSizes;
   const outOfStock = inventory.isOutOfStock;
   const selectedSizeOption = p
@@ -213,8 +257,8 @@ export default function ProductDetailPage({
     : undefined;
   const cartQtyForSelectedSize = p
     ? cart.filter(
-        (item) => item.product._id === p._id && item.size === activeSize,
-      ).reduce((total, item) => total + item.quantity, 0)
+      (item) => item.product._id === p._id && item.size === activeSize,
+    ).reduce((total, item) => total + item.quantity, 0)
     : 0;
   const maxQtyForSelectedSize = selectedSizeOption?.units ?? 0;
   const remainingQtyForSelectedSize = selectedSizeOption
@@ -286,6 +330,8 @@ export default function ProductDetailPage({
   const swipeImageCandidate = getSwipeImageCandidate(dragOffset);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    // Ignore touch pointer events — touch interactions are handled by touch handlers
+    if (event.pointerType === 'touch') return;
     setDragStartX(event.clientX);
     setIsDragging(true);
     setIsAnimating(false);
@@ -294,6 +340,7 @@ export default function ProductDetailPage({
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'touch') return;
     if (!isDragging || dragStartX === null) return;
     setDragOffset(event.clientX - dragStartX);
   };
@@ -318,15 +365,18 @@ export default function ProductDetailPage({
     setDragStartX(null);
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (event?: React.PointerEvent<HTMLDivElement>) => {
+    if (event && event.pointerType === 'touch') return;
     if (isDragging) finalizeDrag();
   };
 
-  const handlePointerCancel = () => {
+  const handlePointerCancel = (event?: React.PointerEvent<HTMLDivElement>) => {
+    if (event && event.pointerType === 'touch') return;
     if (isDragging) finalizeDrag();
   };
 
-  const handlePointerLeave = () => {
+  const handlePointerLeave = (event?: React.PointerEvent<HTMLDivElement>) => {
+    if (event && event.pointerType === 'touch') return;
     if (isDragging) finalizeDrag();
   };
 
@@ -398,9 +448,8 @@ export default function ProductDetailPage({
               className="relative aspect-3/4 rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg touch-none"
             >
               <div
-                className={`absolute inset-0 transition-transform ${
-                  isAnimating ? 'duration-500 ease-out' : 'duration-0'
-                }`}
+                className={`absolute inset-0 transition-transform ${isAnimating ? 'duration-500 ease-out' : 'duration-0'
+                  }`}
                 style={{
                   transform: `translateX(${dragOffset}px) scale(${mobileScale})`,
                   transformOrigin: transformOriginRef.current,
@@ -412,9 +461,8 @@ export default function ProductDetailPage({
                   <img
                     src={displayedImage}
                     alt={p.name}
-                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${
-                      outOfStock ? 'opacity-75 grayscale-20' : ''
-                    }`}
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${outOfStock ? 'opacity-75 grayscale-20' : ''
+                      }`}
                   />
                   {swipeImageCandidate ? (
                     <img
@@ -509,25 +557,6 @@ export default function ProductDetailPage({
                   {p.badge}
                 </div>
               )}
-              <button
-                onClick={() => (!isAdmin ? toggleWishlist(p._id) : null)}
-                className={`absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all z-10 cursor-pointer ${
-                  liked
-                    ? 'bg-maroon-900 text-gold-300'
-                    : 'bg-white/90 backdrop-blur text-maroon-500 hover:text-maroon-900'
-                }`}
-                title="Wishlist"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill={liked ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth={liked ? 0 : 1.8}
-                  className="w-6 h-6"
-                >
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-              </button>
             </div>
 
             {/* Thumbnail strip */}
@@ -536,11 +565,10 @@ export default function ProductDetailPage({
                 <div
                   key={img || i}
                   onClick={() => setActiveImage(img)}
-                  className={`aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-colors ${
-                    displayedImage === img
+                  className={`aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-colors ${displayedImage === img
                       ? 'border-maroon-800'
                       : 'border-gold-100 hover:border-gold-400'
-                  }`}
+                    }`}
                 >
                   <img
                     src={img}
@@ -558,8 +586,26 @@ export default function ProductDetailPage({
               <span className="text-xs font-bold text-gold-600 tracking-widest uppercase">
                 {p.category}
               </span>
-              <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-maroon-900 mt-1 leading-snug">
+              <h1 className="flex font-display gap-4 text-2xl sm:text-3xl lg:text-4xl font-bold text-maroon-900 mt-1 leading-snug">
                 {p.name}
+                <button
+                  onClick={() => (toggleWishlist(p._id))}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all z-999 cursor-pointer ${liked
+                      ? 'bg-maroon-900 text-gold-300'
+                      : 'bg-white/90 backdrop-blur text-maroon-500 hover:text-maroon-900'
+                    }`}
+                  title="Wishlist"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill={liked ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    strokeWidth={liked ? 0 : 1.8}
+                    className="w-6 h-6"
+                  >
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                </button>
               </h1>
             </div>
 
@@ -628,11 +674,10 @@ export default function ProductDetailPage({
                       key={sz.name}
                       type="button"
                       onClick={() => setActiveSize(sz.name)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 ${
-                        activeSize === sz.name
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 ${activeSize === sz.name
                           ? 'border-maroon-900 bg-maroon-900 text-gold-200 shadow-sm'
                           : 'border-gold-200 bg-white text-maroon-900 hover:bg-gold-50'
-                      }`}
+                        }`}
                     >
                       {sz.name}
                     </button>
@@ -791,8 +836,8 @@ export default function ProductDetailPage({
               {related.map((r) => {
                 const d = r.originalPrice
                   ? Math.round(
-                      ((r.originalPrice - r.price) / r.originalPrice) * 100,
-                    )
+                    ((r.originalPrice - r.price) / r.originalPrice) * 100,
+                  )
                   : 0;
                 return (
                   <Link
