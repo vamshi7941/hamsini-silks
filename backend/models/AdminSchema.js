@@ -22,10 +22,16 @@ const AdminSchema = new Schema({
     type: String,
     required: true,
   },
+  // whether this admin is a super-admin and can access catalogue
+  isSuperAdmin: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
 });
 
 // static signup method
-AdminSchema.statics.signup = async function (_id, fullName, email, password) {
+AdminSchema.statics.signup = async function (_id, fullName, email, password, isSuperAdmin = false) {
   // validation
   if (!_id) {
     throw Error('Id is required');
@@ -59,6 +65,7 @@ AdminSchema.statics.signup = async function (_id, fullName, email, password) {
     fullName,
     email,
     password: hash,
+    isSuperAdmin: Boolean(isSuperAdmin),
   });
 
   return user;
@@ -79,13 +86,14 @@ AdminSchema.statics.login = async function (email, password) {
   const fullName = user.fullName;
   const passWord = user.password;
   const id = user._id;
+  const isSuperAdmin = Boolean(user.isSuperAdmin);
 
   const match = await bcrypt.compare(password, passWord);
 
   if (!match) {
     throw Error('Incorrect password');
   }
-  const userDetails = { id, fullName, email, passWord };
+  const userDetails = { id, fullName, email, passWord, isSuperAdmin };
   return userDetails;
 };
 

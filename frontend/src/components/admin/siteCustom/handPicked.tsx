@@ -163,7 +163,7 @@ export default function HandPicked() {
           {isDropdownOpen && (
             <div
               ref={dropdownRef}
-              className="absolute z-10 mt-2 max-h-72 w-full overflow-hidden rounded-xl border border-gold-200 bg-white shadow-lg"
+              className="mt-2 max-h-72 w-full overflow-hidden rounded-xl border border-gold-200 bg-white shadow-lg"
             >
               <div className="border-b border-gold-100 p-2">
                 <input

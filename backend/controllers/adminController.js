@@ -32,14 +32,15 @@ export async function loginUser(req, res) {
   try {
     const user = await AdminSchema.login(email, password);
 
-    // create a token
-    const token = createToken(user._id);
-
     const fullName = user.fullName;
     const _id = user.id;
+    const isSuperAdmin = Boolean(user.isSuperAdmin);
+
+    // create a token using the admin id
+    const token = createToken(_id);
 
     res.status(200).json({
-      user: { _id, fullName, email, token, role: 'admin' },
+      user: { _id, fullName, email, token, role: 'admin', isSuperAdmin },
       message: 'Login successful',
       success: true,
     });
@@ -50,7 +51,7 @@ export async function loginUser(req, res) {
 
 /** insert all questinos */
 export async function signupUser(req, res) {
-  const { _id, fullName, email, password } = req.body;
+  const { _id, fullName, email, password, isSuperAdmin = false } = req.body;
 
   const adminSecret = req.headers['x-admin-secret'];
 
@@ -59,13 +60,13 @@ export async function signupUser(req, res) {
   }
 
   try {
-    const user = await AdminSchema.signup(_id, fullName, email, password);
+    const user = await AdminSchema.signup(_id, fullName, email, password, isSuperAdmin);
 
     // create a token
     const token = createToken(user._id);
 
     res.status(200).json({
-      user: { _id, fullName, email, token },
+      user: { _id, fullName, email, token, isSuperAdmin: Boolean(user.isSuperAdmin) },
       message: 'Signup successful',
       success: true,
     });

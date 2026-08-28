@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as adminController from '../controllers/adminController.js';
 import Product from '../models/ProductSchema.js';
-import { requireAdminAuth } from '../middleware/requireAuth.js';
+import { requireAdminAuth, requireSuperAdmin } from '../middleware/requireAuth.js';
 const router = Router();
 
 router.get('/', async (req, res) => {
@@ -30,14 +30,14 @@ router.get('/:id/image', async (req, res) => {
   }
 });
 
-router.route('/addProduct').post(requireAdminAuth, adminController.addProduct);
+router.route('/addProduct').post(requireSuperAdmin, adminController.addProduct);
 
 router
   .route('/updateProduct/:id')
-  .put(requireAdminAuth, adminController.updateProduct);
+  .put(requireSuperAdmin, adminController.updateProduct);
 
 router
   .route('/deleteProduct/:id')
-  .delete(requireAdminAuth, adminController.deleteProduct);
+  .delete(requireSuperAdmin, adminController.deleteProduct);
 
 export default router;

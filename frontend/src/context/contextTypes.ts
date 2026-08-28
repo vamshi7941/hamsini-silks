@@ -67,6 +67,8 @@ export type User = {
   _id: string;
   promoCode?: string;
   discountPercentage?: number;
+  // whether this admin is a super-admin; undefined for non-admins
+  isSuperAdmin?: boolean;
 };
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';

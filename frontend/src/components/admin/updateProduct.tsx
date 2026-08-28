@@ -177,6 +177,15 @@ export default function UpdateProduct({
     // update state after command
     setDescription(editorRef.current.innerHTML);
   };
+
+  // Set initial editor HTML only when the product changes (avoid re-applying innerHTML on every render)
+  // This prevents React from overwriting the caret position while typing.
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = description;
+    }
+  }, [product]);
+
   const [badge, setBadge] = useState(product?.badge ?? '');
   const [image, setImage] = useState(product?.image ?? '');
   const [additionalImages, setAdditionalImages] = useState(
@@ -560,7 +569,6 @@ export default function UpdateProduct({
                 contentEditable
                 suppressContentEditableWarning
                 className="w-full px-4 py-2.5 border-2 border-gold-200 rounded-xl text-sm text-maroon-900 focus:outline-none focus:border-maroon-700 transition-colors placeholder:text-maroon-300 min-h-[80px]"
-                dangerouslySetInnerHTML={{ __html: description }}
               />
             </div>
           </div>

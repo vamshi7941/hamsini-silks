@@ -266,17 +266,25 @@ export default function OrderRow({ order }: { order: OrderData }) {
               <h4 className="text-xs font-bold text-maroon-900 uppercase tracking-wider mb-3">
                 Order Summary
               </h4>
-              <div className="h-[130px] bg-gold-50 rounded-xl p-3 border border-gold-200">
+              <div className="bg-gold-50 rounded-xl p-3 border border-gold-200">
                 <div className="text-xs font-bold text-maroon-900 mb-1">
                   Summary
                 </div>
-                <div className="flex justify-between text-xs text-maroon-800">
+                <div className="flex justify-between text-xs text-maroon-800 mb-2">
                   <span>Items:</span>
                   <span className="font-bold">
                     {order.items.reduce((a, b) => a + b.units, 0)}
                   </span>
                 </div>
-                <div className="flex justify-between text-xs text-maroon-800">
+                <div className="flex justify-between text-xs text-maroon-800 mb-2">
+                  <span>Sub Total:</span>
+                  <span className="font-bold">₹{order.sub_total.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-xs text-maroon-800 mb-2">
+                  <span>Shipping Charges:</span>
+                  <span className="font-bold">₹{order.shipping_charges.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-xs text-maroon-800 mb-2">
                   <span>Payment:</span>
                   <span className="font-bold">{order.paymentMethod}</span>
                 </div>
