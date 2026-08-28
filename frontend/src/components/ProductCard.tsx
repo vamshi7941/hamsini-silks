@@ -6,7 +6,7 @@ import { generateSlug } from '@/utils/slug';
 import { Product } from '@/context/contextTypes';
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { isInWishlist, user } = useStore();
+  const { cart, isInWishlist, showToast, user } = useStore();
   const { addToCart, toggleWishlist } = CustomerApi();
   const discount = product.originalPrice
     ? Math.round(
@@ -17,6 +17,19 @@ export default function ProductCard({ product }: { product: Product }) {
   const liked = isInWishlist(product._id);
   const outOfStock = product.inStock === false;
   const isAdmin = user.role === 'admin';
+  const defaultSize = Array.isArray(product.sizes)
+    ? product.sizes.find((entry: any) => entry && entry.name)
+    : undefined;
+  const cartQtyForDefaultSize = cart.reduce((total, item) => {
+    if (item.product._id === product._id && item.size === defaultSize?.name) {
+      return total + item.quantity;
+    }
+    return total;
+  }, 0);
+  const remainingQtyForDefaultSize = Math.max(
+    0,
+    Number(defaultSize?.units ?? 0) - cartQtyForDefaultSize,
+  );
   const productUrl = `/product/${generateSlug(product._id, product.name)}`;
 
   return (
@@ -91,6 +104,13 @@ export default function ProductCard({ product }: { product: Product }) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                if (remainingQtyForDefaultSize <= 0) {
+                  showToast(
+                    'You have already reached the available quantity for this size in your bag.',
+                    'warning',
+                  );
+                  return;
+                }
                 addToCart(product);
               }}
               className="w-full bg-maroon-800 hover:bg-maroon-900 text-gold-100 text-xs font-bold tracking-wider py-2.5 sm:py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.97] cursor-pointer"

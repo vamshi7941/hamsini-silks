@@ -1,7 +1,10 @@
 import { CartItem, Product } from '@/context/contextTypes';
 import { useStore } from '@/context/StoreContext';
 import { OrderData, OrderItem } from '@/types';
-import { getSelectedSizeOption } from '@/utils/productInventory';
+import {
+  getSelectedSizeOption,
+  normalizeProductSizes,
+} from '@/utils/productInventory';
 
 export const CustomerApi = () => {
   const apiUrl =
@@ -433,37 +436,62 @@ export const CustomerApi = () => {
   const addToCart = async (
     product: Product,
     quantity = 1,
-    activeSize = '6.2m (with blouse)',
+    activeSize?: string,
   ) => {
-    const selectedSizeOption = getSelectedSizeOption(product, activeSize);
-    if (!selectedSizeOption || selectedSizeOption.units <= 0) {
+    const resolvedSize =
+      activeSize ||
+      normalizeProductSizes(product)[0]?.name ||
+      product?.sizes?.[0]?.name ||
+      '';
+
+    const selectedSizeOption = getSelectedSizeOption(product, resolvedSize);
+    const existingCartQty = cart.reduce((total, item) => {
+      if (item.product._id === product._id && item.size === resolvedSize) {
+        return total + item.quantity;
+      }
+      return total;
+    }, 0);
+    const remainingAvailable = Math.max(
+      0,
+      (selectedSizeOption?.units ?? 0) - existingCartQty,
+    );
+
+    if (!selectedSizeOption) {
       showToast('This size is currently out of stock.', 'warning');
       return;
     }
 
-    const safeQuantity = Math.min(quantity, selectedSizeOption.units);
+    if (remainingAvailable <= 0) {
+      showToast(
+        'You have already reached the available quantity for this size in your bag.',
+        'warning',
+      );
+      return;
+    }
+
+    const safeQuantity = Math.min(quantity, remainingAvailable);
     if (safeQuantity < quantity) {
       showToast(
-        `Only ${selectedSizeOption.units} unit(s) available for this size.`,
+        `Only ${remainingAvailable} unit(s) remaining for this size in your bag.`,
         'warning',
       );
     }
 
     const existingItem = cart.find(
-      (item) => item.product._id === product._id && item.size === activeSize,
+      (item) => item.product._id === product._id && item.size === resolvedSize,
     );
 
     const newCart = existingItem
       ? cart.map((item) =>
-          item.product._id === product._id && item.size === activeSize
+          item.product._id === product._id && item.size === resolvedSize
             ? {
                 ...item,
                 quantity: item.quantity + safeQuantity,
-                size: activeSize,
+                size: resolvedSize,
               }
             : item,
         )
-      : [...cart, { product, quantity: safeQuantity, size: activeSize }];
+      : [...cart, { product, quantity: safeQuantity, size: resolvedSize }];
 
     await updateCart(newCart, user).then((res: any) => {
       if (res.success) {
