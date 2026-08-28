@@ -76,7 +76,6 @@ export default function PromotersDashboard() {
     try {
       const data = await getOwnPromoterOrders(user._id);
       if (data) {
-        console.log('Fetched orders:', data);
         setOrders(data);
       }
     } catch (error) {
