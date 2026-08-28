@@ -9,10 +9,22 @@ import {
 } from '@/utils/productInventory';
 import { slugify } from '@/utils/cn';
 
-export default function ProductDetailPage() {
+export default function ProductDetailPage({
+  imageUrl,
+  zoomLevel = 5,
+  lensSize = 290,
+  previewWidth = 400,
+  previewHeight = 400,
+}: {
+  imageUrl?: string;
+  zoomLevel?: number;
+  lensSize?: number;
+  previewWidth?: number;
+  previewHeight?: number;
+} = {}) {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { products, showToast, isInWishlist, setBuyNowItem, user } = useStore();
+  const { products, cart, showToast, isInWishlist, setBuyNowItem, user } = useStore();
 
   const { addToCart, toggleWishlist } = CustomerApi();
   const [qty, setQty] = useState(1);
@@ -27,6 +39,88 @@ export default function ProductDetailPage() {
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [imageContainerWidth, setImageContainerWidth] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Magnifier / zoom state & refs
+  const [showLens, setShowLens] = useState(false);
+  const lensRef = useRef<HTMLDivElement | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const pointerPos = useRef({ x: 0, y: 0 }); // target pointer position
+  const animPos = useRef({ x: 0, y: 0 }); // animated (smoothed) position
+  const rafRef = useRef<number | null>(null);
+
+  // Cancel RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  const startRaf = () => {
+    if (rafRef.current) return;
+    const step = () => {
+      const rect = imageContainerRef.current?.getBoundingClientRect();
+      if (!rect) {
+        rafRef.current = null;
+        return;
+      }
+      // simple lerp for smoothing
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      const tx = pointerPos.current.x;
+      const ty = pointerPos.current.y;
+      animPos.current.x = lerp(animPos.current.x, tx, 0.2);
+      animPos.current.y = lerp(animPos.current.y, ty, 0.2);
+
+      // update lens position
+      if (lensRef.current) {
+        const half = (lensSize || 150) / 2;
+        lensRef.current.style.transform = `translate(${animPos.current.x - half}px, ${animPos.current.y - half}px)`;
+      }
+
+      // update preview and lens background position
+      if (previewRef.current || lensRef.current) {
+        const xPct = rect.width > 0 ? (animPos.current.x / rect.width) * 100 : 50;
+        const yPct = rect.height > 0 ? (animPos.current.y / rect.height) * 100 : 50;
+        const pos = `${xPct}% ${yPct}%`;
+        if (previewRef.current) previewRef.current.style.backgroundPosition = pos;
+        if (lensRef.current) lensRef.current.style.backgroundPosition = pos;
+      }
+
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+  };
+
+  const stopRaf = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  };
+
+  const updatePointerFromMouse = (e: MouseEvent) => {
+    const rect = imageContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    // clamp
+    x = Math.max(0, Math.min(rect.width, x));
+    y = Math.max(0, Math.min(rect.height, y));
+    pointerPos.current.x = x;
+    pointerPos.current.y = y;
+    // ensure preview background image is set and lens background configured
+    const src = imageUrl || displayedImage;
+    const bgSize = `${(zoomLevel || 3) * 100}% ${(zoomLevel || 3) * 100}%`;
+    if (previewRef.current) {
+      previewRef.current.style.backgroundImage = `url(${src})`;
+      previewRef.current.style.backgroundSize = bgSize;
+    }
+    if (lensRef.current) {
+      lensRef.current.style.backgroundImage = `url(${src})`;
+      lensRef.current.style.backgroundSize = bgSize;
+      lensRef.current.style.backgroundRepeat = 'no-repeat';
+    }
+  };
+
 
   const isAdmin = user.role === 'admin';
   const p = selectedProduct;
@@ -61,6 +155,15 @@ export default function ProductDetailPage() {
   const selectedSizeOption = p
     ? getSelectedSizeOption(p, activeSize)
     : undefined;
+  const cartQtyForSelectedSize = p
+    ? cart.filter(
+        (item) => item.product._id === p._id && item.size === activeSize,
+      ).reduce((total, item) => total + item.quantity, 0)
+    : 0;
+  const maxQtyForSelectedSize = selectedSizeOption?.units ?? 0;
+  const remainingQtyForSelectedSize = selectedSizeOption
+    ? Math.max(0, selectedSizeOption.units - cartQtyForSelectedSize)
+    : 0;
   const liked = p ? isInWishlist(p._id) : false;
 
   useEffect(() => {
@@ -264,6 +367,68 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
+              {/* Magnifier interactive overlay (mouse only) */}
+              <div
+                onMouseEnter={(e) => {
+                  // ignore touch
+                  // e.nativeEvent is a MouseEvent here
+                  setShowLens(true);
+                  updatePointerFromMouse(e.nativeEvent as MouseEvent);
+                  startRaf();
+                }}
+                onMouseMove={(e) => updatePointerFromMouse(e.nativeEvent as MouseEvent)}
+                onMouseLeave={() => {
+                  setShowLens(false);
+                  stopRaf();
+                }}
+                className="absolute inset-0 z-20"
+              />
+
+              {/* Lens */}
+              <div
+                ref={lensRef}
+                style={{
+                  width: `${lensSize}px`,
+                  height: `${lensSize}px`,
+                  borderRadius: '9999px',
+                  position: 'absolute',
+                  pointerEvents: 'none',
+                  boxShadow: '0 4px 18px rgba(0,0,0,0.25)',
+                  // background image will be set dynamically to show magnified area
+                  backgroundColor: 'rgba(0,0,0,0.06)',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: '50% 50%',
+                  transform: 'translate(-9999px, -9999px)',
+                  transition: 'opacity 120ms linear, transform 80ms linear',
+                  opacity: showLens ? 1 : 0,
+                  border: '1px solid rgba(255,255,255,0.28)',
+                  overflow: 'hidden',
+                  zIndex: 30,
+                }}
+              />
+
+              {/* Preview */}
+              {showLens && (
+                <div
+                  ref={previewRef}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: `calc(100% + 16px)`,
+                    width: `${previewWidth}px`,
+                    height: `${previewHeight}px`,
+                    backgroundImage: `url(${imageUrl || displayedImage})`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: `${(zoomLevel || 3) * 100}% ${(zoomLevel || 3) * 100}%`,
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                    zIndex: 40,
+                  }}
+                />
+              )}
+
               {outOfStock && (
                 <div className="absolute inset-0 bg-maroon-950/60 backdrop-blur-[2px] flex items-center justify-center z-20 pointer-events-none">
                   <span className="bg-maroon-900 text-gold-200 text-sm font-bold tracking-widest px-6 py-3 rounded-full uppercase border border-gold-300 shadow-2xl">
@@ -441,12 +606,17 @@ export default function ProductDetailPage() {
                   </span>
                   <button
                     onClick={() => {
-                      if (
-                        selectedSizeOption &&
-                        qty >= selectedSizeOption.units
-                      ) {
+                      if (!selectedSizeOption) {
                         showToast(
-                          `Only ${selectedSizeOption.units} unit(s) available for this size.`,
+                          'This size is currently out of stock.',
+                          'warning',
+                        );
+                        return;
+                      }
+
+                      if (qty >= maxQtyForSelectedSize) {
+                        showToast(
+                          `Only ${maxQtyForSelectedSize} unit(s) available for this size.`,
                           'warning',
                         );
                         return;
@@ -488,12 +658,23 @@ export default function ProductDetailPage() {
                   <button
                     onClick={() => {
                       if (isAdmin) return;
-                      if (
-                        !selectedSizeOption ||
-                        selectedSizeOption.units <= 0
-                      ) {
+                      if (!selectedSizeOption) {
                         showToast(
                           'This size is currently out of stock.',
+                          'warning',
+                        );
+                        return;
+                      }
+                      if (remainingQtyForSelectedSize <= 0) {
+                        showToast(
+                          'You have already reached the available quantity for this size in your bag.',
+                          'warning',
+                        );
+                        return;
+                      }
+                      if (qty > remainingQtyForSelectedSize) {
+                        showToast(
+                          `Only ${remainingQtyForSelectedSize} unit(s) remaining for this size in your bag.`,
                           'warning',
                         );
                         return;
