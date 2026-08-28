@@ -19,6 +19,7 @@ export const Auth = () => {
     _id: string = '',
     token: string = '',
     phone: string = '',
+    isSuperAdmin: boolean = false,
   ) => {
     const displayName =
       name ||
@@ -35,6 +36,7 @@ export const Auth = () => {
       _id,
       token,
       phone,
+      isSuperAdmin,
     } as User;
 
     setUser(newUser);
@@ -177,9 +179,10 @@ export const Auth = () => {
         const name =
           json.user.fullName ?? json.user.email?.split('@')[0] ?? 'Admin';
         const token = json.user.token ?? '';
-        login(email, 'admin', name, _id, token);
-        showToast(`Welcome back, ${name}!`, 'success');
-      } else {
+          const isSuperAdmin = Boolean(json.user.isSuperAdmin);
+          login(email, 'admin', name, _id, token, '', isSuperAdmin);
+          showToast(`Welcome back, ${name}!`, 'success');
+        } else {
         showToast(
           json.message || json.error || 'Invalid email or password',
           'error',
@@ -235,6 +238,7 @@ export const Auth = () => {
       loggedIn: false,
       token: '',
       _id: '',
+      isSuperAdmin: false,
     } as User;
     setUser(guest);
     try {

@@ -60,6 +60,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
           loggedIn: !!parsed.loggedIn,
           token: parsed.token || '',
           _id: parsed._id || '',
+          isSuperAdmin: parsed.isSuperAdmin ?? false,
         };
       }
     } catch (e) {

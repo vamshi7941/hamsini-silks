@@ -112,11 +112,15 @@ export default function AdminDashboard() {
 
           {/* ═══════════════════ CATALOGUE ═══════════════════ */}
           {activeTab === 'catalogue' && (
-            <Catalogue
-              setShowAddModal={setShowAddModal}
-              setEditingProduct={setEditingProduct}
-              setDeleteConfirm={setDeleteConfirm}
-            />
+            user.isSuperAdmin ? (
+              <Catalogue
+                setShowAddModal={setShowAddModal}
+                setEditingProduct={setEditingProduct}
+                setDeleteConfirm={setDeleteConfirm}
+              />
+            ) : (
+              <AccessDenied page="catalogue" />
+            )
           )}
 
           {/* ═══════════════════ MEDIA LIBRARY ═══════════════════ */}

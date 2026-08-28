@@ -13,10 +13,10 @@ export default function SideBar({
 }) {
   const navigate = useNavigate();
 
-  const { orders, products } = useStore();
+  const { orders, products, user } = useStore();
   const { logout } = Auth();
 
-  const sidebarItems: any = [
+  const baseSidebarItems: any = [
     {
       id: 'overview',
       label: 'Overview',
@@ -34,6 +34,14 @@ export default function SideBar({
     { id: 'promoters', label: 'Promoters', icon: Icon.users },
     { id: 'site-customize', label: 'Site Customize', icon: Icon.catalogue },
   ];
+
+  // If the logged-in admin is not a super-admin, hide the catalogue entry
+  const sidebarItems = baseSidebarItems.filter((item: any) => {
+    if (item.id === 'catalogue' && user.role === 'admin' && !user.isSuperAdmin) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <aside className="w-16 md:w-60 admin-sidebar flex flex-col shrink-0 sticky top-0 h-screen z-40">
