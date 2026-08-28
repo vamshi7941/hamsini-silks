@@ -80,6 +80,10 @@ export default function ProductDetailPage({
       initialPinchDistanceRef.current = d;
       initialScaleRef.current = mobileScale;
       setIsPinching(true);
+      // show lens and set pointer to midpoint
+      const mid = getTouchMidpoint(e.touches[0], e.touches[1]);
+      setShowLens(true);
+      updatePointerFromCoords(mid.x, mid.y);
     } else if (e.touches.length === 1) {
       // begin one-finger zoom (vertical drag to zoom)
       e.preventDefault();
@@ -95,6 +99,9 @@ export default function ProductDetailPage({
         const originY = (relY / rect.height) * 100;
         transformOriginRef.current = `${originX}% ${originY}%`;
       }
+      // show lens and set pointer to touch
+      setShowLens(true);
+      updatePointerFromCoords(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
 
@@ -117,6 +124,8 @@ export default function ProductDetailPage({
         scale = Math.max(1, Math.min(5, scale));
         setMobileScale(scale);
       }
+      // move lens to midpoint
+      updatePointerFromCoords(mid.x, mid.y);
     } else if (oneFingerZoom) {
       if (e.touches.length !== 1) return;
       e.preventDefault();
@@ -135,6 +144,8 @@ export default function ProductDetailPage({
         const originY = (relY / rect.height) * 100;
         transformOriginRef.current = `${originX}% ${originY}%`;
       }
+      // move lens to touch point so it follows finger drag
+      updatePointerFromCoords(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
 
@@ -152,6 +163,11 @@ export default function ProductDetailPage({
         oneFingerStartYRef.current = null;
         initialScaleRef.current = mobileScale;
       }
+    }
+    // hide lens when all touches ended
+    if (e.touches.length === 0) {
+      setShowLens(false);
+      stopRaf();
     }
   };
 
@@ -198,10 +214,14 @@ export default function ProductDetailPage({
   };
 
   const updatePointerFromMouse = (e: MouseEvent) => {
+    updatePointerFromCoords(e.clientX, e.clientY);
+  };
+
+  const updatePointerFromCoords = (clientX: number, clientY: number) => {
     const rect = imageContainerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    let x = e.clientX - rect.left;
-    let y = e.clientY - rect.top;
+    let x = clientX - rect.left;
+    let y = clientY - rect.top;
     // clamp
     x = Math.max(0, Math.min(rect.width, x));
     y = Math.max(0, Math.min(rect.height, y));
@@ -219,6 +239,8 @@ export default function ProductDetailPage({
       lensRef.current.style.backgroundSize = bgSize;
       lensRef.current.style.backgroundRepeat = 'no-repeat';
     }
+    // ensure raf is running so lens/preview are updated
+    startRaf();
   };
 
 
