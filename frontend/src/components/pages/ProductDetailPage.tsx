@@ -8,6 +8,7 @@ import {
   getSelectedSizeOption,
 } from '@/utils/productInventory';
 import { slugify } from '@/utils/cn';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 export default function ProductDetailPage({
   imageUrl,
@@ -48,6 +49,16 @@ export default function ProductDetailPage({
   const animPos = useRef({ x: 0, y: 0 }); // animated (smoothed) position
   const rafRef = useRef<number | null>(null);
 
+  // Detect touch devices to disable lens/preview on mobile
+  const isTouchDevice = typeof window !== 'undefined' && (('ontouchstart' in window) || (typeof navigator !== 'undefined' && (navigator as any).maxTouchPoints > 0));
+  const [isMobileWidth, setIsMobileWidth] = useState<boolean>(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  useEffect(() => {
+    const onResize = () => setIsMobileWidth(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const useMobileView = isTouchDevice && isMobileWidth;
+
   // Cancel RAF on unmount
   useEffect(() => {
     return () => {
@@ -63,91 +74,10 @@ export default function ProductDetailPage({
   const initialPinchDistanceRef = useRef<number | null>(null);
   const initialScaleRef = useRef<number>(1);
   const oneFingerStartYRef = useRef<number | null>(null);
-
-  const getTouchDistance = (t1: Touch, t2: Touch) =>
-    Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-  const getTouchMidpoint = (t1: Touch, t2: Touch) => ({
-    x: (t1.clientX + t2.clientX) / 2,
-    y: (t1.clientY + t2.clientY) / 2,
-  });
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isAdmin) return;
-    if (e.touches.length === 2) {
-      // begin two-finger pinch
-      e.preventDefault();
-      const d = getTouchDistance(e.touches[0], e.touches[1]);
-      initialPinchDistanceRef.current = d;
-      initialScaleRef.current = mobileScale;
-      setIsPinching(true);
-      // show lens and set pointer to midpoint
-      const mid = getTouchMidpoint(e.touches[0], e.touches[1]);
-      setShowLens(true);
-      updatePointerFromCoords(mid.x, mid.y);
-    } else if (e.touches.length === 1) {
-      // begin one-finger zoom (vertical drag to zoom)
-      e.preventDefault();
-      oneFingerStartYRef.current = e.touches[0].clientY;
-      initialScaleRef.current = mobileScale;
-      setOneFingerZoom(true);
-      // set transform origin to touch point
-      const rect = imageContainerRef.current?.getBoundingClientRect();
-      if (rect) {
-        const relX = e.touches[0].clientX - rect.left;
-        const relY = e.touches[0].clientY - rect.top;
-        const originX = (relX / rect.width) * 100;
-        const originY = (relY / rect.height) * 100;
-        transformOriginRef.current = `${originX}% ${originY}%`;
-      }
-      // show lens and set pointer to touch
-      setShowLens(true);
-      updatePointerFromCoords(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (isPinching) {
-      if (e.touches.length !== 2) return;
-      e.preventDefault();
-      const d = getTouchDistance(e.touches[0], e.touches[1]);
-      const rect = imageContainerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const mid = getTouchMidpoint(e.touches[0], e.touches[1]);
-      const relX = mid.x - rect.left;
-      const relY = mid.y - rect.top;
-      const originX = (relX / rect.width) * 100;
-      const originY = (relY / rect.height) * 100;
-      transformOriginRef.current = `${originX}% ${originY}%`;
-      if (initialPinchDistanceRef.current && initialPinchDistanceRef.current > 0) {
-        let scale =
-          initialScaleRef.current * (d / initialPinchDistanceRef.current);
-        scale = Math.max(1, Math.min(5, scale));
-        setMobileScale(scale);
-      }
-      // move lens to midpoint
-      updatePointerFromCoords(mid.x, mid.y);
-    } else if (oneFingerZoom) {
-      if (e.touches.length !== 1) return;
-      e.preventDefault();
-      const startY = oneFingerStartYRef.current ?? e.touches[0].clientY;
-      const dy = startY - e.touches[0].clientY; // upward drag increases zoom
-      // sensitivity: 300px for doubling
-      let scale = initialScaleRef.current * (1 + dy / 300);
-      scale = Math.max(1, Math.min(5, scale));
-      setMobileScale(scale);
-      // update transform-origin to follow touch
-      const rect = imageContainerRef.current?.getBoundingClientRect();
-      if (rect) {
-        const relX = e.touches[0].clientX - rect.left;
-        const relY = e.touches[0].clientY - rect.top;
-        const originX = (relX / rect.width) * 100;
-        const originY = (relY / rect.height) * 100;
-        transformOriginRef.current = `${originX}% ${originY}%`;
-      }
-      // move lens to touch point so it follows finger drag
-      updatePointerFromCoords(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  };
+  const panStartRef = useRef<{ x: number; y: number } | null>(null);
+  const mobileTranslateRef = useRef({ x: 0, y: 0 });
+  const [mobileTranslate, setMobileTranslate] = useState({ x: 0, y: 0 });
+  const panActiveRef = useRef<boolean>(false);
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (isPinching) {
@@ -162,6 +92,12 @@ export default function ProductDetailPage({
         setOneFingerZoom(false);
         oneFingerStartYRef.current = null;
         initialScaleRef.current = mobileScale;
+      }
+    }
+    if (panActiveRef.current) {
+      if (e.touches.length === 0) {
+        panActiveRef.current = false;
+        panStartRef.current = null;
       }
     }
     // hide lens when all touches ended
@@ -327,6 +263,15 @@ export default function ProductDetailPage({
       window.removeEventListener('resize', updateImageContainerWidth);
   }, [p?._id]);
 
+  // reset translate when scale goes back to 1
+  useEffect(() => {
+    if (mobileScale <= 1) {
+      mobileTranslateRef.current = { x: 0, y: 0 };
+      setMobileTranslate({ x: 0, y: 0 });
+      transformOriginRef.current = '50% 50%';
+    }
+  }, [mobileScale]);
+
   const getImageIndex = (img: string) =>
     allImages.findIndex((item) => item === img);
 
@@ -411,6 +356,82 @@ export default function ProductDetailPage({
     setIsAnimating(false);
   };
 
+  // Mobile-only image view (no magnifier) — use react-zoom-pan-pinch for smooth pinch/pan
+  const resetTransformRef = useRef<() => void>(() => {});
+  const twScaleRef = useRef<number>(1);
+  const mobileImgRef = useRef<HTMLImageElement | null>(null);
+
+  const MobileImageView = () => (
+    <div
+      ref={imageContainerRef}
+      className="relative aspect-3/4 rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg"
+    >
+      <TransformWrapper
+        initialScale={1}
+        minScale={1}
+        maxScale={5}
+        centerOnInit={true}
+        limitToBounds={true}
+        wheel={{ disabled: true }}
+        doubleClick={{ disabled: true }}
+        pinch={{ step: 5 }}
+      >
+        {(tw: any) => {
+          // capture reset function and current scale
+          resetTransformRef.current = tw.resetTransform;
+          twScaleRef.current = tw.state?.scale ?? 1;
+          return (
+            <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full">
+              <img
+                ref={mobileImgRef}
+                src={displayedImage}
+                alt={p?.name}
+                className={`w-full h-full object-cover ${outOfStock ? 'opacity-75 grayscale-20' : ''}`}
+              />
+            </TransformComponent>
+          );
+        }}
+      </TransformWrapper>
+
+      {outOfStock && (
+        <div className="absolute inset-0 bg-maroon-950/60 backdrop-blur-[2px] flex items-center justify-center z-20 pointer-events-none">
+          <span className="bg-maroon-900 text-gold-200 text-sm font-bold tracking-widest px-6 py-3 rounded-full uppercase border border-gold-300 shadow-2xl">
+            Out of stock
+          </span>
+        </div>
+      )}
+
+      {discount > 0 && (
+        <div className="absolute top-4 left-4 bg-gold-500 text-white text-sm font-extrabold px-3 py-1 rounded-full shadow-md z-10">
+          {discount}% OFF
+        </div>
+      )}
+      {p?.badge && (
+        <div className="absolute top-4 right-4 bg-maroon-800 text-gold-100 text-xs font-bold px-3 py-1 rounded-full shadow-md z-10">
+          {p.badge}
+        </div>
+      )}
+    </div>
+  );
+
+  useEffect(() => {
+    const onPointerDown = (ev: PointerEvent) => {
+      if (!useMobileView) return;
+      const target = ev.target as Node | null;
+      // if click/tap inside the actual image element, do nothing
+      if (mobileImgRef.current && target && mobileImgRef.current.contains(target)) return;
+      if (twScaleRef.current > 1 && resetTransformRef.current) {
+        try {
+          resetTransformRef.current();
+        } catch (err) {
+          // ignore
+        }
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown, { passive: true });
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [useMobileView]);
+
   if (!p) {
     return (
       <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
@@ -456,130 +477,131 @@ export default function ProductDetailPage({
         <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
           {/* Left: Image */}
           <div className="space-y-4">
-            <div
-              ref={imageContainerRef}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerCancel}
-              onPointerLeave={handlePointerLeave}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchEnd}
-              className="relative aspect-3/4 rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg touch-none"
-            >
+            {useMobileView ? (
+              <MobileImageView />
+            ) : (
               <div
-                className={`absolute inset-0 transition-transform ${isAnimating ? 'duration-500 ease-out' : 'duration-0'
-                  }`}
-                style={{
-                  transform: `translateX(${dragOffset}px) scale(${mobileScale})`,
-                  transformOrigin: transformOriginRef.current,
-                  transition: isPinching ? 'none' : undefined,
-                }}
-                onTransitionEnd={handleImageTransitionEnd}
+                ref={imageContainerRef}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerCancel}
+                onPointerLeave={handlePointerLeave}
+                onTouchCancel={handleTouchEnd}
+                className="relative aspect-3/4 rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg touch-none"
               >
-                <div className="relative w-full h-full">
-                  <img
-                    src={displayedImage}
-                    alt={p.name}
-                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${outOfStock ? 'opacity-75 grayscale-20' : ''
-                      }`}
-                  />
-                  {swipeImageCandidate ? (
-                    <img
-                      src={swipeImageCandidate}
-                      alt="Swipe preview"
-                      className="absolute top-0 left-0 w-full h-full object-cover"
-                      style={{
-                        transform: `translateX(${dragOffset < 0 ? '100%' : '-100%'})`,
-                      }}
-                    />
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Magnifier interactive overlay (mouse only) */}
-              <div
-                onMouseEnter={(e) => {
-                  // ignore touch
-                  // e.nativeEvent is a MouseEvent here
-                  setShowLens(true);
-                  updatePointerFromMouse(e.nativeEvent as MouseEvent);
-                  startRaf();
-                }}
-                onMouseMove={(e) => updatePointerFromMouse(e.nativeEvent as MouseEvent)}
-                onMouseLeave={() => {
-                  setShowLens(false);
-                  stopRaf();
-                }}
-                className="absolute inset-0 z-20"
-              />
-
-              {/* Lens */}
-              <div
-                ref={lensRef}
-                style={{
-                  width: `${lensSize}px`,
-                  height: `${lensSize}px`,
-                  borderRadius: '9999px',
-                  position: 'absolute',
-                  pointerEvents: 'none',
-                  boxShadow: '0 4px 18px rgba(0,0,0,0.25)',
-                  // background image will be set dynamically to show magnified area
-                  backgroundColor: 'rgba(0,0,0,0.06)',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: '50% 50%',
-                  transform: 'translate(-9999px, -9999px)',
-                  transition: 'opacity 120ms linear, transform 80ms linear',
-                  opacity: showLens ? 1 : 0,
-                  border: '1px solid rgba(255,255,255,0.28)',
-                  overflow: 'hidden',
-                  zIndex: 30,
-                }}
-              />
-
-              {/* Preview */}
-              {showLens && (
                 <div
-                  ref={previewRef}
+                  className={`absolute inset-0 transition-transform ${isAnimating ? 'duration-500 ease-out' : 'duration-0'
+                    }`}
                   style={{
+                    transform: `translateX(${dragOffset}px) scale(${mobileScale})`,
+                    transformOrigin: transformOriginRef.current,
+                    transition: isPinching ? 'none' : undefined,
+                  }}
+                  onTransitionEnd={handleImageTransitionEnd}
+                >
+                  <div className="relative w-full h-full">
+                    <img
+                      src={displayedImage}
+                      alt={p.name}
+                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${outOfStock ? 'opacity-75 grayscale-20' : ''
+                        }`}
+                    />
+                    {swipeImageCandidate ? (
+                      <img
+                        src={swipeImageCandidate}
+                        alt="Swipe preview"
+                        className="absolute top-0 left-0 w-full h-full object-cover"
+                        style={{
+                          transform: `translateX(${dragOffset < 0 ? '100%' : '-100%'})`,
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Magnifier interactive overlay (mouse only) */}
+                <div
+                  onMouseEnter={(e) => {
+                    // ignore touch
+                    // e.nativeEvent is a MouseEvent here
+                    setShowLens(true);
+                    updatePointerFromMouse(e.nativeEvent as MouseEvent);
+                    startRaf();
+                  }}
+                  onMouseMove={(e) => updatePointerFromMouse(e.nativeEvent as MouseEvent)}
+                  onMouseLeave={() => {
+                    setShowLens(false);
+                    stopRaf();
+                  }}
+                  className="absolute inset-0 z-20"
+                />
+
+                {/* Lens */}
+                <div
+                  ref={lensRef}
+                  style={{
+                    width: `${lensSize}px`,
+                    height: `${lensSize}px`,
+                    borderRadius: '9999px',
                     position: 'absolute',
-                    top: 0,
-                    left: `calc(100% + 16px)`,
-                    width: `${previewWidth}px`,
-                    height: `${previewHeight}px`,
-                    backgroundImage: `url(${imageUrl || displayedImage})`,
+                    pointerEvents: 'none',
+                    boxShadow: '0 4px 18px rgba(0,0,0,0.25)',
+                    // background image will be set dynamically to show magnified area
+                    backgroundColor: 'rgba(0,0,0,0.06)',
                     backgroundRepeat: 'no-repeat',
-                    backgroundSize: `${(zoomLevel || 3) * 100}% ${(zoomLevel || 3) * 100}%`,
-                    borderRadius: '12px',
+                    backgroundPosition: '50% 50%',
+                    transform: 'translate(-9999px, -9999px)',
+                    transition: 'opacity 120ms linear, transform 80ms linear',
+                    opacity: showLens ? 1 : 0,
+                    border: '1px solid rgba(255,255,255,0.28)',
                     overflow: 'hidden',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-                    zIndex: 40,
+                    zIndex: 30,
                   }}
                 />
-              )}
 
-              {outOfStock && (
-                <div className="absolute inset-0 bg-maroon-950/60 backdrop-blur-[2px] flex items-center justify-center z-20 pointer-events-none">
-                  <span className="bg-maroon-900 text-gold-200 text-sm font-bold tracking-widest px-6 py-3 rounded-full uppercase border border-gold-300 shadow-2xl">
-                    Out of stock
-                  </span>
-                </div>
-              )}
+                {/* Preview */}
+                {showLens && (
+                  <div
+                    ref={previewRef}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: `calc(100% + 16px)`,
+                      width: `${previewWidth}px`,
+                      height: `${previewHeight}px`,
+                      backgroundImage: `url(${imageUrl || displayedImage})`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: `${(zoomLevel || 3) * 100}% ${(zoomLevel || 3) * 100}%`,
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                      zIndex: 40,
+                    }}
+                  />
+                )}
 
-              {discount > 0 && (
-                <div className="absolute top-4 left-4 bg-gold-500 text-white text-sm font-extrabold px-3 py-1 rounded-full shadow-md z-10">
-                  {discount}% OFF
-                </div>
-              )}
-              {p.badge && (
-                <div className="absolute top-4 right-4 bg-maroon-800 text-gold-100 text-xs font-bold px-3 py-1 rounded-full shadow-md z-10">
-                  {p.badge}
-                </div>
-              )}
-            </div>
+                {outOfStock && (
+                  <div className="absolute inset-0 bg-maroon-950/60 backdrop-blur-[2px] flex items-center justify-center z-20 pointer-events-none">
+                    <span className="bg-maroon-900 text-gold-200 text-sm font-bold tracking-widest px-6 py-3 rounded-full uppercase border border-gold-300 shadow-2xl">
+                      Out of stock
+                    </span>
+                  </div>
+                )}
+
+                {discount > 0 && (
+                  <div className="absolute top-4 left-4 bg-gold-500 text-white text-sm font-extrabold px-3 py-1 rounded-full shadow-md z-10">
+                    {discount}% OFF
+                  </div>
+                )}
+                {p.badge && (
+                  <div className="absolute top-4 right-4 bg-maroon-800 text-gold-100 text-xs font-bold px-3 py-1 rounded-full shadow-md z-10">
+                    {p.badge}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Thumbnail strip */}
             <div className="grid grid-cols-4 gap-2">
@@ -588,8 +610,8 @@ export default function ProductDetailPage({
                   key={img || i}
                   onClick={() => setActiveImage(img)}
                   className={`aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-colors ${displayedImage === img
-                      ? 'border-maroon-800'
-                      : 'border-gold-100 hover:border-gold-400'
+                    ? 'border-maroon-800'
+                    : 'border-gold-100 hover:border-gold-400'
                     }`}
                 >
                   <img
@@ -613,8 +635,8 @@ export default function ProductDetailPage({
                 <button
                   onClick={() => (toggleWishlist(p._id))}
                   className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all z-999 cursor-pointer ${liked
-                      ? 'bg-maroon-900 text-gold-300'
-                      : 'bg-white/90 backdrop-blur text-maroon-500 hover:text-maroon-900'
+                    ? 'bg-maroon-900 text-gold-300'
+                    : 'bg-white/90 backdrop-blur text-maroon-500 hover:text-maroon-900'
                     }`}
                   title="Wishlist"
                 >
@@ -697,8 +719,8 @@ export default function ProductDetailPage({
                       type="button"
                       onClick={() => setActiveSize(sz.name)}
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 ${activeSize === sz.name
-                          ? 'border-maroon-900 bg-maroon-900 text-gold-200 shadow-sm'
-                          : 'border-gold-200 bg-white text-maroon-900 hover:bg-gold-50'
+                        ? 'border-maroon-900 bg-maroon-900 text-gold-200 shadow-sm'
+                        : 'border-gold-200 bg-white text-maroon-900 hover:bg-gold-50'
                         }`}
                     >
                       {sz.name}
