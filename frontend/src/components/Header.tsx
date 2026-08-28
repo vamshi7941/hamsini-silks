@@ -348,55 +348,46 @@ export default function Header() {
             );
           })}
           {moreCategories.length > 0 && (
-            <div className="border-b border-gold-100">
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setMobileOpenCategory(
-                      mobileOpenCategory === 'more' ? null : 'more',
-                    )
-                  }
-                  className="flex-1 text-left py-2 text-maroon-800 text-xs tracking-wider cursor-pointer"
-                >
-                  More
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMobileOpenCategory(
-                      mobileOpenCategory === 'more' ? null : 'more',
-                    );
-                  }}
-                  className="p-2 text-gold-500"
-                  aria-label="Toggle more categories"
-                >
-                  <ChevronRightIcon
-                    className={`h-3.5 w-3.5 transition-transform ${
-                      mobileOpenCategory === 'more' ? 'rotate-90' : ''
-                    }`}
-                  />
-                </button>
-              </div>
-              {mobileOpenCategory === 'more' && (
-                <div className="pb-2 pl-3 space-y-1">
-                  {moreCategories.map((cat: any) => (
-                    <div key={cat._id} className="space-y-1">
+            <>
+              {moreCategories.map((cat: any) => {
+                const subcategories = (siteContent?.categories ?? []).filter(
+                  (item: any) =>
+                    item.type === 'subcategory' && item.parentId === cat._id,
+                );
+                const isOpen = mobileOpenCategory === cat._id;
+
+                return (
+                  <div key={cat._id} className="border-b border-gold-100">
+                    <div className="flex items-center justify-between">
                       <button
                         onClick={() =>
                           handleNav(cat.name, slugify(cat.slug || cat.name))
                         }
-                        className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] text-maroon-700 hover:bg-gold-50 transition-colors cursor-pointer"
+                        className="flex-1 text-left py-2 text-maroon-800 text-xs tracking-wider cursor-pointer"
                       >
                         {cat.name}
                       </button>
-                      {(siteContent?.categories ?? [])
-                        .filter(
-                          (item: any) =>
-                            item.type === 'subcategory' && item.parentId === cat._id,
-                        )
-                        .map((subcat: any) => (
+                      {subcategories.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMobileOpenCategory(isOpen ? null : cat._id);
+                          }}
+                          className="p-2 text-gold-500"
+                          aria-label={`Toggle ${cat.name} subcategories`}
+                        >
+                          <ChevronRightIcon
+                            className={`h-3.5 w-3.5 transition-transform ${
+                              isOpen ? 'rotate-90' : ''
+                            }`}
+                          />
+                        </button>
+                      )}
+                    </div>
+                    {isOpen && subcategories.length > 0 && (
+                      <div className="pb-2 pl-3 space-y-1">
+                        {subcategories.map((subcat: any) => (
                           <button
                             key={subcat._id}
                             onClick={() =>
@@ -405,16 +396,17 @@ export default function Header() {
                                 slugify(subcat.slug || subcat.name),
                               )
                             }
-                            className="block w-full rounded-md px-3 py-1 text-left text-[10px] text-maroon-600 hover:bg-gold-50 transition-colors cursor-pointer"
+                            className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] text-maroon-700 hover:bg-gold-50 transition-colors cursor-pointer"
                           >
                             {subcat.name}
                           </button>
                         ))}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
           )}
           {user.loggedIn && user.role === 'admin' && (
             <button
