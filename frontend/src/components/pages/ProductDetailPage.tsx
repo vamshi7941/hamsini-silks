@@ -55,6 +55,62 @@ export default function ProductDetailPage({
     };
   }, []);
 
+  // Mobile pinch-to-zoom state for admin
+  const [mobileScale, setMobileScale] = useState(1);
+  const [isPinching, setIsPinching] = useState(false);
+  const transformOriginRef = useRef<string>('50% 50%');
+  const initialPinchDistanceRef = useRef<number | null>(null);
+  const initialScaleRef = useRef<number>(1);
+
+  const getTouchDistance = (t1: Touch, t2: Touch) =>
+    Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+  const getTouchMidpoint = (t1: Touch, t2: Touch) => ({
+    x: (t1.clientX + t2.clientX) / 2,
+    y: (t1.clientY + t2.clientY) / 2,
+  });
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isAdmin) return;
+    if (e.touches.length === 2) {
+      // begin pinch
+      e.preventDefault();
+      const d = getTouchDistance(e.touches[0], e.touches[1]);
+      initialPinchDistanceRef.current = d;
+      initialScaleRef.current = mobileScale;
+      setIsPinching(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isPinching) return;
+    if (e.touches.length !== 2) return;
+    e.preventDefault();
+    const d = getTouchDistance(e.touches[0], e.touches[1]);
+    const rect = imageContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const mid = getTouchMidpoint(e.touches[0], e.touches[1]);
+    const relX = mid.x - rect.left;
+    const relY = mid.y - rect.top;
+    const originX = (relX / rect.width) * 100;
+    const originY = (relY / rect.height) * 100;
+    transformOriginRef.current = `${originX}% ${originY}%`;
+    if (initialPinchDistanceRef.current && initialPinchDistanceRef.current > 0) {
+      let scale =
+        initialScaleRef.current * (d / initialPinchDistanceRef.current);
+      scale = Math.max(1, Math.min(5, scale));
+      setMobileScale(scale);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isPinching) return;
+    if (e.touches.length < 2) {
+      setIsPinching(false);
+      initialPinchDistanceRef.current = null;
+      initialScaleRef.current = mobileScale;
+    }
+  };
+
   const startRaf = () => {
     if (rafRef.current) return;
     const step = () => {
@@ -335,6 +391,10 @@ export default function ProductDetailPage({
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerCancel}
               onPointerLeave={handlePointerLeave}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
               className="relative aspect-3/4 rounded-3xl overflow-hidden bg-maroon-50 border-2 border-gold-100 shadow-lg touch-none"
             >
               <div
@@ -342,7 +402,9 @@ export default function ProductDetailPage({
                   isAnimating ? 'duration-500 ease-out' : 'duration-0'
                 }`}
                 style={{
-                  transform: `translateX(${dragOffset}px)`,
+                  transform: `translateX(${dragOffset}px) scale(${mobileScale})`,
+                  transformOrigin: transformOriginRef.current,
+                  transition: isPinching ? 'none' : undefined,
                 }}
                 onTransitionEnd={handleImageTransitionEnd}
               >
