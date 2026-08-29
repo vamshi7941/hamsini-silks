@@ -48,6 +48,25 @@ export default function ProductDetailPage({
   const pointerPos = useRef({ x: 0, y: 0 }); // target pointer position
   const animPos = useRef({ x: 0, y: 0 }); // animated (smoothed) position
   const rafRef = useRef<number | null>(null);
+  // local adjustable zoom for desktop magnifier (wheel)
+  const [localZoomLevel, setLocalZoomLevel] = useState<number>(zoomLevel || 3);
+  useEffect(() => {
+    setLocalZoomLevel(zoomLevel || 3);
+  }, [zoomLevel]);
+  // body overflow backup for disabling page scroll while hovering image
+  const bodyOverflowRef = useRef<string | null>(null);
+  useEffect(() => {
+    return () => {
+      // on unmount restore body overflow
+      if (bodyOverflowRef.current !== null) {
+        try {
+          document.body.style.overflow = bodyOverflowRef.current;
+        } catch (err) {
+          // ignore
+        }
+      }
+    };
+  }, []);
 
   // Detect touch devices to disable lens/preview on mobile
   const isTouchDevice = typeof window !== 'undefined' && (('ontouchstart' in window) || (typeof navigator !== 'undefined' && (navigator as any).maxTouchPoints > 0));
@@ -165,7 +184,7 @@ export default function ProductDetailPage({
     pointerPos.current.y = y;
     // ensure preview background image is set and lens background configured
     const src = imageUrl || displayedImage;
-    const bgSize = `${(zoomLevel || 3) * 100}% ${(zoomLevel || 3) * 100}%`;
+    const bgSize = `${localZoomLevel * 100}% ${localZoomLevel * 100}%`;
     if (previewRef.current) {
       previewRef.current.style.backgroundImage = `url(${src})`;
       previewRef.current.style.backgroundSize = bgSize;
@@ -432,6 +451,47 @@ export default function ProductDetailPage({
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [useMobileView]);
 
+  // Attach a non-passive wheel listener at capture phase to reliably prevent page scroll when cursor is over image
+  useEffect(() => {
+    if (useMobileView) return; // only for desktop magnifier
+    const container = imageContainerRef.current;
+    if (!container) return;
+
+    const onWheel = (e: WheelEvent) => {
+      // compute if pointer is over the container
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+      if (!(x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom)) return;
+
+      // prevent page scroll and stop propagation
+      e.preventDefault();
+      e.stopPropagation();
+
+      // update pointer so zoom centers near cursor
+      try {
+        updatePointerFromCoords(e.clientX, e.clientY);
+      } catch (err) {
+        // ignore
+      }
+
+      const delta = e.deltaY;
+      const step = -delta * 0.002; // same sensitivity as before
+
+      setLocalZoomLevel((prev) => {
+        const next = Math.max(1, Math.min(8, prev + step));
+        const bg = `${next * 100}% ${next * 100}%`;
+        if (previewRef.current) previewRef.current.style.backgroundSize = bg;
+        if (lensRef.current) lensRef.current.style.backgroundSize = bg;
+        return next;
+      });
+    };
+
+    // use capture + non-passive on document to reliably intercept wheel events
+    document.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => document.removeEventListener('wheel', onWheel, { capture: true });
+  }, [imageContainerRef, useMobileView]);
+
   if (!p) {
     return (
       <div className="min-h-screen bg-[#fdf8f1] flex items-center justify-center">
@@ -526,6 +586,13 @@ export default function ProductDetailPage({
                     // ignore touch
                     // e.nativeEvent is a MouseEvent here
                     setShowLens(true);
+                    // disable body scroll while hovering
+                    try {
+                      if (bodyOverflowRef.current === null) bodyOverflowRef.current = document.body.style.overflow || '';
+                      document.body.style.overflow = 'hidden';
+                    } catch (err) {
+                      // ignore
+                    }
                     updatePointerFromMouse(e.nativeEvent as MouseEvent);
                     startRaf();
                   }}
@@ -533,8 +600,38 @@ export default function ProductDetailPage({
                   onMouseLeave={() => {
                     setShowLens(false);
                     stopRaf();
+                    // restore body scroll
+                    try {
+                      if (bodyOverflowRef.current !== null) {
+                        document.body.style.overflow = bodyOverflowRef.current;
+                        bodyOverflowRef.current = null;
+                      }
+                    } catch (err) {
+                      // ignore
+                    }
+                  }}
+                  onWheel={(e) => {
+                    // only when lens is visible and desktop
+                    if (!showLens) return;
+                    // prevent page from scrolling
+                    e.preventDefault();
+                    const we = e.nativeEvent as WheelEvent;
+                    // update pointer to wheel position so zoom centers near cursor
+                    updatePointerFromCoords(we.clientX, we.clientY);
+                    // adjust zoom: negative deltaY -> wheel up -> zoom in
+                    const delta = we.deltaY;
+                    const step = -delta * 0.002; // tweak sensitivity
+                    let next = localZoomLevel + step;
+                    // clamp
+                    next = Math.max(1, Math.min(8, next));
+                    setLocalZoomLevel(next);
+                    const src = imageUrl || displayedImage;
+                    const bg = `${next * 100}% ${next * 100}%`;
+                    if (previewRef.current) previewRef.current.style.backgroundSize = bg;
+                    if (lensRef.current) lensRef.current.style.backgroundSize = bg;
                   }}
                   className="absolute inset-0 z-20"
+                  style={{ touchAction: 'none' }}
                 />
 
                 {/* Lens */}
@@ -572,7 +669,7 @@ export default function ProductDetailPage({
                       height: `${previewHeight}px`,
                       backgroundImage: `url(${imageUrl || displayedImage})`,
                       backgroundRepeat: 'no-repeat',
-                      backgroundSize: `${(zoomLevel || 3) * 100}% ${(zoomLevel || 3) * 100}%`,
+                      backgroundSize: `${localZoomLevel * 100}% ${localZoomLevel * 100}%`,
                       borderRadius: '12px',
                       overflow: 'hidden',
                       border: '1px solid rgba(0,0,0,0.08)',
