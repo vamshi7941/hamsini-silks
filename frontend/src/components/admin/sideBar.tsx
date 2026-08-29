@@ -35,17 +35,18 @@ export default function SideBar({
     { id: 'site-customize', label: 'Site Customize', icon: Icon.catalogue },
   ];
 
-  // If the logged-in admin is not a super-admin, hide the catalogue entry
+  const isRestrictedAdmin = user.role === 'admin' && !user.isSuperAdmin;
+
   const sidebarItems = baseSidebarItems.filter((item: any) => {
-    if (item.id === 'catalogue' && user.role === 'admin' && !user.isSuperAdmin) {
-      return false;
+    if (isRestrictedAdmin) {
+      return item.id === 'orders' || item.id === 'catalogue';
     }
     return true;
   });
 
   return (
-    <aside className="w-16 md:w-60 admin-sidebar flex flex-col shrink-0 sticky top-0 h-screen z-40">
-      <nav className="flex-1 px-2 md:px-3 py-4 space-y-1 overflow-y-auto admin-scroll">
+    <aside className="w-16 md:w-60 admin-sidebar flex flex-col shrink-0 sticky top-0 z-40 overflow-hidden">
+      <nav className="flex-1 px-2 md:px-3 py-4 space-y-1 overflow-hidden">
         {sidebarItems.map((item: any, i: number) => (
           <button
             key={i}
