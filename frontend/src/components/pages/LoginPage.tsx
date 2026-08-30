@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
 import { Auth } from '../../api/auth';
@@ -16,6 +16,9 @@ export default function LoginPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  // OTP resend timer (seconds remaining)
+  const [otpTimer, setOtpTimer] = useState(0);
+  const OTP_TIMEOUT = 120; // seconds (2 minutes)
 
   const [promoterPhone, setPromoterPhone] = useState('');
   const [promoterPassword, setPromoterPassword] = useState('');
@@ -35,8 +38,43 @@ export default function LoginPage() {
     try {
       await sendPhoneOtp(patronPhone);
       setOtpSent(true);
+      setOtpTimer(OTP_TIMEOUT);
     } catch (error) {
       console.error('Send OTP failed', error);
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  // Countdown for OTP resend
+  useEffect(() => {
+    if (!otpSent) return;
+    if (otpTimer <= 0) return;
+    const id = setInterval(() => {
+      setOtpTimer((t) => {
+        if (t <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [otpSent, otpTimer]);
+
+  const handleResendOtp = async () => {
+    if (sendingOtp) return;
+    if (!/^\d{10}$/.test(patronPhone)) {
+      showToast('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+    setSendingOtp(true);
+    try {
+      await sendPhoneOtp(patronPhone);
+      setOtpSent(true);
+      setOtpTimer(OTP_TIMEOUT);
+    } catch (error) {
+      console.error('Resend OTP failed', error);
     } finally {
       setSendingOtp(false);
     }
@@ -221,10 +259,27 @@ export default function LoginPage() {
                             placeholder=""
                           />
                         </div>
+
+                        <div className="flex items-center justify-between mt-2 text-xs">
+                          <div className="text-maroon-700/90">OTP sent to {patronPhone}</div>
+                          {otpTimer > 0 ? (
+                            <div className="text-maroon-600">Resend in {String(Math.floor(otpTimer/60)).padStart(2,'0')}:{String(otpTimer%60).padStart(2,'0')}</div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleResendOtp}
+                              disabled={sendingOtp}
+                              className="text-sm font-semibold text-maroon-700 hover:underline"
+                            >
+                              {sendingOtp ? 'Resending…' : 'Resend OTP'}
+                            </button>
+                          )}
+                        </div>
+
                         <button
                           type="button"
                           onClick={handleVerifyOtp}
-                          className="w-full py-3.5 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md"
+                          className="w-full py-3.5 rounded-xl bg-maroon-900 hover:bg-maroon-800 text-gold-100 font-bold text-sm tracking-wide transition-colors cursor-pointer shadow-md mt-3"
                         >
                           {verifyingOtp
                             ? 'Verifying OTP…'

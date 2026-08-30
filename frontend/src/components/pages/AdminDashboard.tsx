@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Product } from '@/context/contextTypes';
 import { AdminApi } from '@/api/admin';
@@ -30,6 +30,7 @@ export type AdminTab =
 export default function AdminDashboard() {
   const { showToast, user } = useStore();
   const { addProduct, updateProduct, deleteProduct } = AdminApi();
+  const isRestrictedAdmin = user.role === 'admin' && !user.isSuperAdmin;
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -45,16 +46,22 @@ export default function AdminDashboard() {
     label: string;
   } | null>(null);
 
+  useEffect(() => {
+    if (isRestrictedAdmin && activeTab !== 'orders' && activeTab !== 'catalogue') {
+      setActiveTab('orders');
+    }
+  }, [activeTab, isRestrictedAdmin]);
+
   if (!user.loggedIn) return <GuestUser page="admin" />;
   if (user.role !== 'admin') return <AccessDenied page="admin" />;
 
   return (
-    <div className="min-h-screen bg-[#f5ede3] flex">
+    <div className="bg-[#f5ede3] flex h-[80vh]">
       {/* ── Sidebar ── */}
       <SideBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* ── Main Content ── */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col max-h-full">
         <header className="bg-white border-b border-gold-100 px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
           <div>
             <h1 className="font-display text-lg md:text-xl font-bold text-maroon-900 capitalize">
@@ -112,15 +119,11 @@ export default function AdminDashboard() {
 
           {/* ═══════════════════ CATALOGUE ═══════════════════ */}
           {activeTab === 'catalogue' && (
-            user.isSuperAdmin ? (
-              <Catalogue
-                setShowAddModal={setShowAddModal}
-                setEditingProduct={setEditingProduct}
-                setDeleteConfirm={setDeleteConfirm}
-              />
-            ) : (
-              <AccessDenied page="catalogue" />
-            )
+            <Catalogue
+              setShowAddModal={setShowAddModal}
+              setEditingProduct={setEditingProduct}
+              setDeleteConfirm={setDeleteConfirm}
+            />
           )}
 
           {/* ═══════════════════ MEDIA LIBRARY ═══════════════════ */}

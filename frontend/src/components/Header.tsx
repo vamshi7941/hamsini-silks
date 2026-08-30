@@ -24,18 +24,16 @@ export default function Header() {
   const ribbonMessages = (siteContent?.ribbon || []).filter(Boolean);
   const marqueeRibbonMessages = ribbonMessages.length
     ? Array.from({ length: 4 }, (_, groupIndex) =>
-        ribbonMessages.map((message, index) => ({
-          id: `${groupIndex}-${index}-${message}`,
-          text: message,
-        })),
-      ).flat()
+      ribbonMessages.map((message, index) => ({
+        id: `${groupIndex}-${index}-${message}`,
+        text: message,
+      })),
+    ).flat()
     : [];
 
   const primaryCategories = (siteContent?.categories ?? []).filter(
     (cat: any) => cat.type !== 'subcategory',
   );
-  const visibleCategories = primaryCategories.slice(0, 4);
-  const moreCategories = primaryCategories.slice(4);
 
   const handleNav = (name: string, slug: string = 'all') => {
     setSelectedCategory(name);
@@ -104,118 +102,98 @@ export default function Header() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden lg:flex justify-center gap-8 xl:gap-12 pb-2.5 pt-2.5 bg-gradient-to-r from-transparent via-maroon-50/20 to-transparent">
-            {[
-              {
-                id: 'all-collections',
-                label: 'All Collections',
-                name: 'All',
-                slug: 'all',
-                isCat: true,
-              },
-              ...visibleCategories.map((cat: any) => ({
-                id: `desktop-${cat._id}`,
-                label: cat.name,
-                name: cat.name,
-                slug: slugify(cat.slug || cat.name),
-                isCat: true,
-                subcategories: (siteContent?.categories ?? []).filter(
-                  (item: any) =>
-                    item.type === 'subcategory' && item.parentId === cat._id,
-                ),
-              })),
-              ...(moreCategories.length > 0
-                ? [
-                    {
-                      id: 'more-categories',
-                      label: 'More',
-                      name: 'More',
-                      isMore: true,
-                      subcategories: moreCategories.map((cat: any) => ({
-                        _id: cat._id,
-                        name: cat.name,
-                        slug: cat.slug || cat.name,
-                        parentId: cat._id,
-                        type: 'category',
-                        subcategories: (siteContent?.categories ?? []).filter(
-                          (item: any) =>
-                            item.type === 'subcategory' && item.parentId === cat._id,
-                        ),
-                      })),
-                    },
-                  ]
-                : []),
-            ].map((item: any) => {
-              const hasSubmenu = Boolean(item.subcategories?.length);
+          <div className="hidden lg:flex">
+            <nav className="flex max-w-[1080px] mx-14 w-full items-center justify-center gap-4 xl:gap-6 pb-2.5 pt-2.5 bg-gradient-to-r from-transparent via-maroon-50/20 to-transparent">
+              {[
+                {
+                  id: 'all-collections',
+                  label: 'All Collections',
+                  name: 'All',
+                  slug: 'all',
+                  isCat: true,
+                },
+                ...primaryCategories.map((cat: any) => ({
+                  id: `desktop-${cat._id}`,
+                  label: cat.name,
+                  name: cat.name,
+                  slug: slugify(cat.slug || cat.name),
+                  isCat: true,
+                  subcategories: (siteContent?.categories ?? []).filter(
+                    (item: any) =>
+                      item.type === 'subcategory' && item.parentId === cat._id,
+                  ),
+                })),
+              ].map((item: any) => {
+                const hasSubmenu = Boolean(item.subcategories?.length);
 
-              return (
-                <div key={item.id} className="relative group">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (item.isMore) return;
-                      if (item.isCat) {
-                        handleNav(item.name, item.slug);
-                      } else {
-                        navigate('/');
-                      }
-                    }}
-                    className="text-[clamp(0.65rem,0.95vw,0.95rem)] whitespace-nowrap tracking-widest uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative py-1 cursor-pointer"
-                  >
-                    {item.label}
-                  </button>
+                return (
+                  <div key={item.id} className="relative group shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.isCat) {
+                          handleNav(item.name, item.slug);
+                        } else {
+                          navigate('/');
+                        }
+                      }}
+                      className="text-[clamp(0.52rem,0.7vw,0.9rem)] whitespace-nowrap tracking-[0.16em] uppercase font-medium text-maroon-900 hover:text-maroon-600 transition-colors relative py-1 cursor-pointer"
+                    >
+                      {item.label}
+                    </button>
 
-                  {hasSubmenu && (
-                    <div className="absolute left-1/2 top-full mt-2 w-64 -translate-x-1/2 rounded-2xl border border-gold-200 bg-white/95 p-2 shadow-xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
-                      {item.subcategories?.map((subcat: any) => (
-                        <div
-                          key={subcat._id || subcat.name}
-                          className="relative group/submenu"
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleNav(
-                                subcat.name,
-                                slugify(subcat.slug || subcat.name),
-                              )
-                            }
-                            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-maroon-800 hover:bg-gold-50 hover:text-maroon-700 transition-colors cursor-pointer whitespace-nowrap"
+                    {hasSubmenu && (
+                      <div className="absolute left-1/2 top-full mt-2 w-64 -translate-x-1/2 rounded-2xl border border-gold-200 bg-white/95 p-2 shadow-xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
+                        {item.subcategories?.map((subcat: any) => (
+                          <div
+                            key={subcat._id || subcat.name}
+                            className="relative group/submenu"
                           >
-                            <span>{subcat.name}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleNav(
+                                  subcat.name,
+                                  slugify(subcat.slug || subcat.name),
+                                )
+                              }
+                              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-maroon-800 hover:bg-gold-50 hover:text-maroon-700 transition-colors cursor-pointer whitespace-nowrap"
+                            >
+                              <span>{subcat.name}</span>
+                              {subcat.subcategories?.length > 0 && (
+                                <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500" />
+                              )}
+                            </button>
                             {subcat.subcategories?.length > 0 && (
-                              <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500" />
+                              <div className="absolute left-0 top-full mt-1 w-52 rounded-2xl border border-gold-200 bg-white/95 p-2 shadow-xl opacity-0 invisible translate-y-2 group-hover/submenu:opacity-100 group-hover/submenu:visible group-hover/submenu:translate-y-0 transition-all duration-200 z-[60]">
+                                {subcat.subcategories.map((nestedSubCat: any) => (
+                                  <button
+                                    key={nestedSubCat._id}
+                                    type="button"
+                                    onClick={() =>
+                                      handleNav(
+                                        nestedSubCat.name,
+                                        slugify(
+                                          nestedSubCat.slug || nestedSubCat.name,
+                                        ),
+                                      )
+                                    }
+                                    className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-maroon-700 hover:bg-gold-50 hover:text-maroon-700 transition-colors cursor-pointer whitespace-nowrap"
+                                  >
+                                    {nestedSubCat.name}
+                                  </button>
+                                ))}
+                              </div>
                             )}
-                          </button>
-                          {subcat.subcategories?.length > 0 && (
-                            <div className="absolute left-0 top-full mt-1 w-52 rounded-2xl border border-gold-200 bg-white/95 p-2 shadow-xl opacity-0 invisible translate-y-2 group-hover/submenu:opacity-100 group-hover/submenu:visible group-hover/submenu:translate-y-0 transition-all duration-200 z-[60]">
-                              {subcat.subcategories.map((nestedSubcat: any) => (
-                                <button
-                                  key={nestedSubcat._id}
-                                  type="button"
-                                  onClick={() =>
-                                    handleNav(
-                                      nestedSubcat.name,
-                                      slugify(
-                                        nestedSubcat.slug || nestedSubcat.name,
-                                      ),
-                                    )
-                                  }
-                                  className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-maroon-700 hover:bg-gold-50 hover:text-maroon-700 transition-colors cursor-pointer whitespace-nowrap"
-                                >
-                                  {nestedSubcat.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+          </div>
 
           {/* Icons & Actions */}
           <div className="flex items-center px-4 gap-1.5 sm:gap-3">
@@ -238,11 +216,10 @@ export default function Header() {
             <Link
               to={user.loggedIn ? '/profile' : '/login'}
               onClick={closeMobileMenu}
-              className={`p-1.5 sm:p-2 rounded-full relative transition-colors cursor-pointer ${
-                user.loggedIn
-                  ? 'text-gold-600 bg-gold-50'
-                  : 'text-maroon-700 hover:bg-maroon-50'
-              }`}
+              className={`p-1.5 sm:p-2 rounded-full relative transition-colors cursor-pointer ${user.loggedIn
+                ? 'text-gold-600 bg-gold-50'
+                : 'text-maroon-700 hover:bg-maroon-50'
+                }`}
               title={
                 user.loggedIn ? `Logged in as ${user.name}` : 'Patron Login'
               }
@@ -285,12 +262,12 @@ export default function Header() {
         <div className="lg:hidden bg-white border-t border-gold-200/60 px-4 sm:px-6 py-2 space-y-1">
           <button
             onClick={() => handleNav('All', 'all')}
-            className="w-full text-left py-2 text-maroon-900 font-semibold text-xs tracking-wider border-b border-gold-100 flex items-center justify-between uppercase cursor-pointer"
+            className="w-full flex items-center justify-between flex-1 text-left py-2 text-maroon-800 text-xs tracking-wider cursor-pointer"
           >
             All Collections
-            <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500" />
+            <ChevronRightIcon className="h-3.5 w-3.5 text-gold-500 mr-2" />
           </button>
-          {visibleCategories.map((cat: any) => {
+          {primaryCategories.map((cat: any) => {
             const subcategories = (siteContent?.categories ?? []).filter(
               (item: any) =>
                 item.type === 'subcategory' && item.parentId === cat._id,
@@ -319,9 +296,8 @@ export default function Header() {
                       aria-label={`Toggle ${cat.name} subcategories`}
                     >
                       <ChevronRightIcon
-                        className={`h-3.5 w-3.5 transition-transform ${
-                          isOpen ? 'rotate-90' : ''
-                        }`}
+                        className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-90' : ''
+                          }`}
                       />
                     </button>
                   )}
@@ -347,67 +323,6 @@ export default function Header() {
               </div>
             );
           })}
-          {moreCategories.length > 0 && (
-            <>
-              {moreCategories.map((cat: any) => {
-                const subcategories = (siteContent?.categories ?? []).filter(
-                  (item: any) =>
-                    item.type === 'subcategory' && item.parentId === cat._id,
-                );
-                const isOpen = mobileOpenCategory === cat._id;
-
-                return (
-                  <div key={cat._id} className="border-b border-gold-100">
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() =>
-                          handleNav(cat.name, slugify(cat.slug || cat.name))
-                        }
-                        className="flex-1 text-left py-2 text-maroon-800 text-xs tracking-wider cursor-pointer"
-                      >
-                        {cat.name}
-                      </button>
-                      {subcategories.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMobileOpenCategory(isOpen ? null : cat._id);
-                          }}
-                          className="p-2 text-gold-500"
-                          aria-label={`Toggle ${cat.name} subcategories`}
-                        >
-                          <ChevronRightIcon
-                            className={`h-3.5 w-3.5 transition-transform ${
-                              isOpen ? 'rotate-90' : ''
-                            }`}
-                          />
-                        </button>
-                      )}
-                    </div>
-                    {isOpen && subcategories.length > 0 && (
-                      <div className="pb-2 pl-3 space-y-1">
-                        {subcategories.map((subcat: any) => (
-                          <button
-                            key={subcat._id}
-                            onClick={() =>
-                              handleNav(
-                                subcat.name,
-                                slugify(subcat.slug || subcat.name),
-                              )
-                            }
-                            className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] text-maroon-700 hover:bg-gold-50 transition-colors cursor-pointer"
-                          >
-                            {subcat.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </>
-          )}
           {user.loggedIn && user.role === 'admin' && (
             <button
               onClick={() => {

@@ -40,19 +40,19 @@ export default function Footer() {
       <div className="pattern-temple h-4 sm:h-5 absolute top-0 left-0 right-0 rotate-180 opacity-50 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Link
+          to="/"
+          className="flex items-center gap-2 sm:gap-3 group p-4 text-left cursor-pointer"
+        >
+          <img
+            src="/logo.png"
+            alt="Hamsini Silks Logo"
+            className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
+          />
+        </Link>
         <div className="lg:grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 pb-8 sm:pb-12 border-b border-gold-700/30">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-4">
-            <Link
-              to="/"
-              className="flex items-center gap-2 sm:gap-3 group p-4 text-left cursor-pointer"
-            >
-              <img
-                src="/logo.png"
-                alt="Hamsini Silks Logo"
-                className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
-              />
-            </Link>
             <p className="text-gold-200/70 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
               Five decades of weaving stories into silk. From the temple looms
               of Kanchipuram, draping the women of India since 1972.
