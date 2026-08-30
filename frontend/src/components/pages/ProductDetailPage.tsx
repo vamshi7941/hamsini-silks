@@ -198,6 +198,21 @@ export default function ProductDetailPage({
     startRaf();
   };
 
+  // Keep lens and preview in sync when the displayed image or zoom changes
+  useEffect(() => {
+    const src = imageUrl || displayedImage;
+    const bg = `${localZoomLevel * 100}% ${localZoomLevel * 100}%`;
+    if (previewRef.current) {
+      previewRef.current.style.backgroundImage = `url(${src})`;
+      previewRef.current.style.backgroundSize = bg;
+      previewRef.current.style.backgroundPosition = '50% 50%';
+    }
+    if (lensRef.current) {
+      lensRef.current.style.backgroundImage = `url(${src})`;
+      lensRef.current.style.backgroundSize = bg;
+      lensRef.current.style.backgroundPosition = '50% 50%';
+    }
+  }, [imageUrl, localZoomLevel]);
 
   const isAdmin = user.role === 'admin';
   const p = selectedProduct;
@@ -266,7 +281,21 @@ export default function ProductDetailPage({
       return;
     }
 
+    // reset to product's first image and clear magnifier state when product changes
     setActiveImage(allImages[0] ?? '');
+    setShowLens(false);
+    stopRaf();
+    // reset local zoom for desktop magnifier
+    setLocalZoomLevel(zoomLevel || 3);
+    // restore body overflow in case it was hidden
+    try {
+      if (bodyOverflowRef.current !== null) {
+        document.body.style.overflow = bodyOverflowRef.current;
+        bodyOverflowRef.current = null;
+      }
+    } catch (err) {
+      // ignore
+    }
   }, [p?._id]);
 
   useEffect(() => {
