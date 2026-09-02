@@ -3,20 +3,45 @@ import { useState } from 'react';
 
 export default function Newsletter() {
   const [phone, setPhone] = useState('');
+  const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
-      alert('Please enter a valid 10-digit mobile number.');
+    if (name.trim().length < 2) {
+      showToast('Please enter your name', 'error');
       return;
     }
 
-    // Here you can add the logic to send the phone number to your backend or API
+    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+      showToast('Please enter a valid 10-digit mobile number.', 'error');
+      return;
+    }
 
-    // for now - it's under progreess
-    showToast('This Integration is in Progress', 'info');
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${(import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:4001'}/api/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), phone: phone, source: 'newsletter' }),
+      });
+
+      if (res.ok) {
+        setName('');
+        setPhone('');
+        showToast('Thanks for subscribing! We have saved your details.', 'success');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        const msg = (data && (data.message || data.error)) || 'Failed to save your details. Please try again.';
+        showToast(msg, 'error');
+      }
+    } catch (err) {
+      showToast('Network error. Please try again later.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -42,7 +67,15 @@ export default function Newsletter() {
             className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-lg mt-6 mx-auto"
           >
             <input
-              type="phone"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+              className="flex-1 px-4 sm:px-5 py-3 sm:py-3.5 rounded-full bg-white/10 border border-gold-400/40 text-gold-100 placeholder:text-gold-200/50 text-sm focus:outline-none focus:border-gold-300"
+            />
+            <input
+              type="tel"
               required
               value={phone}
               maxLength={10}
@@ -52,9 +85,10 @@ export default function Newsletter() {
             />
             <button
               type="submit"
-              className="px-5 sm:px-7 py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-gold-500 to-gold-400 text-maroon-900 font-bold text-xs sm:text-sm tracking-wider hover:scale-[1.02] transition-transform whitespace-nowrap cursor-pointer shrink-0"
+              disabled={isSubmitting}
+              className="px-5 sm:px-7 py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-gold-500 to-gold-400 text-maroon-900 font-bold text-xs sm:text-sm tracking-wider hover:scale-[1.02] transition-transform whitespace-nowrap cursor-pointer shrink-0 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              SUBSCRIBE
+              {isSubmitting ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
             </button>
           </form>
 

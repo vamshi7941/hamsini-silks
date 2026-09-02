@@ -760,7 +760,7 @@ export default function ProductDetailPage({
                 {p.name}
                 <button
                   onClick={() => (toggleWishlist(p._id))}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all z-999 cursor-pointer ${liked
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all p-2 cursor-pointer ${liked
                     ? 'bg-maroon-900 text-gold-300'
                     : 'bg-white/90 backdrop-blur text-maroon-500 hover:text-maroon-900'
                     }`}

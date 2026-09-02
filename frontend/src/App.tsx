@@ -39,6 +39,8 @@ import {
 import ProfilePage from './components/pages/Profile';
 import VerifyPhonePage from './components/pages/VerifyPhonePage';
 import FooterPage from './components/pages/FooterPage';
+import CookieConsent from './components/CookieConsent';
+import Chatbot from './components/Chatbot';
 
 function HomePage() {
   return (
@@ -175,6 +177,8 @@ export default function App() {
       </main>
 
       <Footer />
+      <CookieConsent />
+      <Chatbot />
     </div>
   );
 }

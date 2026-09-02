@@ -101,6 +101,30 @@ export async function googleLogin(req, res) {
       });
     }
 
+    // ensure customer phone (if present) is mirrored into leads collection
+    try {
+      const Lead = (await import('../models/LeadSchema.js')).default;
+      const phone = customer.phone || '';
+      if (phone && phone.toString().replace(/\D/g, '').length >= 6) {
+        const cleanPhone = String(phone).replace(/\D/g, '').slice(-10);
+        await Lead.findOneAndUpdate(
+          { phone: cleanPhone },
+          {
+            $set: {
+              name: customer.fullName || '',
+              source: 'login',
+              metadata: { email: customer.email || '' },
+              createdAtIST: istString,
+            },
+            $setOnInsert: { phone: cleanPhone },
+          },
+          { upsert: true, new: true }
+        );
+      }
+    } catch (err) {
+      console.error('Failed updating lead from googleLogin', err);
+    }
+
     const token = createToken(customer._id);
     return res.json({ success: true, customer, token });
   } catch (err) {
@@ -265,6 +289,23 @@ export async function verifyLoginOtp(req, res) {
         { $set: { loggedInAtIST: istString } },
         { new: true },
       );
+
+      // mirror into leads
+      try {
+        const Lead = (await import('../models/LeadSchema.js')).default;
+        const cleanPhone = String(phone).replace(/\D/g, '');
+        await Lead.findOneAndUpdate(
+          { phone: cleanPhone },
+          {
+            $set: { name: updated.fullName || '', source: 'login', metadata: { email: updated.email || '' }, createdAtIST: istString },
+            $setOnInsert: { phone: cleanPhone },
+          },
+          { upsert: true, new: true },
+        );
+      } catch (err) {
+        console.error('Failed updating lead from verifyLoginOtp (phone)', err);
+      }
+
       const token = createToken(updated._id);
       return res.json({ success: true, message: 'OTP verified successfully.', token, user: updated.toObject() });
     }
@@ -275,6 +316,25 @@ export async function verifyLoginOtp(req, res) {
         { $set: { phone, loggedInAtIST: istString } },
         { new: true },
       );
+
+      // mirror into leads when phone present
+      try {
+        const Lead = (await import('../models/LeadSchema.js')).default;
+        const cleanPhone = String(phone).replace(/\D/g, '');
+        if (cleanPhone) {
+          await Lead.findOneAndUpdate(
+            { phone: cleanPhone },
+            {
+              $set: { name: updated.fullName || '', source: 'login', metadata: { email: updated.email || '' }, createdAtIST: istString },
+              $setOnInsert: { phone: cleanPhone },
+            },
+            { upsert: true, new: true },
+          );
+        }
+      } catch (err) {
+        console.error('Failed updating lead from verifyLoginOtp (email)', err);
+      }
+
       const token = createToken(updated._id);
       return res.json({ success: true, message: 'OTP verified successfully.', token, user: updated.toObject() });
     }
@@ -288,6 +348,24 @@ export async function verifyLoginOtp(req, res) {
       loggedInAtIST: istString,
       role: 'customer',
     });
+
+    // mirror to leads
+    try {
+      const Lead = (await import('../models/LeadSchema.js')).default;
+      const cleanPhone = String(phone).replace(/\D/g, '');
+      if (cleanPhone) {
+        await Lead.findOneAndUpdate(
+          { phone: cleanPhone },
+          {
+            $set: { name: customer.fullName || '', source: 'signup', metadata: { email: customer.email || '' }, createdAtIST: istString },
+            $setOnInsert: { phone: cleanPhone },
+          },
+          { upsert: true, new: true },
+        );
+      }
+    } catch (err) {
+      console.error('Failed updating lead from verifyLoginOtp (create)', err);
+    }
 
     const token = createToken(customer._id);
     return res.json({ success: true, message: 'OTP verified successfully.', token, user: customer.toObject() });
