@@ -285,6 +285,42 @@ export default function UpdateProduct({
     }
   }, [categoryOptions, selectedCategoryId]);
 
+  // Ensure selected subcategory belongs to the selected category; clear it if not
+  useEffect(() => {
+    if (!subcategoryId) return;
+    const sub = siteContent.categories.find((c) => c._id === subcategoryId);
+    if (sub && sub.parentId && sub.parentId !== selectedCategoryId) {
+      setSubcategoryId('');
+    }
+  }, [selectedCategoryId, subcategoryId, siteContent.categories]);
+
+  // When opening the modal for editing, update the selects to reflect the product's saved category/subcategory
+  useEffect(() => {
+    if (!product) return;
+    // try to find matching subcategory by name
+    const sub = siteContent.categories.find(
+      (c) => c.type === 'subcategory' && c.name === product.subcategory,
+    );
+
+    // try to find top-level category matching product.category
+    const cat = siteContent.categories.find(
+      (c) => c.type !== 'subcategory' && c.name === product.category,
+    );
+
+    if (cat) {
+      setSelectedCategoryId(cat._id);
+    } else if (sub) {
+      // if product.category stored as a subcategory name, pick its parent
+      setSelectedCategoryId(sub.parentId ?? '');
+    }
+
+    if (sub) {
+      setSubcategoryId(sub._id);
+    } else {
+      setSubcategoryId('');
+    }
+  }, [product, siteContent.categories]);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto admin-scroll">

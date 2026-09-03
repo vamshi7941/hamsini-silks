@@ -9,6 +9,7 @@ import customerRouter from './routes/customer.js';
 import adminRouter from './routes/admin.js';
 import * as promoterController from './controllers/promoterController.js';
 import { requirePromoterAuth } from './middleware/requireAuth.js';
+import leadsRouter from './routes/leads.js';
 
 import SiteConfig from './models/SiteConfigSchema.js';
 
@@ -37,6 +38,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/customer', customerRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/leads', leadsRouter);
 
 app.get(
   '/api/promoter/stats/:promoterId',

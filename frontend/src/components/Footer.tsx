@@ -35,7 +35,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-[#1a0805] text-gold-100 pt-12 sm:pt-16 pb-6 sm:pb-8 relative overflow-hidden shrink-0">
+    <footer className="bg-[#1a0805] text-gold-100 pt-12 pb-6 sm:py-8 relative overflow-hidden shrink-0">
       <div className="absolute inset-0 bg-mandala opacity-10 pointer-events-none" />
       <div className="pattern-temple h-4 sm:h-5 absolute top-0 left-0 right-0 rotate-180 opacity-50 pointer-events-none" />
 
@@ -47,12 +47,12 @@ export default function Footer() {
           <img
             src="/logo.png"
             alt="Hamsini Silks Logo"
-            className="h-auto w-[130px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
+            className="h-auto w-[100px] object-contain transition-transform duration-500 group-hover:scale-105 rounded"
           />
         </Link>
-        <div className="lg:grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 pb-8 sm:pb-12 border-b border-gold-700/30">
+        <div className="lg:grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 border-b border-gold-700/30">
           {/* Brand */}
-          <div className="col-span-2 lg:col-span-4">
+          <div className="col-span-2 lg:col-span-6">
             <p className="text-gold-200/70 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
               Five decades of weaving stories into silk. From the temple looms
               of Kanchipuram, draping the women of India since 1972.
@@ -99,7 +99,7 @@ export default function Footer() {
           </div>
 
           {/* Link cols */}
-          <div className="col-span-1 sm:col-span-1 lg:col-span-8 grid grid-cols-3 gap-6 sm:gap-8">
+          <div className="col-span-1 sm:col-span-1 lg:col-span-6 grid grid-cols-3 gap-6 sm:gap-8">
             {cols.map((col) => (
               <div key={col.title}>
                 <h4 className="font-display text-sm sm:text-base lg:text-lg text-gold-300 mb-3 sm:mb-4 tracking-wide font-bold">
@@ -159,12 +159,6 @@ export default function Footer() {
               COD
             </span>
           </div>
-        </div>
-
-        <div className="text-center mt-6 sm:mt-8">
-          <p className="font-serif italic text-gold-400/60 text-xs sm:text-sm">
-            ॥ वस्त्रं तेजः ॥ &nbsp; A drape is a blessing.
-          </p>
         </div>
       </div>
     </footer>
