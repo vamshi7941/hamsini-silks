@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/context/StoreContext';
-import { hasAnalyticsConsent } from '../utils/cookieConsent';
+import { COOKIE_CONSENT_EVENT, hasAnalyticsConsent } from '../utils/cookieConsent';
 import { generateSlug } from '@/utils/slug';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Send } from 'lucide-react';
@@ -24,25 +24,37 @@ export default function Chatbot() {
   const messagesRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // show chat bubble only if analytics consent exists (user accepted cookies)
-    if (!hasAnalyticsConsent()) return;
-    setShowBubble(true);
+    const syncBubbleAndRestoreState = () => {
+      const consented = hasAnalyticsConsent();
+      setShowBubble(consented);
 
-    // try to restore previous chat state (messages, flowStep, phone, name) from in-memory cache
-    try {
-      const parsed = chatMemory;
-      if (parsed) {
-        if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
-          setMessages(parsed.messages);
+      if (!consented) return;
+
+      // try to restore previous chat state (messages, flowStep, phone, name) from in-memory cache
+      try {
+        const parsed = chatMemory;
+        if (parsed) {
+          if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+            setMessages((current) => (current.length > 0 ? current : parsed.messages));
+          }
+          if (parsed.flowStep && parsed.flowStep !== 'init') {
+            setFlowStep((current) => (current === 'init' ? parsed.flowStep : current));
+          }
+          if (parsed.phone) setPhone((current) => current || parsed.phone);
+          if (parsed.name) setName((current) => current || parsed.name);
         }
-        if (parsed.flowStep) setFlowStep(parsed.flowStep);
-        if (parsed.phone) setPhone(parsed.phone);
-        if (parsed.name) setName(parsed.name);
+      } catch (err) {
+        // ignore restore errors
+        console.error('Failed to restore chat state', err);
       }
-    } catch (err) {
-      // ignore restore errors
-      console.error('Failed to restore chat state', err);
-    }
+    };
+
+    syncBubbleAndRestoreState();
+    window.addEventListener(COOKIE_CONSENT_EVENT, syncBubbleAndRestoreState);
+
+    return () => {
+      window.removeEventListener(COOKIE_CONSENT_EVENT, syncBubbleAndRestoreState);
+    };
   }, []);
 
   useEffect(() => {

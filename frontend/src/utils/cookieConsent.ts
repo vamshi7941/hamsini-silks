@@ -7,6 +7,7 @@ export type CookiePreferences = {
 };
 
 export const COOKIE_CONSENT_KEY = 'hamsini_cookie_consent';
+export const COOKIE_CONSENT_EVENT = 'cookie-consent-changed';
 
 const DEFAULT_PREFERENCES: CookiePreferences = {
   necessary: true,
@@ -57,6 +58,10 @@ export function setCookieConsent(preferences: Partial<CookiePreferences>) {
   const cookieValue = `${COOKIE_CONSENT_KEY}=${encodeURIComponent(JSON.stringify(nextPreferences))}; expires=${expires}; path=/; SameSite=Lax${isSecure ? '; Secure' : ''}`;
 
   document.cookie = cookieValue;
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT));
+  }
 }
 
 export function hasAnalyticsConsent() {
