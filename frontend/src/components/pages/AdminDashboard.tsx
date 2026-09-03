@@ -10,6 +10,7 @@ import SideBar from '../admin/sideBar';
 import Orders from '../admin/orders';
 import Catalogue from '../admin/catalogue';
 import Promoters from '../admin/promoters';
+import Leads from '../admin/leads';
 import SiteCustomize from '../admin/siteCustomize';
 import UpdateProduct from '../admin/updateProduct';
 import ImageEditor from '../admin/imageEditor';
@@ -24,6 +25,7 @@ export type AdminTab =
   | 'catalogue'
   | 'media'
   | 'promoters'
+  | 'leads'
   | 'site-customize';
 
 // ── MAIN ADMIN DASHBOARD ──────────────────────────────────────────────────────
@@ -137,6 +139,9 @@ export default function AdminDashboard() {
 
           {/* ═══════════════════ PROMOTERS ═══════════════════ */}
           {activeTab === 'promoters' && <Promoters />}
+
+          {/* ═══════════════════ LEADS ═══════════════════ */}
+          {activeTab === 'leads' && <Leads />}
 
           {/* ═══════════════════ SITE CUSTOMIZE ═══════════════════ */}
           {activeTab === 'site-customize' && <SiteCustomize />}

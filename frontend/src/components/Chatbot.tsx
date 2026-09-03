@@ -53,7 +53,7 @@ export default function Chatbot() {
         addBotMessage('Hello! How can I help you today? You can browse categories or our hand-picked items.');
         setFlowStep('menu');
       } else {
-        addBotMessage('Welcome! Please provide your phone number to start the chat, or open WhatsApp.');
+        addBotMessage('Welcome! Enter the mobile number to start the chat, or open WhatsApp.');
         setFlowStep('phone');
       }
     } else {
@@ -271,15 +271,12 @@ export default function Chatbot() {
           {flowStep === "phone" && (
             <div className="flex flex-col items-center gap-3 mt-4">
               <div className="bg-white rounded-[20px] p-4 max-w-full">
-                <p className="text-sm text-gray-700 mb-3">
-                  Please provide your phone number to start the conversation.
-                </p>
 
                 <div className="flex gap-2">
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="10-digit phone"
+                    placeholder="Mobile Number"
                     className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
                   />
 

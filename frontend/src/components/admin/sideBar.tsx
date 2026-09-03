@@ -32,6 +32,7 @@ export default function SideBar({
     },
     { id: 'media', label: 'Media', icon: Icon.image },
     { id: 'promoters', label: 'Promoters', icon: Icon.users },
+    { id: 'leads', label: 'Leads', icon: Icon.leads },
     { id: 'site-customize', label: 'Site Customize', icon: Icon.catalogue },
   ];
 
@@ -53,11 +54,10 @@ export default function SideBar({
             onClick={() => setActiveTab(item.id as AdminTab)}
             aria-label={item.label}
             title={item.label}
-            className={`w-full flex items-center justify-center md:justify-start gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer relative group ${
-              activeTab === item.id
+            className={`w-full flex items-center justify-center md:justify-start gap-3 px-2.5 md:px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer relative group ${activeTab === item.id
                 ? 'bg-gold-500/20 text-gold-200 border border-gold-500/30'
                 : 'text-white/60 hover:bg-white/10 hover:text-white'
-            }`}
+              }`}
           >
             <item.icon />
             <span className="hidden md:block">{item.label}</span>
